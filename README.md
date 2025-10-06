@@ -109,7 +109,7 @@ git reset
 ```
 ### 2.3 添加远程仓库
 ```powershell
-git remote add origin https://gitee.com/h_starlight/intelligent-helmet-terminal.git
+git remote add origin https://gitee.com/h_starlight/amqp-demo.git
 ```
 
 ### 2.4 验证远程仓库配置
@@ -119,8 +119,8 @@ git remote -v
 正常显示结果：
 ```powershell
 
-origin https://gitee.com/h_starlight/intelligent-helmet-terminal.git (fetch)
-origin https://gitee.com/h_starlight/intelligent-helmet-terminal.git (push)
+origin  https://gitee.com/h_starlight/amqp-demo.git (fetch)
+origin  https://gitee.com/h_starlight/amqp-demo.git (push)
 
 ```
 
