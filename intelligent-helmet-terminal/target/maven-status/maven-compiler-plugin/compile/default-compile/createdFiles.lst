@@ -1,0 +1,8 @@
+com\demo\ApplicationAMQPJavaDemo$1.class
+com\demo\config\WebSocketConfig.class
+com\demo\model\SensorData.class
+com\demo\websocket\SensorDataWebSocketHandler.class
+com\demo\controller\SensorDataController.class
+com\demo\service\SensorDataService.class
+com\demo\ApplicationAMQPJavaDemo.class
+com\demo\config\JacksonConfig.class
