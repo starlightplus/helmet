@@ -17,7 +17,6 @@ IoT平台：华为云IoTDA
 构建工具：Maven
 运行环境：Java 8+
 ### (4)前端技术栈
-框架：Vue 3
 核心语言：HTML5, CSS3, JavaScript (ES6+)
 UI框架：原生CSS，无额外框架依赖
 地图服务：百度地图API
@@ -59,9 +58,29 @@ mvn spring-boot:run
 ## 2.运行前端Vue应用
 ### 2.1 进入Vue项目目录
 ```powershell
-cd amqp-demo/intelligent-helmet-vue
+cd amqp-demo\intelligent-helmet-vue
 ```
-### 2.2 安装依赖（可选）
+### 2.2 安装依赖（第一次）
+```powershell
+npm install
+```
+此时如果报错
+```powershell
+npm error code EPERM
+npm error syscall open
+npm error path D:\nodejs\node_cache\_cacache\tmp\21af31fe
+npm error errno EPERM
+...
+```
+配置 npm 使用一个新的缓存目录，避免权限问题
+```powershell
+npm config set cache "C:\Users\$env:USERNAME\AppData\Roaming\npm-cache"
+```
+验证缓存目录是否已经更改
+```powershell
+npm config get cache
+```
+再次安装依赖
 ```powershell
 npm install
 ```
@@ -89,11 +108,11 @@ markdown
 ### 1.1 删除本地项目（可选）
 如果本地已存在同名项目，需要先删除：
 ```powershell   
-Remove-Item -Recurse -Force amqp-demo
+Remove-Item -Recurse -Force intelligent-helmet-terminal
 ```
 ### 1.2 克隆项目到本地
 ```powershell 
-git clone https://gitee.com/h_starlight/amqp-demo.git
+git clone https://gitee.com/h_starlight/intelligent-helmet-terminal.git
 ```
 
 ## 2. 项目上传到Gitee
