@@ -1,18 +1,24 @@
 <template>
   <div class="controls" data-aos="fade-up" data-aos-delay="200">
-    <button type="button" class="btn glass-button" @click="onToggleAuto" :data-key="'auto'">
+    <button type="button" class="btn glass-button large-button" @click="onToggleAuto" :data-key="'auto'">
       {{ isAuto ? '关闭自动刷新' : '开启自动刷新' }}
     </button>
-    <button type="button" class="btn glass-button" @click="onClearAll" :data-key="'clear-all'">
+    <button type="button" class="btn glass-button large-button" @click="onClearAll" :data-key="'clear-all'">
       清除所有数据
+    </button>
+    <button type="button" class="btn glass-button large-button" @click="onLogout" :data-key="'logout'">
+      退出登录
     </button>
   </div>
 </template>
 
 <script setup>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+
 const emit = defineEmits(['toggle-auto-refresh', 'clear-all-data'])
 const isAuto = ref(false)
+const router = useRouter()
 
 function createRipple(e) {
   const button = e.currentTarget
@@ -37,12 +43,18 @@ function onClearAll(e) {
   createRipple(e)
   emit('clear-all-data')
 }
+
+function onLogout(e) {
+  createRipple(e)
+  // 跳转到首页
+  router.push('/')
+}
 </script>
 
 <style scoped>
 .controls {
   display: flex;
-  gap: 12px;
+  gap: 15px;
   justify-content: center;
   margin-bottom: 24px;
   flex-wrap: wrap;
@@ -62,6 +74,12 @@ function onClearAll(e) {
   transition: all 0.3s ease;
   font-weight: 500;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+/* 放大按钮 */
+.large-button {
+  padding: 16px 32px;
+  font-size: 1.1em;
 }
 
 .glass-button:hover {
@@ -84,6 +102,18 @@ function onClearAll(e) {
   to {
     transform: scale(2.5);
     opacity: 0;
+  }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .controls {
+    gap: 10px;
+  }
+  
+  .large-button {
+    padding: 14px 25px;
+    font-size: 1em;
   }
 }
 </style>

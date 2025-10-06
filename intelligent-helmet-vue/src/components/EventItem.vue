@@ -31,7 +31,6 @@ const formattedTime = computed(() => formatDateTime(props.event.timestamp))
 </script>
 
 <style scoped>
-/* 复用你已设计的样式（略） */
 .event-item {
   display: flex;
   justify-content: space-between;

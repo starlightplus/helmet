@@ -37,12 +37,13 @@ const indicatorClass = computed(()=> {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 18px;
-  border-radius: 12px;
+  padding: 24px 24px;
+  border-radius: 20px;
   background: rgba(10, 15, 44, 0.4);
-  margin-bottom: 20px;
+  margin-bottom: 40px;
   border: 1px solid rgba(0, 247, 255, 0.3);
   color: white; /* 将字体颜色改为白色 */
+  
 }
 
 .status-item {

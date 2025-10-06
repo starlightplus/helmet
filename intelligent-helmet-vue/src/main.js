@@ -1,12 +1,13 @@
 import { createApp } from 'vue'
-
-import App from './views/App.vue'
+import App from './App.vue'
+import router from './router'
 
 // 初始化AOS动画库
 import AOS from 'aos'
 import 'aos/dist/aos.css'
 
 const app = createApp(App)
+app.use(router)
 
 // 在应用挂载后初始化AOS
 app.mount('#app')

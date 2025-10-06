@@ -17,6 +17,7 @@ IoT平台：华为云IoTDA
 构建工具：Maven
 运行环境：Java 8+
 ### (4)前端技术栈
+框架：Vue 3
 核心语言：HTML5, CSS3, JavaScript (ES6+)
 UI框架：原生CSS，无额外框架依赖
 地图服务：百度地图API
@@ -58,7 +59,7 @@ mvn spring-boot:run
 ## 2.运行前端Vue应用
 ### 2.1 进入Vue项目目录
 ```powershell
-cd intelligent-helmet-vue
+cd amqp-demo/intelligent-helmet-vue
 ```
 ### 2.2 安装依赖（可选）
 ```powershell
@@ -88,11 +89,11 @@ markdown
 ### 1.1 删除本地项目（可选）
 如果本地已存在同名项目，需要先删除：
 ```powershell   
-Remove-Item -Recurse -Force intelligent-helmet-terminal
+Remove-Item -Recurse -Force amqp-demo
 ```
 ### 1.2 克隆项目到本地
 ```powershell 
-git clone https://gitee.com/h_starlight/intelligent-helmet-terminal.git
+git clone https://gitee.com/h_starlight/amqp-demo.git
 ```
 
 ## 2. 项目上传到Gitee

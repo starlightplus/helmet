@@ -161,17 +161,17 @@ onUnmounted(() => {
 .map-container {
   padding: 24px;
   background: rgba(10, 15, 44, 0.4);
-  border-radius: 20px; /* 与SensorCard一致 */
-  margin-bottom: 20px; /* 与SensorCard一致 */
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); /* 与SensorCard一致 */
-  border: 1px solid rgba(0, 247, 255, 0.3); /* 与SensorCard一致 */
-  backdrop-filter: blur(10px); /* 与SensorCard一致 */
-  transition: transform 0.3s ease, box-shadow 0.3s ease; /* 与SensorCard一致 */
+  border-radius: 20px; 
+  margin-bottom: 20px; 
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); 
+  border: 1px solid rgba(0, 247, 255, 0.3); 
+  backdrop-filter: blur(10px); 
+  transition: transform 0.3s ease, box-shadow 0.3s ease; 
 }
 
 .map-container:hover {
-  transform: translateY(-5px); /* 与SensorCard一致 */
-  box-shadow: 0 12px 40px rgba(0, 247, 255, 0.4); /* 与SensorCard一致 */
+  transform: translateY(-5px); 
+  box-shadow: 0 12px 40px rgba(0, 247, 255, 0.4); 
 }
 
 .map-header {

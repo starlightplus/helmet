@@ -105,7 +105,7 @@ onUnmounted(()=>{
   max-width: 1400px;
   margin: 0 auto;
   padding: 20px 0;
-  width: 100%; /* 确保容器宽度正确 */
+  width: 90%; /* 确保容器宽度正确 */
   box-sizing: border-box; /* 包含padding和border在宽度内 */
 }
 
