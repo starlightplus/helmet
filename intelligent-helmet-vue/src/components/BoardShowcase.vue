@@ -1,58 +1,64 @@
 <template>
-  <section class="relative w-full h-[800px] bg-[#030712] border-b border-white/5 overflow-hidden">
+  <section class="relative w-full h-[800px] border-b border-white/5 overflow-hidden" style="background: #000000;">
     <!-- 顶部标题信息 -->
     <div class="absolute top-12 right-12 z-10 text-right pointer-events-none">
       <div class="flex items-center justify-end gap-4 mb-2">
-        <span class="text-[10px] font-mono text-cyan-400 tracking-widest uppercase">Hardware Core // 02</span>
+        <span class="text-[30px] font-mono text-cyan-400 tracking-widest uppercase">TACTICAL BOARD</span>
         <div class="w-2 h-2 bg-cyan-500" style="clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)"></div>
       </div>
-      <h2 class="text-4xl font-black text-white uppercase tracking-tighter">
-        Tactical <span class="text-cyan-500">Board</span>
+      <h2 class="text-5xl font-black text-white uppercase tracking-tighter">
+        开发板 <span class="text-cyan-500">3D建模展示</span>
       </h2>
-      <p class="text-slate-500 text-[10px] font-mono mt-2 max-w-xs ml-auto uppercase tracking-widest leading-relaxed">
-        Integrated processing unit for real-time tactical data analysis.<br />[STATUS: SYSTEM_READY]
+      <p class="text-slate-400 text-[20px] font-mono mt-2 max-w-xs ml-auto uppercase tracking-widest leading-relaxed">
+        鼠标光标移动可查看开发板全貌<br />[STATUS: SYSTEM_READY]
       </p>
     </div>
 
     <!-- TresJS 画布 -->
-    <TresCanvas shadows alpha>
-      <TresPerspectiveCamera :position="[0, 2, 10]" :fov="35" />
-      
-      <!-- 基础控制器 -->
-      <OrbitControls
-        :enable-zoom="false"
-        :auto-rotate="true"
-        :auto-rotate-speed="0.5"
-        :max-polar-angle="Math.PI / 1.8"
-        :min-polar-angle="Math.PI / 4"
-      />
+    <div class="canvas-wrapper">
+      <TresCanvas
+        :alpha="true"
+        shadows
+        :renderer-options="{ alpha: true, antialias: true }"
+      >
+        <TresPerspectiveCamera :position="[0, 2, 10]" :fov="35" />
 
-      <!-- 灯光系统 -->
-      <TresAmbientLight :intensity="0.8" />
-      <TresDirectionalLight :position="[5, 8, 5]" :intensity="1.5" cast-shadow />
-      <TresDirectionalLight :position="[-5, 5, -5]" :intensity="0.5" color="#06b6d4" />
+        <!-- 基础控制器 -->
+        <OrbitControls
+          :enable-zoom="false"
+          :auto-rotate="true"
+          :auto-rotate-speed="0.5"
+          :max-polar-angle="Math.PI / 1.8"
+          :min-polar-angle="Math.PI / 4"
+        />
 
-      <!-- 模型组 -->
-      <TresGroup ref="modelGroup">
-        <primitive v-if="model" :object="model" />
-      </TresGroup>
+        <!-- 灯光系统 -->
+        <TresAmbientLight :intensity="0.8" />
+        <TresDirectionalLight :position="[5, 8, 5]" :intensity="1.5" cast-shadow />
+        <TresDirectionalLight :position="[-5, 5, -5]" :intensity="0.5" color="#06b6d4" />
 
-      <!-- 底部阴影 -->
-      <ContactShadows 
-        :opacity="0.4" 
-        :blur="2.5" 
-        :scale="15" 
-        :far="10" 
-        :position="[0, -2, 0]"
-      />
-    </TresCanvas>
+        <!-- 模型组 -->
+        <TresGroup ref="modelGroup">
+          <primitive v-if="model" :object="model" />
+        </TresGroup>
+
+        <!-- 底部阴影 -->
+        <ContactShadows
+          :opacity="0.4"
+          :blur="2.5"
+          :scale="15"
+          :far="10"
+          :position="[0, -2, 0]"
+        />
+      </TresCanvas>
+    </div>
 
     <!-- 底部参数信息 -->
     <div class="absolute bottom-12 left-12 z-10 pointer-events-none">
       <div class="flex flex-col gap-4">
         <div v-for="(spec, i) in specs" :key="i" class="flex items-center gap-3">
-          <div class="w-8 h-[1px] bg-cyan-500/50"></div>
-          <span class="text-[9px] font-mono text-slate-400 tracking-widest uppercase">{{ spec }}</span>
+          <div class="w-8 h-[4px] bg-cyan-500/50"></div>
+          <span class="text-[14px] font-mono text-slate-400 tracking-widest uppercase">{{ spec }}</span>
         </div>
       </div>
     </div>
@@ -110,13 +116,13 @@ loader.load(
   }
 )
 
-// 3. 手动实现漂浮动画 (使用 requestAnimationFrame)
+// 手动实现漂浮动画 (使用 requestAnimationFrame)
 let animationId = null
 let startTime = performance.now()
 
 const animate = (currentTime) => {
   const elapsed = (currentTime - startTime) / 1000 // 转换为秒
-  
+
   if (modelGroup.value) {
     // Y 轴上下漂浮
     modelGroup.value.position.y = Math.sin(elapsed * 1.5) * 0.2
@@ -124,13 +130,24 @@ const animate = (currentTime) => {
     modelGroup.value.rotation.z = Math.sin(elapsed * 0.5) * 0.05
     modelGroup.value.rotation.x = Math.cos(elapsed * 0.5) * 0.05
   }
-  
+
   animationId = requestAnimationFrame(animate)
 }
 
 onMounted(() => {
   startTime = performance.now()
   animationId = requestAnimationFrame(animate)
+
+  // 尝试访问 TresJS 的渲染器并设置透明背景
+  setTimeout(() => {
+    const canvas = document.querySelector('[data-tres]')
+    if (canvas) {
+      const gl = canvas.getContext('webgl2') || canvas.getContext('webgl')
+      if (gl) {
+        console.log('[BoardShowcase] WebGL context found, alpha:', gl.getContextAttributes()?.alpha)
+      }
+    }
+  }, 100)
 })
 
 onUnmounted(() => {
@@ -139,3 +156,91 @@ onUnmounted(() => {
   }
 })
 </script>
+
+<style scoped>
+/* Canvas Wrapper */
+.canvas-wrapper {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+}
+
+/* 强制 TresCanvas 的 canvas 元素透明并正确定位 */
+.canvas-wrapper :deep(canvas) {
+  background: transparent !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* High-Tech Animated Background */
+.tech-background {
+  position: absolute !important;
+  inset: 0 !important;
+  pointer-events: none !important;
+  z-index: 1 !important;
+  overflow: hidden !important;
+  background: #030712 !important;
+}
+
+.dynamic-grid {
+  position: absolute;
+  inset: 0;
+  opacity: 0.3;
+  background-image: linear-gradient(rgba(6, 182, 212, 0.2) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(6, 182, 212, 0.2) 1px, transparent 1px);
+  background-size: 40px 40px;
+  mask-image: radial-gradient(circle at 50% 50%, black 30%, transparent 80%);
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, black 30%, transparent 80%);
+}
+
+.glow-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(120px);
+  animation: pulse 4s ease-in-out infinite;
+}
+
+.glow-orb-1 {
+  top: -20%;
+  left: -10%;
+  width: 50%;
+  height: 50%;
+  background: rgba(6, 182, 212, 0.4);
+  animation-duration: 4s;
+}
+
+.glow-orb-2 {
+  bottom: -20%;
+  right: -10%;
+  width: 50%;
+  height: 50%;
+  background: rgba(59, 130, 246, 0.3);
+  animation-duration: 5s;
+  animation-delay: 1s;
+}
+
+.scanner-line {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: rgba(6, 182, 212, 0.3);
+  box-shadow: 0 0 15px rgba(6, 182, 212, 0.5);
+  animation: scan 4s linear infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.6; }
+}
+
+@keyframes scan {
+  0% { top: 0; opacity: 0; }
+  50% { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+</style>

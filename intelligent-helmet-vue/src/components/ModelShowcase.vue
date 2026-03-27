@@ -398,7 +398,19 @@ onUnmounted(() => {
         <div class="progress-box"><div id="progress-bar"></div></div>
     </div>
 
-    <div class="bg-grid"></div>
+    <!-- High-Tech Animated Background -->
+    <div class="tech-background">
+      <!-- Dynamic Grid -->
+      <div class="dynamic-grid"></div>
+
+      <!-- Glowing Orbs -->
+      <div class="glow-orb glow-orb-1"></div>
+      <div class="glow-orb glow-orb-2"></div>
+
+      <!-- Scanner Line -->
+      <div class="scanner-line"></div>
+    </div>
+
     <div ref="webglContainer" id="webgl-container"></div>
 
     <div id="ui-layer">
@@ -469,30 +481,87 @@ onUnmounted(() => {
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@400;700&display=swap');
 
 .endfield-app {
-  /* 适配 3：将 100vw 改为 100%，高度设为 800px 或 100vh，防止出现横向滚动条 */
   width: 100%;
   height: 800px;
   position: relative;
-  background-color: #0f0f11;
+  background-color: #030712;
   font-family: 'Space Grotesk', sans-serif;
   overflow: hidden;
   color: #e2e2e2;
-  --theme-color: #f7d238; 
+  --theme-color: #f7d238;
   --holo-color: #00e5ff;
-  --bg-dark: #0f0f11;
+  --bg-dark: #030712;
   --panel-bg: rgba(20, 20, 23, 0.85);
   --font-mono: 'JetBrains Mono', monospace;
 }
 
-.bg-grid { 
-  position: absolute; 
-  top: 0; 
-  left: 0; 
-  width: 100%; 
-  height: 100%; 
-  background-image: linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px); 
-  background-size: 40px 40px; 
-  z-index: 0; 
+/* High-Tech Animated Background */
+.tech-background {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+  background: #030712;
+}
+
+.dynamic-grid {
+  position: absolute;
+  inset: 0;
+  opacity: 0.2;
+  background-image: linear-gradient(rgba(6, 182, 212, 0.15) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(6, 182, 212, 0.15) 1px, transparent 1px);
+  background-size: 40px 40px;
+  mask-image: radial-gradient(circle at 50% 50%, black 30%, transparent 80%);
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, black 30%, transparent 80%);
+}
+
+.glow-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(120px);
+  animation: pulse 4s ease-in-out infinite;
+}
+
+.glow-orb-1 {
+  top: -20%;
+  left: -10%;
+  width: 50%;
+  height: 50%;
+  background: rgba(6, 182, 212, 0.3);
+  animation-duration: 4s;
+}
+
+.glow-orb-2 {
+  bottom: -20%;
+  right: -10%;
+  width: 50%;
+  height: 50%;
+  background: rgba(59, 130, 246, 0.2);
+  animation-duration: 5s;
+  animation-delay: 1s;
+}
+
+.scanner-line {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: rgba(6, 182, 212, 0.3);
+  box-shadow: 0 0 15px rgba(6, 182, 212, 0.5);
+  animation: scan 4s linear infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.6; }
+}
+
+@keyframes scan {
+  0% { top: 0; opacity: 0; }
+  50% { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
 }
 
 #webgl-container { 

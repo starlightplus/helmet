@@ -24,7 +24,7 @@
       <!-- 终末地战术风格 Navigation Bar -->
       <header
         class="fixed top-0 left-0 w-full h-20 z-50 flex items-center justify-between px-6 md:px-12 transition-all duration-300"
-        :class="isScrolled ? 'bg-[#030712]/90 backdrop-blur-md border-b border-white/10 shadow-2xl' : 'bg-transparent'"
+        :class="isScrolled ? 'bg-[#030712] border-b border-white/10 shadow-2xl' : 'bg-transparent'"
       >
         <!-- 左侧：战术标识区 (Identity) -->
         <div class="flex items-center gap-6">
