@@ -18,8 +18,11 @@
     <div class="canvas-wrapper">
       <TresCanvas
         :alpha="true"
-        shadows
-        :renderer-options="{ alpha: true, antialias: true }"
+        :renderer-options="{
+          alpha: true,
+          antialias: false,
+          powerPreference: 'high-performance'
+        }"
       >
         <TresPerspectiveCamera :position="[0, 2, 10]" :fov="35" />
 
@@ -32,24 +35,13 @@
           :min-polar-angle="Math.PI / 4"
         />
 
-        <!-- 灯光系统 -->
-        <TresAmbientLight :intensity="0.8" />
-        <TresDirectionalLight :position="[5, 8, 5]" :intensity="1.5" cast-shadow />
-        <TresDirectionalLight :position="[-5, 5, -5]" :intensity="0.5" color="#06b6d4" />
+        <!-- 最小化光源 -->
+        <TresAmbientLight :intensity="1.5" />
 
         <!-- 模型组 -->
         <TresGroup ref="modelGroup">
           <primitive v-if="model" :object="model" />
         </TresGroup>
-
-        <!-- 底部阴影 -->
-        <ContactShadows
-          :opacity="0.4"
-          :blur="2.5"
-          :scale="15"
-          :far="10"
-          :position="[0, -2, 0]"
-        />
       </TresCanvas>
     </div>
 
