@@ -1,14 +1,21 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+
+// 接收姿态数据 props
+const props = defineProps({
+  roll: { type: Number, default: 0 },
+  pitch: { type: Number, default: 0 },
+  autoRotate: { type: Boolean, default: true } // 是否自动旋转
+});
 
 const webglContainer = ref<HTMLElement | null>(null);
 const loading = ref(true);
 const scanState = ref(0);
 const statusHTML = ref('目前展示状态：<span style="color:var(--holo-color)">全息数据蓝图</span>。<br><br>点击下方指令，启动高转速离心解析仪，重组高精度物理装甲。');
-const btnText = ref('DECODE // 离心实体解析');
+const btnText = ref('离心实体解析');
 const btnDisabled = ref(false);
 
 // 模拟经纬度和轨迹
@@ -76,21 +83,37 @@ function createSciFiScannerUI() {
 }
 
 const initThreeJS = () => {
-  if (!webglContainer.value) return;
+  if (!webglContainer.value) {
+    console.error('[ModelShowcase] webglContainer 不存在');
+    return;
+  }
   const container = webglContainer.value;
 
+  // 获取容器尺寸，如果为 0 则使用默认值
+  let width = container.clientWidth;
+  let height = container.clientHeight;
+
+  console.log('[ModelShowcase] initThreeJS - 原始容器尺寸:', width, 'x', height);
+
+  // 如果容器尺寸为 0，使用默认尺寸
+  if (width === 0 || height === 0) {
+    width = 800;
+    height = 600;
+    console.warn('[ModelShowcase] 容器尺寸为 0，使用默认尺寸:', width, 'x', height);
+  }
+
   scene = new THREE.Scene();
-  // 适配 1：使用容器的宽高而不是 window 的宽高
-  camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
+  camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
   camera.position.set(0, 0, 9);
 
   renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-  renderer.setSize(container.clientWidth, container.clientHeight);
-  // 适配 2：限制像素比，进一步提升性能
+  renderer.setSize(width, height);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.localClippingEnabled = true;
   container.appendChild(renderer.domElement);
+
+  console.log('[ModelShowcase] renderer 已创建，canvas 尺寸:', renderer.domElement.width, 'x', renderer.domElement.height);
 
   controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
@@ -206,7 +229,17 @@ const animate = () => {
   if (modelGroup) {
       modelGroup.position.y = Math.sin(time * 1.5) * 0.1;
       currentSpinSpeed += (targetSpinSpeed - currentSpinSpeed) * accelFactor;
-      modelGroup.rotation.y += currentSpinSpeed;
+
+      // 在扫描动画期间（scanState === 1 或 3）或 autoRotate 为 true 时才自动旋转
+      if (props.autoRotate || scanState.value === 1 || scanState.value === 3) {
+        modelGroup.rotation.y += currentSpinSpeed;
+      }
+
+      // 应用姿态数据到模型旋转（roll 和 pitch）
+      if (props.roll !== 0 || props.pitch !== 0) {
+        modelGroup.rotation.z = -props.roll * Math.PI / 180;
+        modelGroup.rotation.x = props.pitch * Math.PI / 180;
+      }
   }
 
   const currentWorldY = scanY + (modelGroup ? modelGroup.position.y : 0);
@@ -284,7 +317,67 @@ const handleResize = () => {
 };
 
 onMounted(() => {
-  initThreeJS();
+  // 使用 ResizeObserver 监听容器尺寸变化
+  if (webglContainer.value) {
+    const container = webglContainer.value;
+    let hasInitialized = false;
+
+    // 创建 ResizeObserver
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        console.log('[ModelShowcase] ResizeObserver - 容器尺寸:', width, 'x', height);
+
+        // 当容器有尺寸且 Three.js 还未初始化时，初始化场景
+        if (width > 0 && height > 0 && !hasInitialized) {
+          console.log('[ModelShowcase] 容器尺寸已就绪，开始初始化 Three.js');
+          hasInitialized = true;
+          initThreeJS();
+
+          // 初始化后立即调整尺寸
+          setTimeout(() => {
+            if (renderer && camera) {
+              camera.aspect = width / height;
+              camera.updateProjectionMatrix();
+              renderer.setSize(width, height);
+              console.log('[ModelShowcase] 初始化后调整尺寸:', width, 'x', height);
+            }
+          }, 50);
+        } else if (width > 0 && height > 0 && renderer && camera) {
+          // 如果已经初始化，只更新尺寸
+          camera.aspect = width / height;
+          camera.updateProjectionMatrix();
+          renderer.setSize(width, height);
+          console.log('[ModelShowcase] 更新渲染器尺寸:', width, 'x', height);
+        }
+      }
+    });
+
+    // 开始观察容器
+    resizeObserver.observe(container);
+
+    // 备用方案：如果 500ms 后仍未初始化，强制初始化
+    setTimeout(() => {
+      if (!hasInitialized) {
+        console.warn('[ModelShowcase] 超时，强制初始化 Three.js');
+        hasInitialized = true;
+        initThreeJS();
+
+        // 强制初始化后，等待一帧再调整尺寸
+        requestAnimationFrame(() => {
+          const w = container.clientWidth;
+          const h = container.clientHeight;
+          if (w > 0 && h > 0 && renderer && camera) {
+            camera.aspect = w / h;
+            camera.updateProjectionMatrix();
+            renderer.setSize(w, h);
+            console.log('[ModelShowcase] 强制初始化后调整尺寸:', w, 'x', h);
+          }
+        });
+      }
+    }, 500);
+  }
+
   window.addEventListener('resize', handleResize);
 });
 
@@ -311,8 +404,7 @@ onUnmounted(() => {
     <div id="ui-layer">
         <!-- Left Panel: Model Control -->
         <div class="info-panel left-panel">
-            <div class="sys-tag">CLASSIFIED // LEVEL 4</div>
-            <h1>ENVOY SYSTEM</h1>
+            <div class="sys-tag">实时显示头盔姿态</div>
             <p v-html="statusHTML"></p>
             <button 
               class="scan-btn" 

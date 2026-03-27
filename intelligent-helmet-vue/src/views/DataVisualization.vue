@@ -95,7 +95,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick, watch, computed } from 'vue'
 import * as echarts from 'echarts'
 import { useWebSocket } from '@/composables/useWebSocket'
 import { useRideHistoryStore } from '@/stores/rideHistory'
@@ -132,6 +132,12 @@ const weekDays = ['周一', '周二', '周三', '周四', '周五', '周六', '�
 
 // 本周卡路里累计
 const weeklyCalories = ref(Array(7).fill(0))
+
+// 计算属性：骑行次数和总里程
+const rideCount = computed(() => rideHistoryStore.rides?.length || 0)
+const totalDistance = computed(() => {
+  return (rideHistoryStore.rides || []).reduce((sum, ride) => sum + (ride.distance || 0), 0)
+})
 
 // Chart 实例
 let tempHumidChart = null

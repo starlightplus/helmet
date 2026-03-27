@@ -38,34 +38,20 @@
 
       <!-- 下方左右分屏（下方 1/3） -->
       <div class="twin-bottom-split">
-        <!-- 左侧：3D 头盔场景 -->
-        <div class="twin-split-panel">
+        <!-- 左侧：3D 头盔场景（占 2/3） -->
+        <div class="twin-split-panel twin-split-panel--left">
           <div class="twin-card__title">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00D9FF" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
             3D 数字孪生
           </div>
           <div class="helmet-view-wrap">
-            <canvas ref="canvasRef" class="twin-canvas"></canvas>
-            <div v-if="loading" class="twin-loading">
-              <div class="twin-loading__spinner"></div>
-              <span>加载模型中...</span>
-            </div>
-            <!-- 跌倒警报 -->
-            <div v-if="fallAlert" class="twin-alert">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FF4757" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-              检测到摔倒！
-            </div>
-            <!-- 风险评分 -->
-            <div class="risk-badge" :class="riskClass">
-              <span class="risk-badge__label">风险评分</span>
-              <span class="risk-badge__val">{{ riskScore }}</span>
-              <span class="risk-badge__desc">{{ riskLabel }}</span>
-            </div>
+            <!-- 使用 HelmetView 组件，传递姿态数据，禁用自动旋转 -->
+            <HelmetView :roll="roll" :pitch="pitch" :autoRotate="false" />
           </div>
         </div>
 
-        <!-- 右侧：姿态可视化 -->
-        <div class="twin-split-panel">
+        <!-- 右侧：姿态可视化（占 1/3） -->
+        <div class="twin-split-panel twin-split-panel--right">
           <div class="twin-card__title">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00D9FF" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="2" x2="12" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
             姿态可视化
@@ -109,9 +95,7 @@
 
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
-import * as THREE from 'three'
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import HelmetView from './ModelShowcase.vue'
 
 const props = defineProps({
   sensorData: { type: Object, default: () => ({}) },
@@ -120,7 +104,6 @@ const props = defineProps({
 })
 
 // DOM refs
-const canvasRef = ref(null)
 const mapContainerRef = ref(null)
 const rollGaugeRef = ref(null)
 const pitchGaugeRef = ref(null)
@@ -128,7 +111,6 @@ const avmGaugeRef = ref(null)
 const gvmGaugeRef = ref(null)
 
 // State
-const loading = ref(true)
 const fallAlert = ref(false)
 const isReplaying = ref(false)
 const viewMode = ref('follow') // 'follow' 或 'global'
@@ -163,18 +145,6 @@ const riskLabel = computed(() => {
   if (s >= 40) return '中风险'
   return '低风险'
 })
-
-// ── Three.js main scene ──────────────────────────────────────────────────────
-let scene, camera, renderer, controls, helmetMesh, rimLight
-let animFrameId, autoRotateTimer
-let axesHelper = null // 坐标系辅助器
-
-// ── Environment awareness ────────────────────────────────────────────────────
-let particleSystem = null
-let sunLight = null
-
-// ── Coordinate system ────────────────────────────────────────────────────────
-let coordinatePlane = null
 
 // ── GPS / track ──────────────────────────────────────────────────────────────
 let baiduMap3D = null // 百度3D地图实例
@@ -324,353 +294,6 @@ function updateMapTrack() {
   console.log('[HelmetTwin] 地图轨迹更新，点数:', trackPoints.value.length)
 }
 
-// ── Sun Position Calculation ─────────────────────────────────────────────────
-// 根据当前时间计算太阳位置
-function getSunPosition() {
-  const hour = new Date().getHours()
-
-  // 夜晚时段（18点-6点）无太阳
-  if (hour < 6 || hour >= 18) {
-    return null
-  }
-
-  // 方位角（0-360度，0=北，90=东，180=南，270=西）
-  let azimuth
-  // 高度角（0-90度，0=地平线，90=天顶）
-  let altitude
-
-  if (hour >= 6 && hour < 12) {
-    // 早晨到中午：太阳从东方升起到南方
-    const progress = (hour - 6) / 6  // 0 -> 1
-    azimuth = 90 + progress * 90     // 90度(东) -> 180度(南)
-    altitude = progress * 70         // 0度 -> 70度
-  } else {
-    // 中午到傍晚：太阳从南方到西方落下
-    const progress = (hour - 12) / 6  // 0 -> 1
-    azimuth = 180 + progress * 90     // 180度(南) -> 270度(西)
-    altitude = 70 - progress * 70     // 70度 -> 0度
-  }
-
-  return { azimuth, altitude, hour }
-}
-
-// 根据时间获取太阳光颜色
-function getSunColor(hour) {
-  if (hour >= 6 && hour < 8) {
-    // 早晨：暖橙色
-    return 0xFFB366
-  } else if (hour >= 8 && hour < 10) {
-    // 上午：浅黄色
-    return 0xFFD700
-  } else if (hour >= 10 && hour < 15) {
-    // 中午：明亮白光
-    return 0xFFFFDD
-  } else if (hour >= 15 && hour < 17) {
-    // 下午：金黄色
-    return 0xFFD700
-  } else {
-    // 傍晚：橙红色
-    return 0xFF8C42
-  }
-}
-
-// ── Environment: Particle System ─────────────────────────────────────────────
-function createParticleSystem(weatherType) {
-  if (!scene) return
-
-  // Remove existing particles
-  if (particleSystem) {
-    scene.remove(particleSystem)
-    particleSystem.geometry.dispose()
-    particleSystem.material.dispose()
-    particleSystem = null
-  }
-
-  if (!weatherType) return
-
-  let particleCount, positions, velocities, geometry, material
-
-  if (weatherType === 'clear') {
-    // 晴天：根据太阳位置创建光线效果
-    const sunPos = getSunPosition()
-
-    // 如果是夜晚，不创建光线
-    if (!sunPos) {
-      console.log('[HelmetTwin] 夜晚时段，不创建阳光')
-      return
-    }
-
-    const { azimuth, altitude, hour } = sunPos
-    const sunColor = getSunColor(hour)
-
-    console.log(`[HelmetTwin] 太阳位置 - 方位角:${azimuth.toFixed(1)}° 高度角:${altitude.toFixed(1)}° 颜色:0x${sunColor.toString(16)}`)
-
-    // 将方位角和高度角转换为3D坐标
-    // 方位角：0°=北(+Z), 90°=东(+X), 180°=南(-Z), 270°=西(-X)
-    // 高度角：0°=地平线, 90°=天顶
-    const azimuthRad = (azimuth - 90) * Math.PI / 180 // 转换为数学角度（0°=+X轴）
-    const altitudeRad = altitude * Math.PI / 180
-
-    // 太阳光源距离
-    const sunDistance = 15
-    const sunX = Math.cos(altitudeRad) * Math.cos(azimuthRad) * sunDistance
-    const sunY = Math.sin(altitudeRad) * sunDistance
-    const sunZ = Math.cos(altitudeRad) * Math.sin(azimuthRad) * sunDistance
-
-    const rayCount = 8 // 光线数量
-    const rayGroup = new THREE.Group()
-
-    for (let i = 0; i < rayCount; i++) {
-      // 在太阳位置周围创建一圈光线
-      const spreadAngle = (i / rayCount) * Math.PI * 2
-      const spreadRadius = 2
-
-      const rayX = sunX + Math.cos(spreadAngle) * spreadRadius
-      const rayY = sunY
-      const rayZ = sunZ + Math.sin(spreadAngle) * spreadRadius
-
-      // 创建圆锥形光束
-      const geometry = new THREE.ConeGeometry(0.15, 10, 8, 1, true)
-      const material = new THREE.MeshBasicMaterial({
-        color: sunColor,
-        transparent: true,
-        opacity: 0.25,
-        side: THREE.DoubleSide,
-        blending: THREE.AdditiveBlending
-      })
-
-      const ray = new THREE.Mesh(geometry, material)
-      ray.position.set(rayX, rayY, rayZ)
-
-      // 让光束指向头盔中心
-      const helmetY = 3.5
-      ray.lookAt(0, helmetY, 0)
-      ray.rotateX(Math.PI / 2) // 调整方向使圆锥正确朝向
-
-      rayGroup.add(ray)
-    }
-
-    particleSystem = rayGroup
-    particleSystem.userData.weatherType = 'clear'
-    particleSystem.userData.sunPosition = sunPos
-    scene.add(particleSystem)
-  } else {
-    // 雨雪效果
-    particleCount = weatherType === 'snow' ? 1000 : 1500
-    positions = new Float32Array(particleCount * 3)
-    velocities = new Float32Array(particleCount)
-
-    for (let i = 0; i < particleCount; i++) {
-      positions[i * 3] = (Math.random() - 0.5) * 30
-      positions[i * 3 + 1] = Math.random() * 20
-      positions[i * 3 + 2] = (Math.random() - 0.5) * 30
-      velocities[i] = weatherType === 'snow' ? 0.02 + Math.random() * 0.03 : 0.1 + Math.random() * 0.15
-    }
-
-    geometry = new THREE.BufferGeometry()
-    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
-    geometry.setAttribute('velocity', new THREE.BufferAttribute(velocities, 1))
-
-    material = new THREE.PointsMaterial({
-      color: weatherType === 'snow' ? 0xffffff : 0x88ccff,
-      size: weatherType === 'snow' ? 0.15 : 0.08,
-      transparent: true,
-      opacity: weatherType === 'snow' ? 0.8 : 0.6,
-      blending: THREE.AdditiveBlending
-    })
-
-    particleSystem = new THREE.Points(geometry, material)
-    particleSystem.userData.weatherType = weatherType
-    scene.add(particleSystem)
-  }
-}
-
-function updateParticles() {
-  if (!particleSystem) return
-
-  const weatherType = particleSystem.userData.weatherType
-
-  if (weatherType === 'clear') {
-    // 晴天：光线缓慢旋转
-    particleSystem.rotation.y += 0.001
-  } else {
-    // 雨雪效果
-    const positions = particleSystem.geometry.attributes.position.array
-    const velocities = particleSystem.geometry.attributes.velocity.array
-
-    for (let i = 0; i < positions.length / 3; i++) {
-      positions[i * 3 + 1] -= velocities[i]
-
-      // Reset particle when it falls below ground
-      if (positions[i * 3 + 1] < 0) {
-        positions[i * 3 + 1] = 20
-        positions[i * 3] = (Math.random() - 0.5) * 30
-        positions[i * 3 + 2] = (Math.random() - 0.5) * 30
-      }
-    }
-
-    particleSystem.geometry.attributes.position.needsUpdate = true
-  }
-}
-
-// ── Environment: Wind Arrow ──────────────────────────────────────────────────
-
-// ── Environment: Dynamic Lighting ────────────────────────────────────────────
-function updateDynamicLighting(weatherText) {
-  if (!scene || !rimLight) return
-
-  const hour = new Date().getHours()
-
-  // Time-based lighting
-  let intensity = 0.8
-  let color = 0xffffff
-
-  if (hour >= 6 && hour < 8) {
-    // Dawn
-    intensity = 0.5
-    color = 0xffaa88
-  } else if (hour >= 8 && hour < 17) {
-    // Day
-    intensity = 0.8
-    color = 0xffffff
-  } else if (hour >= 17 && hour < 19) {
-    // Dusk
-    intensity = 0.6
-    color = 0xff8844
-  } else {
-    // Night
-    intensity = 0.3
-    color = 0x6688cc
-  }
-
-  // Weather-based adjustment
-  if (weatherText) {
-    if (/晴/.test(weatherText)) {
-      // 晴天：增强光照，更明亮
-      intensity *= 1.3
-      rimLight.intensity = 2.0
-      rimLight.color.setHex(0xffd700)
-    } else if (/阴|多云/.test(weatherText)) {
-      intensity *= 0.7
-      rimLight.intensity = 1.2
-    } else if (/雨|雪/.test(weatherText)) {
-      intensity *= 0.5
-      color = 0x8899aa
-      rimLight.intensity = 0.8
-      rimLight.color.setHex(0x88ccff)
-    } else if (/雾|霾/.test(weatherText)) {
-      intensity *= 0.4
-      color = 0xaaaaaa
-      rimLight.intensity = 0.6
-    }
-  }
-
-  // Update directional light
-  const dirLight = scene.children.find(c => c.type === 'DirectionalLight')
-  if (dirLight) {
-    dirLight.intensity = intensity
-    dirLight.color.setHex(color)
-  }
-
-  // Update ambient light
-  const ambLight = scene.children.find(c => c.type === 'AmbientLight')
-  if (ambLight) {
-    ambLight.intensity = intensity * 0.5
-  }
-}
-
-// ── Init main Three.js scene ─────────────────────────────────────────────────
-function initScene() {
-  const canvas = canvasRef.value
-  const parent = canvas.parentElement
-  // 从父容器读取尺寸
-  const w = parent?.clientWidth || 600
-  const h = parent?.clientHeight || 400
-  console.log('[HelmetTwin] initScene - canvas尺寸:', w, 'x', h)
-
-  scene = new THREE.Scene()
-  scene.background = new THREE.Color(0x0f1624) // 和姿态卡片背景协调的深蓝色
-
-  camera = new THREE.PerspectiveCamera(50, w / h, 0.1, 200)
-  camera.position.set(0, 4, 8)
-  console.log('[HelmetTwin] 相机位置:', camera.position.x, camera.position.y, camera.position.z)
-
-  // 普通渲染器（不需要透明）
-  renderer = new THREE.WebGLRenderer({ canvas, antialias: true })
-  renderer.setSize(w, h)
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-  renderer.shadowMap.enabled = true
-
-  controls = new OrbitControls(camera, renderer.domElement)
-  controls.target.set(0, 3.5, 0)
-  controls.minDistance = 3
-  controls.maxDistance = 20
-  controls.enableDamping = true
-  controls.autoRotate = false
-
-  // Lights
-  scene.add(new THREE.AmbientLight(0xffffff, 0.4))
-  const dir = new THREE.DirectionalLight(0xffffff, 0.8)
-  dir.position.set(5, 10, 5)
-  dir.castShadow = true
-  scene.add(dir)
-  rimLight = new THREE.PointLight(0x00D9FF, 1.5, 15)
-  rimLight.position.set(-3, 5, -3)
-  scene.add(rimLight)
-
-  // 添加坐标平面（浅色平面作为坐标系背景）
-  const planeGeometry = new THREE.PlaneGeometry(6, 6)
-  const planeMaterial = new THREE.MeshStandardMaterial({
-    color: 0x1a2a3a,
-    roughness: 0.8,
-    metalness: 0.2
-  })
-  coordinatePlane = new THREE.Mesh(planeGeometry, planeMaterial)
-  coordinatePlane.rotation.x = -Math.PI / 2
-  coordinatePlane.position.y = 0.5
-  coordinatePlane.receiveShadow = true
-  scene.add(coordinatePlane)
-
-  // 添加坐标系辅助器（显示XYZ轴）- 放大尺寸
-  axesHelper = new THREE.AxesHelper(4) // 轴长度为4，超过头盔
-  axesHelper.position.set(0, 0.5, 0) // 放在坐标平面上
-  scene.add(axesHelper)
-
-  // Load helmet model
-  new GLTFLoader().load('/models/black_helmet.glb', (gltf) => {
-    helmetMesh = gltf.scene
-    helmetMesh.position.set(0, 3.5, 0)
-    helmetMesh.scale.setScalar(1.8)
-    console.log('[HelmetTwin] 头盔加载 - 位置:', helmetMesh.position.x, helmetMesh.position.y, helmetMesh.position.z, '缩放:', 1.8)
-    helmetMesh.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true } })
-    scene.add(helmetMesh)
-
-    // 添加头盔正面聚光灯
-    const frontLight = new THREE.SpotLight(0xffffff, 2)
-    frontLight.position.set(0, 3.5, 5) // 在头盔正前方
-    frontLight.target = helmetMesh
-    frontLight.angle = Math.PI / 6
-    frontLight.penumbra = 0.3
-    frontLight.decay = 2
-    frontLight.distance = 10
-    scene.add(frontLight)
-
-    loading.value = false
-  }, undefined, () => { loading.value = false })
-
-  console.log('[HelmetTwin] 相机初始化', camera.position, w, h)
-
-  function animate() {
-    animFrameId = requestAnimationFrame(animate)
-    controls.update()
-    updateParticles()
-
-    // 头盔保持固定位置，不移动
-
-    renderer.render(scene, camera)
-  }
-  animate()
-}
 
 // ── Gauge drawing functions ──────────────────────────────────────────────────
 // 初始化所有仪表盘
@@ -787,18 +410,6 @@ watch(() => props.sensorData, (data) => {
 
   console.log('[HelmetTwin] 更新后的值 - roll:', roll.value, 'pitch:', pitch.value, 'avm:', avm.value, 'gvm:', gvm.value)
 
-  // Apply rotation to helmet (只使用 roll 和 pitch)
-  if (helmetMesh) {
-    helmetMesh.rotation.z = -r * Math.PI / 180
-    helmetMesh.rotation.x = p * Math.PI / 180
-  }
-
-  // Risk-based rim light color
-  if (rimLight) {
-    const rs = riskScore.value
-    rimLight.color.set(rs >= 70 ? 0xFF4757 : rs >= 40 ? 0xFFD93D : 0x00D9FF)
-  }
-
   // Fall alert
   if (data.fallFlag) {
     fallAlert.value = true
@@ -827,72 +438,27 @@ watch(() => props.sensorData, (data) => {
   updateGauges()
 }, { deep: true })
 
-// ── Watch weather data ───────────────────────────────────────────────────────
-watch(() => props.weatherData, (data) => {
-  if (!data || !scene) return
-
-  console.log('[HelmetTwin] 天气数据更新:', data)
-
-  // Update dynamic lighting
-  updateDynamicLighting(data.text)
-
-  // Create particle system based on weather
-  let weatherType = null
-  if (/雪/.test(data.text)) {
-    weatherType = 'snow'
-  } else if (/雨/.test(data.text)) {
-    weatherType = 'rain'
-  } else if (/晴/.test(data.text)) {
-    weatherType = 'clear'
-  }
-
-  if (weatherType) {
-    createParticleSystem(weatherType)
-  }
-}, { deep: true })
-
-// ── Resize ───────────────────────────────────────────────────────────────────
-function onResize() {
-  if (!renderer || !canvasRef.value) return
-  const canvas = canvasRef.value
-  const parent = canvas.parentElement
-  console.log('[HelmetTwin] 父容器尺寸', parent?.clientWidth, parent?.clientHeight)
-
-  // 从父容器读取尺寸，而不是从 canvas
-  const w = parent?.clientWidth || canvas.clientWidth || 600
-  const h = parent?.clientHeight || canvas.clientHeight || 400
-
-  camera.aspect = w / h
-  camera.updateProjectionMatrix()
-  renderer.setSize(w, h)
-  console.log('[HelmetTwin] Canvas resize', w, h)
-}
 
 // ── Lifecycle ────────────────────────────────────────────────────────────────
 onMounted(() => {
-  initScene()
   initBaiduMap3D() // 初始化百度3D地图
 
   // 初始化仪表盘
   setTimeout(() => {
     initGauges()
   }, 100)
-
-  window.addEventListener('resize', onResize)
-
-  // Initialize dynamic lighting
-  setTimeout(() => {
-    updateDynamicLighting(props.weatherData?.text)
-  }, 500)
 })
 
 onUnmounted(() => {
-  window.removeEventListener('resize', onResize)
-  cancelAnimationFrame(animFrameId)
-  renderer?.dispose()
 })
 
-defineExpose({ onResize })
+// 暴露 onResize 方法供 App.vue 调用
+defineExpose({
+  onResize: () => {
+    // ModelShowcase 内部会自动处理 resize
+    console.log('[HelmetTwin] onResize called')
+  }
+})
 </script>
 
 <style scoped>
@@ -969,9 +535,8 @@ defineExpose({ onResize })
   min-height: 0;
 }
 
-/* 左右两个面板各占一半 */
+/* 左右两个面板 - 左侧占 2/3，右侧占 1/3 */
 .twin-split-panel {
-  flex: 1;
   display: flex;
   flex-direction: column;
   background: rgba(26, 42, 58, 0.3);
@@ -979,6 +544,14 @@ defineExpose({ onResize })
   border-radius: 8px;
   overflow: hidden;
   min-width: 0;
+}
+
+.twin-split-panel--left {
+  flex: 2; /* 左侧占 2/3 */
+}
+
+.twin-split-panel--right {
+  flex: 1; /* 右侧占 1/3 */
 }
 
 /* 头盔视图包装器 */
@@ -989,10 +562,38 @@ defineExpose({ onResize })
   min-height: 0;
 }
 
-.helmet-view-wrap .twin-canvas {
+.helmet-view-wrap :deep(.endfield-app) {
+  width: 100% !important;
+  height: 100% !important;
+  position: absolute;
+  inset: 0;
+}
+
+.helmet-view-wrap :deep(#webgl-container) {
   width: 100%;
   height: 100%;
-  display: block;
+}
+
+.helmet-view-wrap :deep(#ui-layer) {
+  /* 显示 UI 层，但只显示左侧面板 */
+  display: flex !important;
+}
+
+.helmet-view-wrap :deep(.right-panel) {
+  /* 隐藏右侧遥测面板 */
+  display: none !important;
+}
+
+.helmet-view-wrap :deep(.left-panel) {
+  /* 调整左侧面板样式，使其更适合嵌入式布局 */
+  width: 320px;
+  font-size: 12px;
+}
+
+.helmet-view-wrap :deep(#loading-screen) {
+  position: absolute;
+  width: 100%;
+  height: 100%;
 }
 
 /* Loading */

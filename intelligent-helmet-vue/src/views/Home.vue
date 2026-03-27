@@ -29,7 +29,6 @@
         <!-- 左侧：战术标识区 (Identity) -->
         <div class="flex items-center gap-6">
           <div class="flex items-center gap-4 cursor-pointer group">
-            <!-- 带有斜切角的实心方块 Logo -->
             <div
               class="w-10 h-10 bg-cyan-500 flex items-center justify-center text-slate-950 font-black italic text-lg transition-transform duration-300 group-hover:scale-105"
               style="clip-path: polygon(20% 0%, 100% 0%, 80% 100%, 0% 100%)"
@@ -40,7 +39,6 @@
               <span class="text-xl font-black tracking-tighter uppercase leading-none text-white">
                 Aero<span class="text-cyan-500">Youth</span>
               </span>
-              <!-- 微型装饰文字 (Micro-copy) -->
               <span class="text-[9px] font-mono tracking-[0.2em] mt-1 text-slate-400">
                 // TACTICAL GEAR SYS.
               </span>
@@ -50,25 +48,21 @@
 
         <!-- 中间：导航枢纽 (Navigation) -->
         <nav class="hidden lg:flex items-center gap-10">
-          <!-- Active Link -->
           <a href="#" class="group relative flex items-center text-xs font-mono font-bold tracking-[0.2em] uppercase transition-colors h-20 text-white">
             <span class="absolute left-0 opacity-0 group-hover:opacity-100 group-hover:-translate-x-4 transition-all duration-300 text-cyan-400">■</span>
             Overview
             <div class="absolute bottom-0 left-0 w-full h-[2px] transition-transform duration-300 origin-left bg-cyan-400"></div>
           </a>
-
           <a href="#architecture" class="group relative flex items-center text-xs font-mono font-bold tracking-[0.2em] uppercase transition-colors h-20 text-slate-400 hover:text-cyan-400">
             <span class="absolute left-0 opacity-0 group-hover:opacity-100 group-hover:-translate-x-4 transition-all duration-300 text-cyan-400">■</span>
             Architecture
             <div class="absolute bottom-0 left-0 w-full h-[2px] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left bg-cyan-400"></div>
           </a>
-
           <a href="#" class="group relative flex items-center text-xs font-mono font-bold tracking-[0.2em] uppercase transition-colors h-20 text-slate-400 hover:text-cyan-400">
             <span class="absolute left-0 opacity-0 group-hover:opacity-100 group-hover:-translate-x-4 transition-all duration-300 text-cyan-400">■</span>
             Safety
             <div class="absolute bottom-0 left-0 w-full h-[2px] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left bg-cyan-400"></div>
           </a>
-
           <a href="#" class="group relative flex items-center text-xs font-mono font-bold tracking-[0.2em] uppercase transition-colors h-20 text-slate-400 hover:text-cyan-400">
             <span class="absolute left-0 opacity-0 group-hover:opacity-100 group-hover:-translate-x-4 transition-all duration-300 text-cyan-400">■</span>
             Specs
@@ -78,7 +72,6 @@
 
         <!-- 右侧：战术指令区 (Action) -->
         <div class="flex items-center gap-8">
-          <!-- 状态指示器 -->
           <div class="hidden md:flex flex-col items-end">
             <div class="flex items-center gap-2 mb-1">
               <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse shadow-[0_0_5px_#22c55e]"></span>
@@ -91,7 +84,6 @@
             </div>
           </div>
 
-          <!-- 战术主按钮 -->
           <router-link
             to="/auth"
             class="relative px-8 py-3 bg-cyan-500/10 text-cyan-400 text-xs font-mono font-bold uppercase tracking-[0.2em] group overflow-hidden border border-cyan-500/30 hover:border-cyan-400 transition-colors inline-block"
@@ -101,7 +93,6 @@
               SYSTEM_LOGIN
               <svg class="w-3 h-3 group-hover:translate-x-1 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
             </span>
-            <!-- 悬浮时从左侧滑入的青色能量层 -->
             <div class="absolute inset-0 bg-cyan-500/20 translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-300 ease-out z-0"></div>
           </router-link>
         </div>
@@ -109,7 +100,6 @@
 
       <!-- Hero Section -->
       <main class="relative pt-32 pb-20 px-6 md:px-12 max-w-[1600px] mx-auto min-h-screen flex flex-col lg:flex-row items-center justify-between gap-12 z-10">
-
         <!-- Left Content -->
         <div class="flex-1 w-full animate-fade-up">
           <div class="flex items-center gap-4 mb-6">
@@ -137,14 +127,10 @@
               class="relative px-8 py-4 bg-cyan-500 text-slate-950 text-sm font-bold uppercase tracking-widest group overflow-hidden flex items-center gap-3"
               style="clip-path: polygon(16px 0, 100% 0, calc(100% - 16px) 100%, 0 100%)"
             >
-              <!-- 文字和图标层 -->
               <span class="relative z-10 flex items-center gap-3 group-hover:text-white transition-colors duration-300">
                 Explore Features
-                <!-- 图标在悬浮时向右移动一点点，增加动感 -->
                 <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
               </span>
-
-              <!-- 隐藏的动画背景层：深色背景从左侧滑入 -->
               <div class="absolute inset-0 bg-slate-900 translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-300 ease-out z-0"></div>
             </button>
 
@@ -159,16 +145,14 @@
           </div>
         </div>
 
-        <!-- Right Content -->
+        <!-- Right Content (Helmet Image) -->
         <div class="flex-1 relative w-full h-[500px] lg:h-[700px] flex items-center justify-center animate-fade-in">
-          <!-- Tech Rings Background -->
           <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div class="w-[300px] h-[300px] md:w-[500px] md:h-[500px] rounded-full border border-white/10 absolute animate-[spin_60s_linear_infinite]"></div>
             <div class="w-[400px] h-[400px] md:w-[650px] md:h-[650px] rounded-full border border-dashed border-white/20 absolute animate-[spin_90s_linear_infinite_reverse]"></div>
             <div class="w-[250px] h-[250px] md:w-[400px] md:h-[400px] rounded-full border-t border-r border-cyan-400/30 absolute animate-[spin_20s_linear_infinite]"></div>
           </div>
 
-          <!-- Product Image -->
           <div class="relative z-10 w-full max-w-md aspect-square" style="mask-image: radial-gradient(circle at center, black 50%, transparent 75%); -webkit-mask-image: radial-gradient(circle at center, black 50%, transparent 75%);">
             <img
               src="https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&q=80&w=1000&bg=030712"
@@ -176,8 +160,6 @@
               class="w-full h-full object-contain drop-shadow-[0_0_30px_rgba(6,182,212,0.3)]"
               referrerpolicy="no-referrer"
             />
-
-            <!-- Floating Tech Label 1 -->
             <div
               class="absolute top-1/4 -right-8 md:-right-16 bg-[#030712]/80 backdrop-blur-md border border-white/20 p-3 shadow-[0_0_20px_rgba(6,182,212,0.2)]"
               style="clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px)"
@@ -185,8 +167,6 @@
               <div class="text-[9px] font-mono text-cyan-400 uppercase tracking-widest mb-1">Material</div>
               <div class="text-xs font-bold text-white uppercase tracking-wider">Polycarbonate Shell</div>
             </div>
-
-            <!-- Floating Tech Label 2 -->
             <div
               class="absolute bottom-1/4 -left-8 md:-left-16 bg-[#030712]/80 backdrop-blur-md border border-white/20 p-3 shadow-[0_0_20px_rgba(6,182,212,0.2)]"
               style="clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px)"
@@ -198,10 +178,25 @@
         </div>
       </main>
 
-      <!-- 3D Model Showcase -->
+      <!-- 3D Model Showcase (头盔 3D 展示) -->
       <ModelShowcase />
 
-      <!-- Bento Grid Features Section -->
+      <!-- Board Showcase (开发板 3D 展示) -->
+      <Suspense>
+        <template #default>
+          <BoardShowcase />
+        </template>
+        <template #fallback>
+          <div class="h-[800px] flex items-center justify-center bg-[#030712] border-b border-white/5">
+            <div class="flex flex-col items-center gap-4">
+              <div class="w-12 h-12 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
+              <span class="text-xs font-mono text-cyan-400 uppercase tracking-[0.2em] animate-pulse">Initializing_Board_Data...</span>
+            </div>
+          </div>
+        </template>
+      </Suspense>
+
+      <!-- Bento Grid Features Section (架构介绍) -->
       <section id="architecture" class="relative py-32 px-6 md:px-12 max-w-[1600px] mx-auto z-10">
         <div class="mb-16">
           <div class="flex items-center gap-4 mb-4">
@@ -214,7 +209,6 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
-          <!-- Feature 1: Aerodynamics (Large Card) -->
           <div
             class="md:col-span-8 bg-white/5 border border-white/10 backdrop-blur-md p-8 md:p-12 relative group overflow-hidden"
             style="clip-path: polygon(0 0, 100% 0, 100% calc(100% - 24px), calc(100% - 24px) 100%, 0 100%)"
@@ -233,10 +227,8 @@
                 </p>
               </div>
             </div>
-            <div class="absolute -right-20 -bottom-20 w-64 h-64 bg-white/5 rounded-full border border-white/10 group-hover:scale-110 transition-transform duration-700 ease-out"></div>
           </div>
 
-          <!-- Feature 2: Magnetic Buckle (Small Card, Dark) -->
           <div
             class="md:col-span-4 bg-[#0a0f1c] text-white border border-white/10 p-8 md:p-12 relative group overflow-hidden"
             style="clip-path: polygon(24px 0, 100% 0, 100% 100%, 0 100%, 0 24px)"
@@ -253,7 +245,6 @@
             </div>
           </div>
 
-          <!-- Feature 3: Reflective (Small Card) -->
           <div class="md:col-span-4 bg-white/5 border border-white/10 backdrop-blur-md p-8 md:p-12 relative group overflow-hidden">
             <div class="absolute top-4 right-4 w-2 h-2 bg-cyan-500 animate-pulse"></div>
             <div class="relative z-10 flex flex-col h-full justify-between">
@@ -267,7 +258,6 @@
             </div>
           </div>
 
-          <!-- Feature 4: EPS Core (Large Card) -->
           <div
             class="md:col-span-8 bg-white/5 border border-white/10 backdrop-blur-md p-8 md:p-12 relative group overflow-hidden"
             style="clip-path: polygon(0 0, 100% 0, 100% 100%, 24px 100%, 0 calc(100% - 24px))"
@@ -302,6 +292,8 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import LoadingScreen from '@/components/LoadingScreen.vue';
 import ModelShowcase from '@/components/ModelShowcase.vue';
+// 导入开发板展示组件
+import BoardShowcase from '@/components/BoardShowcase.vue';
 
 const isLoading = ref(true);
 const isScrolled = ref(false);
@@ -345,5 +337,15 @@ onUnmounted(() => {
 @keyframes fadeIn {
   from { opacity: 0; transform: translateX(50px); }
   to   { opacity: 1; transform: translateX(0); }
+}
+
+.animate-scan {
+  animation: scan 4s linear infinite;
+}
+
+@keyframes scan {
+  0% { top: 0; opacity: 0; }
+  50% { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
 }
 </style>
