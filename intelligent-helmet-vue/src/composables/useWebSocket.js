@@ -50,21 +50,27 @@ export function useWebSocket() {
 
     ws.onmessage = (evt) => {
       lastUpdateTime.value = new Date()
+      console.log('[WS] 收到原始消息:', evt.data)
       try {
         const data = JSON.parse(evt.data)
+        console.log('[WS] JSON解析成功:', data)
         // assumed message types: {type:'sensor', payload: {...}} or plain sensor obj
         if (data) {
           if (data.type === 'sensor' && data.payload) {
+            console.log('[WS] 走sensor+payload分支')
             handleSensorPayload(data.payload)
           } else if (data.type === 'pong') {
             // ignore
+          } else if (data.type === 'status') {
+            console.log('[WS] AMQP状态:', data.message)
+            connectionStatus.value = data.message || '已连接'
           } else {
-            // try treat as sensor data directly
+            console.log('[WS] 走直接数据分支, deviceId=', data.deviceId, 'temp=', data.temperature)
             handleSensorPayload(data)
           }
         }
       } catch (e) {
-        console.warn('无法解析WS消息', e)
+        console.warn('[WS] JSON解析失败（可能是纯文本欢迎消息）:', evt.data)
       }
     }
 
@@ -111,11 +117,12 @@ export function useWebSocket() {
 
   // internal handler for sensor payload
   function handleSensorPayload(payload) {
-    // payload expected: deviceId, temperature, humidity, longitude, latitude, receiveTime, fallFlag/slowFlag/turnLeftFlag/turnRightFlag
     if (!payload) return
-    // optionally update deviceCount by inspecting unique devices - left to parent to maintain if needed
+    console.log('[WS] handleSensorPayload 被调用, payload:', JSON.stringify(payload).substring(0, 200))
     if (onSensorData) {
-      try { onSensorData(payload) } catch (e) { console.error(e) }
+      try { onSensorData(payload) } catch (e) { console.error('[WS] onSensorData回调执行出错:', e) }
+    } else {
+      console.warn('[WS] onSensorData 回调未设置！')
     }
   }
 

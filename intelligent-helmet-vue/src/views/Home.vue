@@ -1,428 +1,349 @@
 <template>
-  <ParticlesBackground />
-  <div class="home-container">
-    <!-- 导航栏 -->
-    <div class="navbar" data-aos="fade-down">
-      <div class="logo">灵盔佑驰</div>
-      <div class="nav-buttons">
-        <GlassEffect class="nav-button-wrapper">
-          <button class="login-btn" @click="goToApp">登录</button>
-        </GlassEffect>
-        <GlassEffect class="nav-button-wrapper">
-          <button class="register-btn" @click="goToApp">注册</button>
-        </GlassEffect>
-      </div>
-    </div>
+  <div
+    class="relative min-h-screen bg-[#030712] text-slate-100 font-sans overflow-hidden"
+    :class="{ 'content-enter': !isLoading }"
+  >
+    <!-- Loading Screen -->
+    <LoadingScreen v-if="isLoading" @complete="isLoading = false" />
 
-    <!-- 顶部与内容之间的分隔线 -->
-    <div class="content-divider"></div>
-
-    <!-- 系统介绍模块 -->
-    <GlassEffect class="intro-container" data-aos="fade-up" data-aos-delay="100">
-      <div class="intro-header">
-        <h2>灵盔佑驰 项目介绍</h2>
+    <!-- Main Content (shown after loading) -->
+    <template v-if="!isLoading">
+      <!-- High-Tech Animated Background -->
+      <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden bg-[#030712]">
+        <!-- Dynamic Grid -->
+        <div class="absolute inset-0 opacity-20" style="background-image: linear-gradient(rgba(6, 182, 212, 0.15) 1px, transparent 1px), linear-gradient(90deg, rgba(6, 182, 212, 0.15) 1px, transparent 1px); background-size: 40px 40px; mask-image: radial-gradient(circle at 50% 50%, black 30%, transparent 80%); -webkit-mask-image: radial-gradient(circle at 50% 50%, black 30%, transparent 80%);"></div>
+        
+        <!-- Glowing Orbs -->
+        <div class="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-cyan-900/30 blur-[120px] animate-pulse" style="animation-duration: 4s;"></div>
+        <div class="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-blue-900/20 blur-[120px] animate-pulse" style="animation-duration: 5s; animation-delay: 1s;"></div>
+        
+        <!-- Scanner Line -->
+        <div class="absolute top-0 left-0 w-full h-[1px] bg-cyan-500/30 shadow-[0_0_15px_rgba(6,182,212,0.5)] animate-scan"></div>
       </div>
-      <div class="intro-content-wrapper">
-        <div class="intro-content">
-          <p>灵盔佑驰是一套专为外卖骑手量身打造的智能头盔系统</p>
-          <p>它深度融合先进的物联网与人工智能技术，集成了高精度GPS定位、温湿度环境感知、MPU6050运动姿态检测以及智能语音交互模块，旨在为骑手的每一次出行构建全方位的智能守护</p>
-          <p>系统能实时追踪骑手位置，精准识别左转、右转、减速等骑行意图，并能在发生意外摔倒时，第一时间触发紧急警报。</p>
-          <p>灵盔佑驰不仅是保障骑手人身安全的坚实盾牌，更是提升配送效率、优化工作体验的智能终端。通过管理后台，运营方能实时掌握骑手状态与周边环境，实现更高效的调度与更及时的应急响应，为整个配送服务体系注入科技动能。</p>
+
+      <!-- 终末地战术风格 Navigation Bar -->
+      <header
+        class="fixed top-0 left-0 w-full h-20 z-50 flex items-center justify-between px-6 md:px-12 transition-all duration-300"
+        :class="isScrolled ? 'bg-[#030712]/90 backdrop-blur-md border-b border-white/10 shadow-2xl' : 'bg-transparent'"
+      >
+        <!-- 左侧：战术标识区 (Identity) -->
+        <div class="flex items-center gap-6">
+          <div class="flex items-center gap-4 cursor-pointer group">
+            <!-- 带有斜切角的实心方块 Logo -->
+            <div
+              class="w-10 h-10 bg-cyan-500 flex items-center justify-center text-slate-950 font-black italic text-lg transition-transform duration-300 group-hover:scale-105"
+              style="clip-path: polygon(20% 0%, 100% 0%, 80% 100%, 0% 100%)"
+            >
+              AY
+            </div>
+            <div class="flex flex-col justify-center">
+              <span class="text-xl font-black tracking-tighter uppercase leading-none text-white">
+                Aero<span class="text-cyan-500">Youth</span>
+              </span>
+              <!-- 微型装饰文字 (Micro-copy) -->
+              <span class="text-[9px] font-mono tracking-[0.2em] mt-1 text-slate-400">
+                // TACTICAL GEAR SYS.
+              </span>
+            </div>
+          </div>
         </div>
-      </div>
-    </GlassEffect>
 
-    <!-- 传感器数据模块 -->
-    <GlassEffect class="sensor-container" data-aos="fade-up" data-aos-delay="200">
-      <div class="sensor-header">
-        <h2>实时传感器数据</h2>
-        <div class="divider"></div>
-        <p>智能头盔内置多种传感器，实时监测环境与位置信息</p>
-      </div>
-      <div class="sensor-dashboard-wrapper">
-        <SimpleSensorDashboard ref="sensorDashboard" />
-      </div>
-    </GlassEffect>
+        <!-- 中间：导航枢纽 (Navigation) -->
+        <nav class="hidden lg:flex items-center gap-10">
+          <!-- Active Link -->
+          <a href="#" class="group relative flex items-center text-xs font-mono font-bold tracking-[0.2em] uppercase transition-colors h-20 text-white">
+            <span class="absolute left-0 opacity-0 group-hover:opacity-100 group-hover:-translate-x-4 transition-all duration-300 text-cyan-400">■</span>
+            Overview
+            <div class="absolute bottom-0 left-0 w-full h-[2px] transition-transform duration-300 origin-left bg-cyan-400"></div>
+          </a>
 
-    <!-- 实时路径追踪模块 -->
-    <GlassEffect class="sensor-container" data-aos="fade-up" data-aos-delay="700">
-      <div class="sensor-header">
-        <h2>实时路径追踪</h2>
-        <div class="divider"></div>
-        <p>智能头盔的GPS数据实时上传至管理终端</p>
-        <p>管理员可随时查看佩戴者的实时位置与历史轨迹</p>
-      </div>
-      <BaiduMap ref="baiduMap" :mapHeight="400" />
-    </GlassEffect>
+          <a href="#architecture" class="group relative flex items-center text-xs font-mono font-bold tracking-[0.2em] uppercase transition-colors h-20 text-slate-400 hover:text-cyan-400">
+            <span class="absolute left-0 opacity-0 group-hover:opacity-100 group-hover:-translate-x-4 transition-all duration-300 text-cyan-400">■</span>
+            Architecture
+            <div class="absolute bottom-0 left-0 w-full h-[2px] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left bg-cyan-400"></div>
+          </a>
 
-    <!-- 设备事件监控模块 -->
-    <GlassEffect class="sensor-container" data-aos="fade-up" data-aos-delay="800">
-      <div class="sensor-header">
-        <h2>设备事件监控</h2>
-        <div class="divider"></div>
-        <p>实时监控头盔检测到的骑行行为事件</p>
-      </div>
-      <EventPanel ref="eventPanel" />
-    </GlassEffect>
+          <a href="#" class="group relative flex items-center text-xs font-mono font-bold tracking-[0.2em] uppercase transition-colors h-20 text-slate-400 hover:text-cyan-400">
+            <span class="absolute left-0 opacity-0 group-hover:opacity-100 group-hover:-translate-x-4 transition-all duration-300 text-cyan-400">■</span>
+            Safety
+            <div class="absolute bottom-0 left-0 w-full h-[2px] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left bg-cyan-400"></div>
+          </a>
 
-    <footer class="page-footer">
-      <h2>灵盔佑驰终端系统</h2>
-      <p>© 2025 灵盔佑驰系统项目组 版权所有</p>
-      <p>联系方式：2668379109@qq.com</p>
-    </footer>
+          <a href="#" class="group relative flex items-center text-xs font-mono font-bold tracking-[0.2em] uppercase transition-colors h-20 text-slate-400 hover:text-cyan-400">
+            <span class="absolute left-0 opacity-0 group-hover:opacity-100 group-hover:-translate-x-4 transition-all duration-300 text-cyan-400">■</span>
+            Specs
+            <div class="absolute bottom-0 left-0 w-full h-[2px] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left bg-cyan-400"></div>
+          </a>
+        </nav>
+
+        <!-- 右侧：战术指令区 (Action) -->
+        <div class="flex items-center gap-8">
+          <!-- 状态指示器 -->
+          <div class="hidden md:flex flex-col items-end">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse shadow-[0_0_5px_#22c55e]"></span>
+              <span class="text-[9px] font-mono tracking-widest text-slate-400">LINK: SECURE</span>
+            </div>
+            <div class="flex items-center gap-1">
+              <div class="w-3 h-[1px] bg-slate-600"></div>
+              <div class="w-1 h-[1px] bg-slate-600"></div>
+              <span class="text-[9px] font-mono text-cyan-500 tracking-widest">OP.01_ACTIVE</span>
+            </div>
+          </div>
+
+          <!-- 战术主按钮 -->
+          <router-link
+            to="/auth"
+            class="relative px-8 py-3 bg-cyan-500/10 text-cyan-400 text-xs font-mono font-bold uppercase tracking-[0.2em] group overflow-hidden border border-cyan-500/30 hover:border-cyan-400 transition-colors inline-block"
+            style="clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px)"
+          >
+            <span class="relative z-10 group-hover:text-white transition-colors duration-300 flex items-center gap-2">
+              SYSTEM_LOGIN
+              <svg class="w-3 h-3 group-hover:translate-x-1 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </span>
+            <!-- 悬浮时从左侧滑入的青色能量层 -->
+            <div class="absolute inset-0 bg-cyan-500/20 translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-300 ease-out z-0"></div>
+          </router-link>
+        </div>
+      </header>
+
+      <!-- Hero Section -->
+      <main class="relative pt-32 pb-20 px-6 md:px-12 max-w-[1600px] mx-auto min-h-screen flex flex-col lg:flex-row items-center justify-between gap-12 z-10">
+
+        <!-- Left Content -->
+        <div class="flex-1 w-full animate-fade-up">
+          <div class="flex items-center gap-4 mb-6">
+            <div class="inline-block px-3 py-1 border border-cyan-500/30 bg-cyan-500/10 text-cyan-400 text-[10px] font-mono font-bold uppercase tracking-widest">
+              SYS.01 // Next Gen
+            </div>
+            <div class="h-[1px] w-12 bg-slate-700"></div>
+            <span class="text-[10px] font-mono text-slate-400 tracking-widest uppercase">Youth Cycling Series</span>
+          </div>
+
+          <h1 class="text-6xl md:text-7xl lg:text-[5.5rem] font-black tracking-tighter leading-[0.85] mb-8 text-white uppercase">
+            Absolute <br />
+            <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500 relative inline-block mt-2">
+              Protection
+              <div class="absolute -right-4 top-0 w-2 h-full bg-cyan-500" style="clip-path: polygon(100% 0, 100% 100%, 0 100%)"></div>
+            </span>
+          </h1>
+
+          <p class="text-base md:text-lg text-slate-400 max-w-xl font-medium leading-relaxed mb-10">
+            Engineered for the next generation of riders. The AeroYouth combines aerospace-grade lightweight materials with a high-density EPS core. Extreme safety meets geek-chic aesthetics.
+          </p>
+
+          <div class="flex flex-wrap items-center gap-6">
+            <button
+              class="relative px-8 py-4 bg-cyan-500 text-slate-950 text-sm font-bold uppercase tracking-widest group overflow-hidden flex items-center gap-3"
+              style="clip-path: polygon(16px 0, 100% 0, calc(100% - 16px) 100%, 0 100%)"
+            >
+              <!-- 文字和图标层 -->
+              <span class="relative z-10 flex items-center gap-3 group-hover:text-white transition-colors duration-300">
+                Explore Features
+                <!-- 图标在悬浮时向右移动一点点，增加动感 -->
+                <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </span>
+
+              <!-- 隐藏的动画背景层：深色背景从左侧滑入 -->
+              <div class="absolute inset-0 bg-slate-900 translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-300 ease-out z-0"></div>
+            </button>
+
+            <div class="flex flex-col text-[10px] font-mono text-slate-400 uppercase tracking-widest border-l-2 border-white/20 pl-4">
+              <span class="text-white font-bold text-lg">240g</span>
+              <span>Ultra-lightweight</span>
+            </div>
+            <div class="flex flex-col text-[10px] font-mono text-slate-400 uppercase tracking-widest border-l-2 border-white/20 pl-4">
+              <span class="text-white font-bold text-lg">CPSC</span>
+              <span>Certified Safe</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Content -->
+        <div class="flex-1 relative w-full h-[500px] lg:h-[700px] flex items-center justify-center animate-fade-in">
+          <!-- Tech Rings Background -->
+          <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div class="w-[300px] h-[300px] md:w-[500px] md:h-[500px] rounded-full border border-white/10 absolute animate-[spin_60s_linear_infinite]"></div>
+            <div class="w-[400px] h-[400px] md:w-[650px] md:h-[650px] rounded-full border border-dashed border-white/20 absolute animate-[spin_90s_linear_infinite_reverse]"></div>
+            <div class="w-[250px] h-[250px] md:w-[400px] md:h-[400px] rounded-full border-t border-r border-cyan-400/30 absolute animate-[spin_20s_linear_infinite]"></div>
+          </div>
+
+          <!-- Product Image -->
+          <div class="relative z-10 w-full max-w-md aspect-square" style="mask-image: radial-gradient(circle at center, black 50%, transparent 75%); -webkit-mask-image: radial-gradient(circle at center, black 50%, transparent 75%);">
+            <img
+              src="https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&q=80&w=1000&bg=030712"
+              alt="AeroYouth Helmet"
+              class="w-full h-full object-contain drop-shadow-[0_0_30px_rgba(6,182,212,0.3)]"
+              referrerpolicy="no-referrer"
+            />
+
+            <!-- Floating Tech Label 1 -->
+            <div
+              class="absolute top-1/4 -right-8 md:-right-16 bg-[#030712]/80 backdrop-blur-md border border-white/20 p-3 shadow-[0_0_20px_rgba(6,182,212,0.2)]"
+              style="clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px)"
+            >
+              <div class="text-[9px] font-mono text-cyan-400 uppercase tracking-widest mb-1">Material</div>
+              <div class="text-xs font-bold text-white uppercase tracking-wider">Polycarbonate Shell</div>
+            </div>
+
+            <!-- Floating Tech Label 2 -->
+            <div
+              class="absolute bottom-1/4 -left-8 md:-left-16 bg-[#030712]/80 backdrop-blur-md border border-white/20 p-3 shadow-[0_0_20px_rgba(6,182,212,0.2)]"
+              style="clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px)"
+            >
+              <div class="text-[9px] font-mono text-cyan-400 uppercase tracking-widest mb-1">Ventilation</div>
+              <div class="text-xs font-bold text-white uppercase tracking-wider">14 Airflow Vents</div>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <!-- 3D Model Showcase -->
+      <ModelShowcase />
+
+      <!-- Bento Grid Features Section -->
+      <section id="architecture" class="relative py-32 px-6 md:px-12 max-w-[1600px] mx-auto z-10">
+        <div class="mb-16">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="w-2 h-2 bg-cyan-500" style="clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)"></div>
+            <span class="text-[10px] font-mono text-cyan-400 tracking-widest uppercase">Sys.02 // Architecture</span>
+          </div>
+          <h2 class="text-4xl md:text-5xl lg:text-6xl font-black tracking-tighter text-white uppercase">
+            Core <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">Modules</span>
+          </h2>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+          <!-- Feature 1: Aerodynamics (Large Card) -->
+          <div
+            class="md:col-span-8 bg-white/5 border border-white/10 backdrop-blur-md p-8 md:p-12 relative group overflow-hidden"
+            style="clip-path: polygon(0 0, 100% 0, 100% calc(100% - 24px), calc(100% - 24px) 100%, 0 100%)"
+          >
+            <div class="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-cyan-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div class="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-cyan-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div class="relative z-10 flex flex-col h-full justify-between">
+              <div class="flex justify-between items-start mb-12">
+                <div class="text-5xl font-black text-white/10">01</div>
+                <div class="px-2 py-1 bg-cyan-500/20 text-cyan-400 text-[9px] font-mono uppercase tracking-widest">Active</div>
+              </div>
+              <div>
+                <h3 class="text-2xl font-bold uppercase tracking-tight mb-3 text-white">Aero-Flow Dynamics</h3>
+                <p class="text-slate-400 text-sm leading-relaxed max-w-md">
+                  14 precisely engineered vents channel air through the helmet, reducing drag by 18% while maintaining optimal thermal regulation during intense rides.
+                </p>
+              </div>
+            </div>
+            <div class="absolute -right-20 -bottom-20 w-64 h-64 bg-white/5 rounded-full border border-white/10 group-hover:scale-110 transition-transform duration-700 ease-out"></div>
+          </div>
+
+          <!-- Feature 2: Magnetic Buckle (Small Card, Dark) -->
+          <div
+            class="md:col-span-4 bg-[#0a0f1c] text-white border border-white/10 p-8 md:p-12 relative group overflow-hidden"
+            style="clip-path: polygon(24px 0, 100% 0, 100% 100%, 0 100%, 0 24px)"
+          >
+            <div class="absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <div class="relative z-10 flex flex-col h-full justify-between">
+              <div class="text-5xl font-black text-white/10 mb-12">02</div>
+              <div>
+                <h3 class="text-xl font-bold uppercase tracking-tight mb-3 text-white">Fidlock® Snap</h3>
+                <p class="text-slate-400 text-sm leading-relaxed">
+                  One-handed magnetic fastening system. Secure lock in milliseconds, effortless release.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Feature 3: Reflective (Small Card) -->
+          <div class="md:col-span-4 bg-white/5 border border-white/10 backdrop-blur-md p-8 md:p-12 relative group overflow-hidden">
+            <div class="absolute top-4 right-4 w-2 h-2 bg-cyan-500 animate-pulse"></div>
+            <div class="relative z-10 flex flex-col h-full justify-between">
+              <div class="text-5xl font-black text-white/10 mb-12">03</div>
+              <div>
+                <h3 class="text-xl font-bold uppercase tracking-tight mb-3 text-white">360° Visibility</h3>
+                <p class="text-slate-400 text-sm leading-relaxed">
+                  Integrated micro-prismatic reflective decals ensure maximum visibility in low-light urban environments.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Feature 4: EPS Core (Large Card) -->
+          <div
+            class="md:col-span-8 bg-white/5 border border-white/10 backdrop-blur-md p-8 md:p-12 relative group overflow-hidden"
+            style="clip-path: polygon(0 0, 100% 0, 100% 100%, 24px 100%, 0 calc(100% - 24px))"
+          >
+            <div class="absolute inset-0 opacity-20" style="background-image: linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px); background-size: 20px 20px;"></div>
+            <div class="relative z-10 flex flex-col h-full justify-between">
+              <div class="flex justify-between items-start mb-12">
+                <div class="text-5xl font-black text-white/10 drop-shadow-sm">04</div>
+                <div class="px-2 py-1 border border-cyan-500 text-cyan-400 text-[9px] font-mono uppercase tracking-widest bg-[#030712]/50 backdrop-blur-sm">Core</div>
+              </div>
+              <div class="flex flex-col md:flex-row gap-8 items-end justify-between">
+                <div class="max-w-md">
+                  <h3 class="text-2xl font-bold uppercase tracking-tight mb-3 text-white">High-Density EPS Matrix</h3>
+                  <p class="text-slate-400 text-sm leading-relaxed">
+                    Multi-density impact absorption foam engineered to disperse kinetic energy across the entire shell structure upon impact.
+                  </p>
+                </div>
+                <div class="w-32 h-32 border-2 border-cyan-500/30 rounded-full flex items-center justify-center relative group-hover:border-cyan-500 transition-colors duration-500">
+                  <div class="w-24 h-24 border border-dashed border-cyan-500/50 rounded-full animate-[spin_10s_linear_infinite]"></div>
+                  <div class="absolute text-[10px] font-mono text-cyan-400 font-bold">IMPACT</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </template>
   </div>
 </template>
 
 <script setup>
-import { useRouter } from 'vue-router'
-import { onMounted, ref } from 'vue'
-import ParticlesBackground from '@/components/ParticlesBackground.vue'
-import GlassEffect from '@/components/GlassEffect.vue'
-import SimpleSensorDashboard from '@/components/SimpleSensorDashboard.vue'
-import BaiduMap from '@/components/BaiduMap.vue'
-import EventPanel from '@/components/EventPanel.vue'
+import { ref, onMounted, onUnmounted } from 'vue';
+import LoadingScreen from '@/components/LoadingScreen.vue';
+import ModelShowcase from '@/components/ModelShowcase.vue';
 
-// 获取路由实例
-const router = useRouter()
-const sensorDashboard = ref(null)
-const baiduMap = ref(null)
-const eventPanel = ref(null)
+const isLoading = ref(true);
+const isScrolled = ref(false);
 
-// 页面跳转函数
-function goToApp() {
-  // 使用Vue Router跳转到App页面（数据采集界面）
-  router.push('/app')
-}
+const handleScroll = () => {
+  isScrolled.value = window.scrollY > 50;
+};
 
-// 页面加载完成后初始化传感器数据和事件监控
 onMounted(() => {
-  startSensorDataCollection()
-  startEventMonitoring() // 启动设备事件监控
-  // 初始化路径点数据
-  initPathPoints()
-})
+  window.addEventListener('scroll', handleScroll);
+});
 
-// 设备事件监控数据
-let eventCounts = {
-  slow: 0,
-  leftTurn: 0,
-  rightTurn: 0
-}
-
-// 路径点数据
-const pathPoints = [
-  { longitude: 119.290, latitude: 26.070 }, // 起点
-  { longitude: 119.295, latitude: 26.072 },
-  { longitude: 119.300, latitude: 26.070 }, // 折返点
-  { longitude: 119.305, latitude: 26.074 },
-  { longitude: 119.310, latitude: 26.072 }  // 终点
-]
-
-// 初始化路径点数据
-function initPathPoints() {
-  // 每2秒更新一次位置信息，循环显示5个路径点
-  let currentIndex = 0
-  setInterval(() => {
-    if (baiduMap.value) {
-      const point = pathPoints[currentIndex]
-      const sensorData = {
-        deviceId: 'DEV001',
-        longitude: point.longitude,
-        latitude: point.latitude,
-        receiveTime: new Date().toISOString()
-      }
-      baiduMap.value.updateMapLocation(sensorData)
-    }
-    currentIndex = (currentIndex + 1) % pathPoints.length
-  }, 2000)
-}
-
-// 开始传感器数据采集循环
-function startSensorDataCollection() {
-  updateSensorData()
-  setInterval(updateSensorData, 2000)
-}
-
-// 更新传感器数据
-function updateSensorData() {
-  // 生成随机传感器数据
-  const deviceId = 'DEV001'
-  const timestamp = new Date().toISOString()
-  
-  const sensorData = {
-    deviceId: deviceId,
-    temperature: (20 + Math.random() * 15).toFixed(1), // 20-35°C
-    humidity: (40 + Math.random() * 40).toFixed(1), // 40-80%
-    longitude: (119.29 + Math.random() * 0.02).toFixed(6), // 119.29-119.31
-    latitude: (26.07 + Math.random() * 0.02).toFixed(6), // 26.07-26.09
-    receiveTime: timestamp
-  }
-  
-  // 更新传感器仪表板
-  if (sensorDashboard.value) {
-    sensorDashboard.value.updateSensorData([sensorData])
-  }
-}
-
-// 模拟设备事件数据
-function simulateEventUpdates() {
-  // 随机生成事件数据
-  const deviceId = 'DEV001'
-  const timestamp = new Date().toISOString()
-  
-  const eventData = {
-    deviceId: deviceId,
-    slowFlag: Math.random() > 0.5,   // 减速事件
-    turnLeftFlag: Math.random() > 0.6,  // 左转事件
-    turnRightFlag: Math.random() > 0.6  // 右转事件
-  }
-  
-  // 更新事件面板
-  if (eventPanel.value) {
-    eventPanel.value.processDeviceEvents(eventData)
-  }
-}
-
-// 启动设备事件监控
-function startEventMonitoring() {
-  simulateEventUpdates()
-  setInterval(simulateEventUpdates, 3000)
-}
+onUnmounted(() => {
+  window.removeEventListener('scroll', handleScroll);
+});
 </script>
 
 <style scoped>
-.home-container {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  overflow-x: hidden;
+.content-enter {
+  animation: contentEnter 1.2s cubic-bezier(0.25, 1, 0.5, 1) forwards;
 }
 
-/* 导航栏样式 */
-.navbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px 40px;
-  background-color: transparent;
-  z-index: 1001;
-  position: relative;
+@keyframes contentEnter {
+  from { transform: scale(1.05); opacity: 0; filter: blur(8px); }
+  to   { transform: scale(1);    opacity: 1; filter: blur(0px); }
 }
 
-.logo {
-  font-size: 2.5em;
-  font-weight: bold;
-  color: #00f7ff;
-  text-shadow: 0 0 10px rgba(0, 247, 255, 0.6);
+.animate-fade-up {
+  animation: fadeUp 0.8s cubic-bezier(0.25, 1, 0.5, 1) 0.4s both;
 }
 
-.nav-buttons {
-  display: flex;
-  gap: 15px;
+.animate-fade-in {
+  animation: fadeIn 1s cubic-bezier(0.25, 1, 0.5, 1) 0.6s both;
 }
 
-.nav-button-wrapper {
-  border-radius: 30px;
-  padding: 0;
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-.nav-buttons button {
-  margin: 0;
-  padding: 15px 30px;
-  font-size: 1.2em;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-weight: 500;
-  border: none;
-  background: transparent;
-  color: #00f7ff;
-  width: 100%;
-  height: 100%;
-  border-radius: 30px;
-}
-
-.nav-buttons button:hover {
-  background: rgba(0, 247, 255, 0.1);
-  transform: scale(1.05);
-}
-
-/* 顶部与内容之间的分隔线 */
-.content-divider {
-  width: 90%;
-  height: 1px;
-  background: linear-gradient(to right, transparent, rgba(0, 247, 255, 0.3), transparent);
-  margin: 20px auto;
-}
-
-/* 分隔线样式 */
-.divider {
-  width: 100%;
-  height: 1px;
-  background: linear-gradient(to right, transparent, rgba(0, 247, 255, 0.6), transparent);
-  margin: 20px 0;
-}
-
-/* 系统介绍模块样式 */
-.intro-container {
-  display: flex;
-  flex-direction: column;
-  margin: 40px auto;
-  max-width: 1200px;
-  width: 100%;
-  border-radius: 20px;
-  overflow: hidden;
-  padding: 60px 40px;
-  text-align: center;
-  z-index: 1001;
-  position: relative;
-  color: #e0e0e0;
-}
-
-.intro-header h2 {
-  font-size: 2.5em;
-  font-weight: bold;
-  margin-bottom: 20px;
-  color: #00f7ff;
-}
-
-.intro-content-wrapper {
-  border: 1px solid rgba(0, 247, 255, 0.3);
-  border-radius: 15px;
-  padding: 25px;
-  background: rgba(10, 15, 44, 0.2);
-  margin-top: 30px;
-}
-
-.intro-content {
-  font-size: 1.2em;
-  line-height: 1.8;
-  max-width: 1000px;
-  margin: 0 auto;
-}
-
-.intro-content p {
-  margin-bottom: 15px;
-}
-
-/* 传感器数据模块样式 */
-.sensor-container {
-  display: flex;
-  flex-direction: column;
-  margin: 40px auto;
-  max-width: 1200px;
-  width: 100%;
-  border-radius: 20px;
-  overflow: hidden;
-  z-index: 1001;
-  position: relative;
-  padding: 40px;
-  text-align: center;
-  color: #e0e0e0;
-}
-
-.sensor-header h2 {
-  font-size: 2em;
-  font-weight: bold;
-  margin-bottom: 10px;
-  color: #00f7ff;
-}
-
-.sensor-header p {
-  color: rgba(224, 224, 224, 0.8);
-  font-size: 1.2em;
-  margin-bottom: 30px;
-}
-
-.sensor-dashboard-wrapper {
-  width: 100%;
-}
-
-#map {
-  width: 100%;
-  height: 400px;
-  border-radius: 10px;
-  z-index: 1001;
-  position: relative;
-  background-color: rgba(20, 30, 60, 0.8);
-  border: 1px solid rgba(0, 247, 255, 0.3);
-  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
-}
-
-/* 页脚样式 */
-.page-footer {
-  color: #00f7ff;
-  font-size: 14px;
-  text-align: center;
-  padding: 30px 20px;
-  position: relative;
-  margin-top: auto;
-}
-
-.page-footer h2 {
-  font-size: 1.5em;
-  margin-bottom: 15px;
-  text-shadow: 0 0 10px rgba(0, 247, 255, 0.6);
-}
-
-.page-footer p {
-  color: rgba(224, 224, 224, 0.8);
-}
-
-/* 响应式设计 */
-@media (max-width: 768px) {
-  .navbar {
-    padding: 15px 20px;
-  }
-  
-  .nav-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-  
-  .nav-buttons button {
-    padding: 12px 25px;
-    font-size: 1.1em;
-  }
-  
-  .intro-container,
-  .sensor-container {
-    margin: 20px auto;
-    padding: 30px 20px;
-  }
-  
-  .intro-header h2 {
-    font-size: 1.8em;
-  }
-  
-  .intro-content {
-    font-size: 1em;
-  }
-  
-  .sensor-header h2 {
-    font-size: 1.5em;
-  }
-  
-  .sensor-header p {
-    font-size: 1em;
-  }
-  
-  .sensor-grid {
-    grid-template-columns: 1fr;
-    gap: 20px;
-  }
-  
-  #map {
-    height: 300px;
-  }
-  
-  .page-footer {
-    font-size: 12px;
-    padding: 20px 15px;
-  }
-  
-  .page-footer h2 {
-    font-size: 1.2em;
-  }
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateX(50px); }
+  to   { opacity: 1; transform: translateX(0); }
 }
 </style>

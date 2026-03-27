@@ -1,14 +1,16 @@
 <template>
   <div class="status-bar" data-aos="fade-up" data-aos-delay="100">
-    <div class="status-item">
+    <div class="status-bar__item">
       <div :class="indicatorClass"></div>
       <span>{{ connectionStatus }}</span>
     </div>
-    <div class="status-item">
-      <span>设备数量: {{ deviceCount }}</span>
+    <div class="status-bar__item">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8892A0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 3h-8l-2 4h12z"/></svg>
+      <span>设备: {{ deviceCount }}</span>
     </div>
-    <div class="status-item">
-      <span>最后更新: {{ formattedLastUpdate }}</span>
+    <div class="status-bar__item">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8892A0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <span>{{ formattedLastUpdate }}</span>
     </div>
   </div>
 </template>
@@ -26,9 +28,9 @@ const props = defineProps({
 const formattedLastUpdate = computed(()=> formatDateTime(props.lastUpdateTime))
 
 const indicatorClass = computed(()=> {
-  if (/断开|失败|error/i.test(props.connectionStatus)) return 'status-indicator error'
-  if (/连接中|connecting/i.test(props.connectionStatus)) return 'status-indicator warning'
-  return 'status-indicator ok'
+  if (/断开|失败|error/i.test(props.connectionStatus)) return 'status-bar__dot status-bar__dot--error'
+  if (/连接中|connecting/i.test(props.connectionStatus)) return 'status-bar__dot status-bar__dot--warning'
+  return 'status-bar__dot status-bar__dot--ok'
 })
 </script>
 
@@ -37,39 +39,48 @@ const indicatorClass = computed(()=> {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 24px 24px;
-  border-radius: 20px;
-  background: rgba(10, 15, 44, 0.4);
-  margin-bottom: 40px;
-  border: 1px solid rgba(0, 247, 255, 0.3);
-  color: white; /* 将字体颜色改为白色 */
-  
+  padding: 12px 20px;
+  border-radius: 12px;
+  background: #1a2332;
+  margin-bottom: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #E8ECF1;
+  font-size: 0.85rem;
 }
 
-.status-item {
+.status-bar__item {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   align-items: center;
+  color: #8892A0;
 }
 
-.status-indicator {
-  width: 10px;
-  height: 10px;
+.status-bar__dot {
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  box-shadow: 0 0 8px rgba(0, 247, 255, 0.4);
 }
 
-.status-indicator.ok {
-  background: #00f7ff;
+.status-bar__dot--ok {
+  background: #00C49A;
+  box-shadow: 0 0 6px rgba(0, 196, 154, 0.5);
 }
 
-.status-indicator.warning {
-  background: #ffcc00;
-  box-shadow: 0 0 8px #ffcc00;
+.status-bar__dot--warning {
+  background: #FFD93D;
+  box-shadow: 0 0 6px rgba(255, 217, 61, 0.5);
 }
 
-.status-indicator.error {
-  background: #ff4444;
-  box-shadow: 0 0 8px #ff4444;
+.status-bar__dot--error {
+  background: #FF4757;
+  box-shadow: 0 0 6px rgba(255, 71, 87, 0.5);
+}
+
+@media (max-width: 768px) {
+  .status-bar {
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+  }
 }
 </style>

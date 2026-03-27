@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python:*)",
+      "Bash(npm install:*)",
+      "Bash(curl:*)",
+      "Bash(npx eslint:*)",
+      "Bash(sed:*)",
+      "Bash(timeout 10 npm run:*)",
+      "Bash(npm list:*)",
+      "Bash(\"D:\\\\嵌入式\\\\1\\\\amqp-demo\\\\intelligent-helmet-vue\\\\src\\\\views\\\\DataVisualization.vue\":*)",
+      "Bash(npm run:*)",
+      "Bash(git clone:*)"
+    ]
+  }
+}

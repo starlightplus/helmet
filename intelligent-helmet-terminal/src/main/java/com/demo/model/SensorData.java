@@ -21,12 +21,16 @@ public class SensorData {
     // GPS定位数据
     private Double longitude;      // 经度（东经，十进制度格式，4位小数）
     private Double latitude;       // 纬度（北纬，十进制度格式，4位小数）
-    
+
+    // 姿态数据
+    private Double roll;           // 横滚角（度）
+    private Double pitch;          // 俯仰角（度）
+    private Double avm;            // 角速度合量（度/秒）
+    private Double gvm;            // 倾斜合量（度）
+
     // Flag服务数据（状态标志）
     private Boolean fallFlag;      // 跌倒标志
     private Boolean slowFlag;      // 缓慢标志
-    private Boolean turnLeftFlag;  // 左转标志
-    private Boolean turnRightFlag; // 右转标志
     
     // 接收时间
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
@@ -113,27 +117,43 @@ public class SensorData {
     public Boolean getSlowFlag() {
         return slowFlag;
     }
-    
+
     public void setSlowFlag(Boolean slowFlag) {
         this.slowFlag = slowFlag;
     }
-    
-    public Boolean getTurnLeftFlag() {
-        return turnLeftFlag;
+
+    public Double getRoll() {
+        return roll;
     }
-    
-    public void setTurnLeftFlag(Boolean turnLeftFlag) {
-        this.turnLeftFlag = turnLeftFlag;
+
+    public void setRoll(Double roll) {
+        this.roll = roll;
     }
-    
-    public Boolean getTurnRightFlag() {
-        return turnRightFlag;
+
+    public Double getPitch() {
+        return pitch;
     }
-    
-    public void setTurnRightFlag(Boolean turnRightFlag) {
-        this.turnRightFlag = turnRightFlag;
+
+    public void setPitch(Double pitch) {
+        this.pitch = pitch;
     }
-    
+
+    public Double getAvm() {
+        return avm;
+    }
+
+    public void setAvm(Double avm) {
+        this.avm = avm;
+    }
+
+    public Double getGvm() {
+        return gvm;
+    }
+
+    public void setGvm(Double gvm) {
+        this.gvm = gvm;
+    }
+
     public LocalDateTime getReceiveTime() {
         return receiveTime;
     }
@@ -151,10 +171,12 @@ public class SensorData {
                 ", humidity=" + humidity +
                 ", longitude=" + longitude +
                 ", latitude=" + latitude +
+                ", roll=" + roll +
+                ", pitch=" + pitch +
+                ", avm=" + avm +
+                ", gvm=" + gvm +
                 ", fallFlag=" + fallFlag +
                 ", slowFlag=" + slowFlag +
-                ", turnLeftFlag=" + turnLeftFlag +
-                ", turnRightFlag=" + turnRightFlag +
                 ", receiveTime=" + receiveTime +
                 '}';
     }

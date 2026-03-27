@@ -172,10 +172,12 @@ public class SensorDataController {
             // 按照GPS坐标显示规范，使用4位小数的十进制度格式
             testData.setLongitude(116.3974); // 东经116.3974°（北京天安门附近）
             testData.setLatitude(39.9093);   // 北纬39.9093°
+            testData.setRoll(10.0);          // 横滚角
+            testData.setPitch(5.0);          // 俯仰角
+            testData.setAvm(8.5);            // 角速度合量
+            testData.setGvm(11.2);           // 倾斜合量
             testData.setFallFlag(true);
             testData.setSlowFlag(false);
-            testData.setTurnLeftFlag(true);
-            testData.setTurnRightFlag(false);
             testData.setReceiveTime(LocalDateTime.now());
             
             // 保存测试数据

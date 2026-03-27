@@ -1,6 +1,9 @@
 <template>
   <div id="dashboard" class="dashboard">
-    <div v-if="sensorDataList.length === 0" class="no-data">暂无传感器数据</div>
+    <div v-if="sensorDataList.length === 0" class="dashboard__empty">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#8892A0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 3h-8l-2 4h12z"/></svg>
+      <span>暂无传感器数据</span>
+    </div>
     <SensorCard
       v-for="(data, index) in sensorDataList"
       :key="data.deviceId || index"
@@ -19,13 +22,13 @@ const sensorDataList = ref([])
 function updateSensorData(newDataList) {
   // newDataList: array of sensor objects
   if (!Array.isArray(newDataList)) return
-  
+
   // 如果传入空数组，则清空所有数据
   if (newDataList.length === 0) {
     sensorDataList.value = []
     return
   }
-  
+
   newDataList.forEach(newData => {
     const idx = sensorDataList.value.findIndex(s => s.deviceId === newData.deviceId)
     if (idx >= 0) {
@@ -42,19 +45,23 @@ defineExpose({ updateSensorData })
 <style scoped>
 .dashboard {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-  gap: 24px;
-  padding: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 20px;
+  padding: 0;
 }
 
-.no-data {
+.dashboard__empty {
   grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
   text-align: center;
   padding: 40px;
-  color: rgba(224, 224, 224, 0.7);
-  font-size: 1.2rem;
-  background: rgba(10, 15, 44, 0.4);
-  border-radius: 20px;
-  border: 1px solid rgba(0, 247, 255, 0.3);
+  color: #8892A0;
+  font-size: 1rem;
+  background: #1a2332;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 </style>

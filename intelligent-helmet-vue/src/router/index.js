@@ -1,6 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Home from '@/views/Home.vue'
 import App from '@/views/App.vue'
+import Auth from '@/views/Auth.vue'
+import { setupRouterGuards } from './guards'
 
 const routes = [
   {
@@ -12,6 +14,33 @@ const routes = [
     path: '/app',
     name: 'App',
     component: App
+  },
+  {
+    path: '/data-viz',
+    name: 'DataVisualization',
+    component: () => import('@/views/DataVisualization.vue')
+  },
+  {
+    path: '/auth',
+    name: 'Auth',
+    component: Auth
+  },
+  {
+    path: '/emergency-contacts',
+    name: 'EmergencyContacts',
+    component: () => import('@/views/EmergencyContacts.vue')
+  },
+  {
+    path: '/profile',
+    name: 'UserProfile',
+    component: () => import('@/views/UserProfilePage.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/ride-history',
+    name: 'RideHistory',
+    component: () => import('@/views/RideHistory.vue'),
+    meta: { requiresAuth: true }
   }
 ]
 
@@ -19,5 +48,7 @@ const router = createRouter({
   history: createWebHistory(),
   routes
 })
+
+setupRouterGuards(router)
 
 export default router

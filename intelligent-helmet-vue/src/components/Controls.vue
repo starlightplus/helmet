@@ -1,12 +1,16 @@
 <template>
   <div class="controls" data-aos="fade-up" data-aos-delay="200">
-    <button type="button" class="btn glass-button large-button" @click="onToggleAuto" :data-key="'auto'">
+    <button type="button" class="controls__btn controls__btn--primary" @click="onToggleAuto">
+      <svg v-if="!isAuto" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
       {{ isAuto ? '关闭自动刷新' : '开启自动刷新' }}
     </button>
-    <button type="button" class="btn glass-button large-button" @click="onClearAll" :data-key="'clear-all'">
+    <button type="button" class="controls__btn controls__btn--secondary" @click="onClearAll">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
       清除所有数据
     </button>
-    <button type="button" class="btn glass-button large-button" @click="onLogout" :data-key="'logout'">
+    <button type="button" class="controls__btn controls__btn--secondary" @click="onLogout">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
       退出登录
     </button>
   </div>
@@ -15,10 +19,12 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useUserStore } from '@/stores/user'
 
 const emit = defineEmits(['toggle-auto-refresh', 'clear-all-data'])
 const isAuto = ref(false)
 const router = useRouter()
+const userStore = useUserStore()
 
 function createRipple(e) {
   const button = e.currentTarget
@@ -46,47 +52,56 @@ function onClearAll(e) {
 
 function onLogout(e) {
   createRipple(e)
-  // 跳转到首页
-  router.push('/')
+  // 清除用户状态
+  userStore.logout()
+  // 跳转到登录页面
+  router.push('/login')
 }
 </script>
 
 <style scoped>
 .controls {
   display: flex;
-  gap: 15px;
+  gap: 12px;
   justify-content: center;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
   flex-wrap: wrap;
 }
 
-.glass-button {
+.controls__btn {
   position: relative;
   overflow: hidden;
-  padding: 12px 24px;
-  border-radius: 24px;
-  border: 1px solid rgba(0, 247, 255, 0.3);
-  background: rgba(10, 15, 44, 0.4);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  color: #00f7ff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 10px;
+  border: none;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   font-weight: 500;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  font-size: 0.9rem;
 }
 
-/* 放大按钮 */
-.large-button {
-  padding: 16px 32px;
-  font-size: 1.1em;
+.controls__btn--primary {
+  background: linear-gradient(135deg, #FF6B35, #FF4757);
+  color: #fff;
 }
 
-.glass-button:hover {
-  background: rgba(0, 247, 255, 0.1);
-  transform: translateY(-2px);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
-  border-color: rgba(0, 247, 255, 0.6);
+.controls__btn--primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(255, 107, 53, 0.4);
+}
+
+.controls__btn--secondary {
+  background: rgba(255, 255, 255, 0.06);
+  color: #E8ECF1;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.controls__btn--secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-1px);
 }
 
 .ripple {
@@ -105,15 +120,14 @@ function onLogout(e) {
   }
 }
 
-/* 响应式设计 */
 @media (max-width: 768px) {
   .controls {
-    gap: 10px;
+    gap: 8px;
   }
-  
-  .large-button {
-    padding: 14px 25px;
-    font-size: 1em;
+
+  .controls__btn {
+    padding: 8px 16px;
+    font-size: 0.85rem;
   }
 }
 </style>
