@@ -7,7 +7,7 @@ const request = axios.create({
 
 // 请求拦截器：自动带上 token
 request.interceptors.request.use(config => {
-  const token = localStorage.getItem('token')
+  const token = sessionStorage.getItem('token')
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
@@ -22,7 +22,7 @@ request.interceptors.response.use(
       const msg = err.response?.data
       // 只有 token 过期/无效才跳，业务性 401（如未绑定设备）不跳
       if (typeof msg === 'string' && (msg.includes('token') || msg.includes('Token') || msg.includes('expired'))) {
-        localStorage.removeItem('token')
+        sessionStorage.removeItem('token')
         window.location.href = '/auth'
       }
     }

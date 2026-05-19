@@ -12,11 +12,6 @@
         </div>
       </div>
       <div class="app-nav__right">
-        <button class="app-nav__btn app-nav__btn--primary" @click="onToggleAuto">
-          <svg v-if="!isAutoRefresh" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-          <svg v-else width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
-          {{ isAutoRefresh ? '停止刷新' : '自动刷新' }}
-        </button>
         <button class="app-nav__btn app-nav__btn--secondary" @click="goToProfile">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           个人资料
@@ -71,80 +66,62 @@
         <!-- 终端页面 -->
         <div v-show="activePage === 'terminal'" class="page-wrapper page-wrapper--terminal">
           <div class="terminal-layout">
-            <div class="app-main">
-              <!-- Environment Dashboard -->
-              <div class="env-dashboard" data-aos="fade-up">
-                <TempHumidityCards
-                  :temperature="latestTemp"
-                  :humidity="latestHumidity"
-                />
-
-          <!-- Device Count Card -->
-          <div class="device-card">
-            <div class="device-card__header">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00D9FF" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 3h-8l-2 4h12z"/></svg>
-              <span>在线设备</span>
-            </div>
-            <div class="device-card__body">
-              <div class="device-card__number">{{ deviceCount }}</div>
-              <div class="device-card__ring">
-                <svg viewBox="0 0 80 80">
-                  <circle cx="40" cy="40" r="32" fill="none" stroke="rgba(0, 217, 255, 0.1)" stroke-width="6" />
-                  <circle cx="40" cy="40" r="32" fill="none" stroke="#00D9FF" stroke-width="6" stroke-linecap="round" stroke-dasharray="201" :stroke-dashoffset="deviceCount > 0 ? 201 * 0.25 : 201" class="device-ring-arc" />
-                  <circle cx="40" cy="40" r="32" fill="none" stroke="rgba(0, 217, 255, 0.15)" stroke-width="6" stroke-dasharray="4 8" class="device-ring-dashed">
-                    <animateTransform attributeName="transform" type="rotate" from="0 40 40" to="360 40 40" dur="30s" repeatCount="indefinite" />
-                  </circle>
-                </svg>
+            <!-- Environment Dashboard -->
+            <div class="env-dashboard" data-aos="fade-up">
+              <TempHumidityCards
+                :temperature="latestTemp"
+                :humidity="latestHumidity"
+              />
+              <!-- Device Count Card -->
+              <div class="device-card">
+                <div class="device-card__header">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00D9FF" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 3h-8l-2 4h12z"/></svg>
+                  <span>在线设备</span>
+                </div>
+                <div class="device-card__body">
+                  <div class="device-card__number">{{ deviceCount }}</div>
+                  <div class="device-card__ring">
+                    <svg viewBox="0 0 80 80">
+                      <circle cx="40" cy="40" r="32" fill="none" stroke="rgba(0, 217, 255, 0.1)" stroke-width="6" />
+                      <circle cx="40" cy="40" r="32" fill="none" stroke="#00D9FF" stroke-width="6" stroke-linecap="round" stroke-dasharray="201" :stroke-dashoffset="deviceCount > 0 ? 201 * 0.25 : 201" class="device-ring-arc" />
+                      <circle cx="40" cy="40" r="32" fill="none" stroke="rgba(0, 217, 255, 0.15)" stroke-width="6" stroke-dasharray="4 8" class="device-ring-dashed">
+                        <animateTransform attributeName="transform" type="rotate" from="0 40 40" to="360 40 40" dur="30s" repeatCount="indefinite" />
+                      </circle>
+                    </svg>
+                  </div>
+                </div>
+                <div class="device-card__status">
+                  <div class="device-card__dot" :class="{ 'device-card__dot--active': deviceCount > 0 && deviceOnline, 'device-card__dot--offline': deviceCount > 0 && !deviceOnline }"></div>
+                  <span>{{ deviceCount > 0 ? (deviceOnline ? '数据传输中' : '暂无数据') : '等待连接' }}</span>
+                </div>
               </div>
             </div>
-            <div class="device-card__status">
-              <div class="device-card__dot" :class="{ 'device-card__dot--active': deviceCount > 0 && deviceOnline, 'device-card__dot--offline': deviceCount > 0 && !deviceOnline }"></div>
-              <span>{{ deviceCount > 0 ? (deviceOnline ? '数据传输中' : '暂无数据') : '等待连接' }}</span>
-            </div>
-          </div>
-        </div>
 
-        <!-- Ride Stats Panel -->
-        <RideStatsPanel
-          :isRiding="rideTracking.isRiding.value"
-          :currentSpeed="rideTracking.currentSpeed.value"
-          :rideDistance="rideTracking.rideDistance.value"
-          :rideDuration="rideTracking.rideDuration.value"
-          :maxSpeed="rideTracking.maxSpeed.value"
-          :avgSpeed="rideTracking.avgSpeed.value"
-          :speedWarning="rideTracking.speedWarning.value"
-          :calories="rideTracking.calories.value"
-          :pace="rideTracking.pace.value"
-        />
+            <!-- Ride Stats Panel -->
+            <RideStatsPanel
+              :isRiding="rideTracking.isRiding.value"
+              :currentSpeed="rideTracking.currentSpeed.value"
+              :rideDistance="rideTracking.rideDistance.value"
+              :rideDuration="rideTracking.rideDuration.value"
+              :maxSpeed="rideTracking.maxSpeed.value"
+              :avgSpeed="rideTracking.avgSpeed.value"
+              :speedWarning="rideTracking.speedWarning.value"
+              :calories="rideTracking.calories.value"
+              :pace="rideTracking.pace.value"
+            />
 
-        <!-- Map Section -->
-        <GaodeMap ref="gaodeMap" class="app-map" />
+            <!-- Map Section -->
+            <GaodeMap ref="gaodeMap" class="app-map" />
 
-        <!-- Event Panel -->
-        <EventPanel ref="eventPanel" />
-            </div>
-
-            <!-- Weather Sidebar -->
-            <aside class="app-sidebar">
-              <WeatherPanel
-                :city="weather.city.value"
-                :current="weather.current.value"
-                :hourly="weather.hourly.value"
-                :forecast="weather.forecast.value"
-                :warning="weather.warning.value"
-                :indices="weather.indices.value"
-                :minutely="weather.minutely.value"
-                :loading="weather.loading.value"
-                :error="weather.error.value"
-              />
-            </aside>
+            <!-- Event Panel -->
+            <EventPanel ref="eventPanel" />
           </div>
         </div>
 
         <!-- 数字孪生页面 -->
         <div v-show="activePage === 'twin'" class="page-wrapper">
           <div class="twin-page">
-            <HelmetTwin ref="helmetTwin" :sensorData="latestSensorData" :connected="isConnected" :weatherData="weather.current.value" />
+            <HelmetTwin ref="helmetTwin" :sensorData="latestSensorData" :connected="isConnected" />
           </div>
         </div>
 
@@ -174,10 +151,10 @@ export default { name: 'AppMain' }
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
+import request from '@/utils/request'
 import SportBackground from '@/components/SportBackground.vue'
 import GaodeMap from '@/components/GaodeMap.vue'
 import EventPanel from '@/components/EventPanel.vue'
-import WeatherPanel from '@/components/WeatherPanel.vue'
 import RideStatsPanel from '@/components/RideStatsPanel.vue'
 import HelmetTwin from '@/components/HelmetTwin.vue'
 import AiChat from '@/components/AiChat.vue'
@@ -185,11 +162,9 @@ import DataVisualization from '@/views/DataVisualization.vue'
 import TempHumidityCards from '@/components/TempHumidityCards.vue'
 import AiAssistant from '@/components/AiAssistant.vue'
 import { useWebSocket } from '@/composables/useWebSocket.js'
-import { useWeather } from '@/composables/useWeather.js'
 import { useRideTracking } from '@/composables/useRideTracking.js'
 import { useRideHistoryStore } from '@/stores/rideHistory.js'
 import { useUserProfileStore } from '@/stores/userProfile.js'
-import { calculateTHI, getComfortLevel } from '@/utils/comfortIndex.js'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -219,13 +194,8 @@ const deviceSet = new Set()
 const deviceCount = ref(0)
 const deviceOnline = ref(false)
 const lastUpdate = ref(null)
-const isAutoRefresh = ref(false)
-let autoTimer = null
 let deviceOfflineTimer = null
 const DEVICE_OFFLINE_TIMEOUT = 5000 // 5秒无数据判定设备离线
-
-// Weather
-const weather = useWeather()
 
 // Ride tracking
 const rideTracking = useRideTracking()
@@ -247,35 +217,6 @@ watch(() => userProfileStore.weight, (newWeight) => {
 // Stats tracking
 const latestTemp = ref(null)
 const latestHumidity = ref(null)
-
-const comfortTHI = computed(() => calculateTHI(latestTemp.value, latestHumidity.value))
-const comfortLevel = computed(() => getComfortLevel(comfortTHI.value))
-
-// Gauge arc math (semicircle arc from 30,110 to 170,110, radius=70)
-const gaugeCircumference = Math.PI * 70 // ~219.9
-const gaugeOffset = computed(() => {
-  if (comfortTHI.value == null) return gaugeCircumference
-  const ratio = Math.min(Math.max(comfortTHI.value / 40, 0), 1)
-  return gaugeCircumference * (1 - ratio)
-})
-const needleAngle = computed(() => {
-  if (comfortTHI.value == null) return Math.PI
-  const ratio = Math.min(Math.max(comfortTHI.value / 40, 0), 1)
-  return Math.PI * (1 - ratio)
-})
-const needleX = computed(() => 100 + 70 * Math.cos(needleAngle.value))
-const needleY = computed(() => 110 - 70 * Math.sin(needleAngle.value))
-
-const tempPercent = computed(() => latestTemp.value != null ? Math.min(Math.max((latestTemp.value + 10) / 60 * 100, 0), 100) : 0)
-const humiPercent = computed(() => latestHumidity.value != null ? Math.min(Math.max(latestHumidity.value, 0), 100) : 0)
-
-const thiLevels = [
-  { range: '<15', label: '寒冷', color: '#00D9FF' },
-  { range: '15-20', label: '凉爽', color: '#00F0FF' },
-  { range: '20-26', label: '舒适', color: '#A855F7' },
-  { range: '26-30', label: '偏热', color: '#C026D3' },
-  { range: '≥30', label: '闷热', color: '#E879F9' }
-]
 
 const indicatorClass = computed(() => {
   if (/断开|失败|error/i.test(wsStatus.value)) return 'app-nav__dot app-nav__dot--error'
@@ -310,10 +251,6 @@ function handleSensorDataFromWS(payload) {
   if (payload.temperature != null) latestTemp.value = Number(payload.temperature)
   if (payload.humidity != null) latestHumidity.value = Number(payload.humidity)
   lastUpdate.value = new Date()
-  // 3) weather: update by GPS location
-  if (payload.longitude && payload.latitude) {
-    weather.updateByLocation(payload.longitude, payload.latitude)
-  }
   // 4) ride tracking: process GPS data
   if (payload.longitude && payload.latitude) {
     rideTracking.processGpsData(payload)
@@ -334,11 +271,6 @@ function resetDeviceOfflineTimer() {
 
 setOnSensorData(handleSensorDataFromWS)
 
-function onToggleAuto() {
-  isAutoRefresh.value = !isAutoRefresh.value
-  if (autoTimer) { clearInterval(autoTimer); autoTimer = null }
-}
-
 function handleClearAllData() {
   if (eventPanel.value && eventPanel.value.clearAllEvents) eventPanel.value.clearAllEvents()
   if (gaodeMap.value && gaodeMap.value.clearAllTracks) gaodeMap.value.clearAllTracks()
@@ -349,7 +281,7 @@ function handleClearAllData() {
 
 function onLogout() {
   userStore.logout()
-  router.push('/login')
+  router.push('/auth')
 }
 
 function goToProfile() {
@@ -360,15 +292,24 @@ function goToRideHistory() {
   router.push('/ride-history')
 }
 
-onMounted(()=>{
+onMounted(async () => {
   connect('ws://localhost:8082/ws/sensor-data')
+  // 从数据库加载最新一条数据，初始化温湿度显示
+  try {
+    const res = await request.get('/api/sensor/history', { params: { limit: 1 } })
+    if (res.data && res.data.length > 0) {
+      const latest = res.data[0]
+      if (latest.temperature != null) latestTemp.value = Number(latest.temperature)
+      if (latest.humidity != null) latestHumidity.value = Number(latest.humidity)
+    }
+  } catch {
+    // 无数据时保持 null 显示 '--'
+  }
 })
 
 onUnmounted(()=>{
   disconnect()
-  weather.stopAutoRefresh()
   rideTracking.destroy()
-  if (autoTimer) clearInterval(autoTimer)
   if (deviceOfflineTimer) clearTimeout(deviceOfflineTimer)
 })
 </script>
@@ -531,17 +472,6 @@ onUnmounted(()=>{
   transition: all 0.2s ease;
 }
 
-.app-nav__btn--primary {
-  background: linear-gradient(135deg, #00D9FF, #A855F7);
-  color: #fff;
-  box-shadow: 0 0 20px rgba(0, 217, 255, 0.3);
-}
-
-.app-nav__btn--primary:hover {
-  box-shadow: 0 2px 20px rgba(0, 217, 255, 0.6), 0 0 30px rgba(168, 85, 247, 0.4);
-  transform: translateY(-1px);
-}
-
 .app-nav__btn--secondary {
   background: rgba(0, 217, 255, 0.08);
   color: #E0F2FE;
@@ -555,15 +485,14 @@ onUnmounted(()=>{
 
 /* Main Content */
 .terminal-layout {
-  max-width: 1600px;
+  max-width: 1400px;
   width: 100%;
   margin: 0 auto;
   padding: 24px;
   box-sizing: border-box;
-  display: grid;
-  grid-template-columns: 1fr 400px;
+  display: flex;
+  flex-direction: column;
   gap: 24px;
-  align-items: start;
 }
 
 /* 页面包装器 - 默认不滚动（数字孪生） */
@@ -595,21 +524,11 @@ onUnmounted(()=>{
   overflow: hidden;
 }
 
-.app-main {
-  min-width: 0;
-}
-
-.app-sidebar {
-  position: sticky;
-  top: 80px;
-}
-
 /* ===== Environment Dashboard ===== */
 .env-dashboard {
   display: grid;
-  grid-template-columns: 1fr 320px;
+  grid-template-columns: 1fr 220px;
   gap: 20px;
-  margin-bottom: 24px;
 }
 
 /* --- Comfort Gauge Card --- */

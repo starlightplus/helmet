@@ -43,15 +43,15 @@
     <div class="mt-8 pt-6 border-t border-white/5 flex flex-wrap justify-between items-center gap-6">
       <div class="flex gap-10">
         <div class="group">
-          <p class="text-[9px] text-white/20 uppercase font-mono tracking-widest group-hover:text-[#00f2ff] transition-colors">Min Temp</p>
+          <p class="text-[9px] text-[#00f2ff] uppercase font-mono tracking-widest">Min Temp</p>
           <p class="text-sm font-mono text-white/70 mt-1">{{ stats.minTemp }}°C</p>
         </div>
         <div class="group">
-          <p class="text-[9px] text-white/20 uppercase font-mono tracking-widest group-hover:text-[#00f2ff] transition-colors">Max Temp</p>
+          <p class="text-[9px] text-[#00f2ff] uppercase font-mono tracking-widest">Max Temp</p>
           <p class="text-sm font-mono text-white/70 mt-1">{{ stats.maxTemp }}°C</p>
         </div>
         <div class="group">
-          <p class="text-[9px] text-white/20 uppercase font-mono tracking-widest group-hover:text-[#ff0055] transition-colors">Avg Humidity</p>
+          <p class="text-[9px] text-[#ff0055] uppercase font-mono tracking-widest">Avg Humidity</p>
           <p class="text-sm font-mono text-white/70 mt-1">{{ stats.avgHum }}%</p>
         </div>
       </div>
