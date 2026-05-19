@@ -74,80 +74,10 @@
             <div class="app-main">
               <!-- Environment Dashboard -->
               <div class="env-dashboard" data-aos="fade-up">
-          <!-- Comfort Gauge Card -->
-          <div class="comfort-card" :style="{ '--c-color': comfortLevel.color, '--c-glow': comfortLevel.color + '40' }">
-            <div class="comfort-card__glow"></div>
-            <div class="comfort-card__header">
-              <div class="comfort-card__label">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg>
-                环境舒适度
-              </div>
-              <div class="comfort-card__badge" :style="{ background: comfortLevel.color + '20', color: comfortLevel.color, borderColor: comfortLevel.color + '40' }">
-                {{ comfortLevel.label }}
-              </div>
-            </div>
-            <div class="comfort-card__gauge">
-              <svg viewBox="0 0 200 130" class="gauge-svg">
-                <defs>
-                  <linearGradient :id="'gaugeGrad'" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stop-color="#00D9FF" />
-                    <stop offset="25%" stop-color="#00F0FF" />
-                    <stop offset="50%" stop-color="#A855F7" />
-                    <stop offset="75%" stop-color="#C026D3" />
-                    <stop offset="100%" stop-color="#E879F9" />
-                  </linearGradient>
-                </defs>
-                <!-- Track -->
-                <path d="M 30 110 A 70 70 0 0 1 170 110" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="10" stroke-linecap="round" />
-                <!-- Value arc -->
-                <path d="M 30 110 A 70 70 0 0 1 170 110" fill="none" :stroke="'url(#gaugeGrad)'" stroke-width="10" stroke-linecap="round" :stroke-dasharray="gaugeCircumference" :stroke-dashoffset="gaugeOffset" class="gauge-arc" />
-                <!-- Needle dot -->
-                <circle :cx="needleX" :cy="needleY" r="6" :fill="comfortLevel.color" class="gauge-needle">
-                  <animate attributeName="r" values="5;7;5" dur="2s" repeatCount="indefinite" />
-                </circle>
-                <circle :cx="needleX" :cy="needleY" r="10" :fill="comfortLevel.color" opacity="0.2">
-                  <animate attributeName="r" values="8;14;8" dur="2s" repeatCount="indefinite" />
-                  <animate attributeName="opacity" values="0.3;0;0.3" dur="2s" repeatCount="indefinite" />
-                </circle>
-                <!-- Center value -->
-                <text x="100" y="90" text-anchor="middle" :fill="comfortLevel.color" font-size="28" font-weight="800" font-family="'Segoe UI', monospace" class="gauge-text">{{ comfortTHI != null ? comfortTHI.toFixed(1) : '--' }}</text>
-                <text x="100" y="108" text-anchor="middle" fill="#8892A0" font-size="11" font-family="'Segoe UI'">THI 指数</text>
-                <!-- Scale labels -->
-                <text x="22" y="122" fill="#556" font-size="9" font-family="monospace">0</text>
-                <text x="172" y="122" fill="#556" font-size="9" font-family="monospace">40</text>
-              </svg>
-            </div>
-            <!-- THI Legend -->
-            <div class="thi-legend">
-              <div class="thi-legend__item" v-for="item in thiLevels" :key="item.label">
-                <span class="thi-legend__dot" :style="{ background: item.color }"></span>
-                <span class="thi-legend__range">{{ item.range }}</span>
-                <span class="thi-legend__label">{{ item.label }}</span>
-              </div>
-            </div>
-            <div class="comfort-card__metrics">
-              <div class="metric-item">
-                <div class="metric-item__head">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#00D9FF" stroke-width="2"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg>
-                  <span class="metric-item__label">温度</span>
-                  <span class="metric-item__val">{{ latestTemp != null ? latestTemp.toFixed(1) + '°C' : '--' }}</span>
-                </div>
-                <div class="metric-item__bar">
-                  <div class="metric-item__fill metric-item__fill--temp" :style="{ width: tempPercent + '%' }"></div>
-                </div>
-              </div>
-              <div class="metric-item">
-                <div class="metric-item__head">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#A855F7" stroke-width="2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
-                  <span class="metric-item__label">湿度</span>
-                  <span class="metric-item__val">{{ latestHumidity != null ? latestHumidity.toFixed(1) + '%' : '--' }}</span>
-                </div>
-                <div class="metric-item__bar">
-                  <div class="metric-item__fill metric-item__fill--humi" :style="{ width: humiPercent + '%' }"></div>
-                </div>
-              </div>
-            </div>
-          </div>
+                <TempHumidityCards
+                  :temperature="latestTemp"
+                  :humidity="latestHumidity"
+                />
 
           <!-- Device Count Card -->
           <div class="device-card">
@@ -228,6 +158,12 @@
 
   <!-- AI 对话浮动组件 -->
   <AiChat :deviceId="latestSensorData.deviceId || ''" />
+
+  <!-- AI 助手 3D 模型 - 紧贴在 AI 对话按钮左边 -->
+  <AiAssistant
+    :sensor-data="latestSensorData"
+    :position="{ x: -10, y: -8 }"
+  />
 </template>
 
 <script>
@@ -246,6 +182,8 @@ import RideStatsPanel from '@/components/RideStatsPanel.vue'
 import HelmetTwin from '@/components/HelmetTwin.vue'
 import AiChat from '@/components/AiChat.vue'
 import DataVisualization from '@/views/DataVisualization.vue'
+import TempHumidityCards from '@/components/TempHumidityCards.vue'
+import AiAssistant from '@/components/AiAssistant.vue'
 import { useWebSocket } from '@/composables/useWebSocket.js'
 import { useWeather } from '@/composables/useWeather.js'
 import { useRideTracking } from '@/composables/useRideTracking.js'

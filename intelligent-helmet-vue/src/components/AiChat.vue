@@ -185,20 +185,7 @@ function formatText(text) {
   bottom: 28px;
   right: 28px;
   z-index: 1000;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 18px;
-  border-radius: 50px;
-  border: 1px solid rgba(0, 217, 255, 0.4);
-  background: linear-gradient(135deg, rgba(0, 217, 255, 0.15), rgba(168, 85, 247, 0.15));
-  backdrop-filter: blur(12px);
-  color: #00D9FF;
-  cursor: pointer;
-  font-size: 0.85rem;
-  font-weight: 600;
-  box-shadow: 0 4px 24px rgba(0, 217, 255, 0.25);
-  transition: all 0.25s ease;
+  display: none;
 }
 
 .ai-fab:hover {
