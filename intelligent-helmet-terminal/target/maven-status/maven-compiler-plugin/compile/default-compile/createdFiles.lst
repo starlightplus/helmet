@@ -1,4 +1,7 @@
 com\demo\ApplicationAMQPJavaDemo$1.class
+com\demo\repository\SensorDataRepository.class
+com\demo\config\JwtUtil.class
+com\demo\service\SensorDataPersistService.class
 com\demo\config\SecurityConfig.class
 com\demo\service\UserService.class
 com\demo\controller\ChatController.class
@@ -10,6 +13,7 @@ com\demo\config\JacksonConfig.class
 com\demo\config\WebSocketConfig.class
 com\demo\model\User.class
 com\demo\service\ClaudeService.class
+com\demo\config\JwtFilter.class
 com\demo\model\SensorData.class
 com\demo\websocket\SensorDataWebSocketHandler.class
 com\demo\controller\AuthController.class

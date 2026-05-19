@@ -1,91 +1,113 @@
 <template>
-  <div class="relative min-h-screen bg-[#030712] flex items-center justify-center overflow-hidden font-sans">
-    <!-- 动态粒子背景 Canvas -->
-    <canvas ref="canvasRef" class="absolute inset-0 z-0"></canvas>
+  <div class="auth-root">
+    <!-- 背景：网格 + 扫描线 -->
+    <canvas ref="canvasRef" class="auth-canvas"></canvas>
 
-    <!-- 高端毛玻璃质感卡片 -->
-    <div class="relative z-10 w-full max-w-md p-10 m-4 rounded-[2rem] bg-white/[0.03] backdrop-blur-2xl border border-white/10 shadow-[0_0_50px_rgba(6,182,212,0.1)]">
+    <!-- 扫描线覆盖层 -->
+    <div class="scanline-overlay"></div>
 
-      <!-- 顶部发光 Logo -->
-      <div class="flex justify-center mb-10">
-        <div class="relative w-16 h-16 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center shadow-[0_0_30px_rgba(6,182,212,0.4)]">
-          <div class="absolute inset-0 rounded-full bg-white/20 animate-ping" style="animation-duration: 3s;"></div>
-          <svg class="w-8 h-8 text-white relative z-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4" />
+    <!-- 主卡片 -->
+    <div class="auth-card">
+
+      <!-- 顶部状态栏 -->
+      <div class="card-topbar">
+        <span class="topbar-tag">SYS</span>
+        <span class="topbar-title">HELMET MONITOR v2.0</span>
+        <span class="topbar-status">
+          <span class="status-dot"></span>
+          ONLINE
+        </span>
+      </div>
+
+      <!-- Logo 区 -->
+      <div class="logo-wrap">
+        <div class="logo-hex">
+          <svg width="32" height="32" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
           </svg>
+        </div>
+        <div class="logo-lines">
+          <div class="logo-line-1"></div>
+          <div class="logo-line-2"></div>
         </div>
       </div>
 
-      <!-- 标题区 -->
-      <div class="text-center mb-10">
-        <h2 class="text-3xl font-light text-white tracking-wide mb-2">
-          {{ isLogin ? 'Welcome Back' : 'Create Account' }}
-        </h2>
-        <p class="text-sm text-slate-400 font-light">
-          {{ isLogin ? 'Authenticate to access the neural network' : 'Join the next generation of riders' }}
-        </p>
+      <!-- 标题 -->
+      <div class="auth-title">
+        <h2>{{ isLogin ? 'ACCESS CONTROL' : 'NEW OPERATOR' }}</h2>
+        <p>{{ isLogin ? 'Enter credentials to authenticate' : 'Register a new operator account' }}</p>
       </div>
 
       <!-- 错误提示 -->
-      <div v-if="errorMessage" class="mb-6 flex items-center gap-2 text-red-400 text-sm px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20">
-        <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <div v-if="errorMessage" class="error-bar">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
         {{ errorMessage }}
       </div>
 
-      <!-- 表单区 (浮动标签设计) -->
-      <form @submit.prevent="handleSubmit" class="space-y-6">
+      <!-- 表单 -->
+      <form @submit.prevent="handleSubmit" class="auth-form">
 
         <!-- 用户名 -->
-        <div class="relative group">
-          <input type="text" v-model="form.username" required id="username"
-            class="w-full bg-transparent border-b border-white/20 px-0 py-3 text-white focus:outline-none focus:border-cyan-400 transition-colors peer placeholder-transparent"
-            placeholder="Username" />
-          <label for="username" class="absolute left-0 -top-3.5 text-xs text-cyan-400 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-slate-400 peer-placeholder-shown:top-3 peer-focus:-top-3.5 peer-focus:text-xs peer-focus:text-cyan-400 cursor-text">Username</label>
-          <p v-if="!isLogin && usernameError" class="mt-1 text-xs text-red-400">{{ usernameError }}</p>
-          <p v-if="!isLogin && checkingUsername" class="mt-1 text-xs text-cyan-400">Checking...</p>
+        <div class="field-wrap">
+          <label class="field-label">USERNAME</label>
+          <div class="field-box" :class="{ 'field-error': !isLogin && usernameError }">
+            <span class="field-prefix">ID</span>
+            <input type="text" v-model="form.username" required autocomplete="username"
+              class="field-input" placeholder="Enter username" />
+            <span v-if="!isLogin && checkingUsername" class="field-checking">···</span>
+          </div>
+          <p v-if="!isLogin && usernameError" class="field-hint error">{{ usernameError }}</p>
         </div>
 
         <!-- 密码 -->
-        <div class="relative group">
-          <input type="password" v-model="form.password" required id="password"
-            class="w-full bg-transparent border-b border-white/20 px-0 py-3 text-white focus:outline-none focus:border-cyan-400 transition-colors peer placeholder-transparent"
-            placeholder="Password" />
-          <label for="password" class="absolute left-0 -top-3.5 text-xs text-cyan-400 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-slate-400 peer-placeholder-shown:top-3 peer-focus:-top-3.5 peer-focus:text-xs peer-focus:text-cyan-400 cursor-text">Password</label>
+        <div class="field-wrap">
+          <label class="field-label">PASSWORD</label>
+          <div class="field-box">
+            <span class="field-prefix">PW</span>
+            <input type="password" v-model="form.password" required autocomplete="current-password"
+              class="field-input" placeholder="Enter password" />
+          </div>
         </div>
 
-        <!-- 确认密码 (仅注册模式) -->
-        <div v-if="!isLogin" class="relative group">
-          <input type="password" v-model="form.confirmPassword" required id="confirmPassword"
-            class="w-full bg-transparent border-b border-white/20 px-0 py-3 text-white focus:outline-none focus:border-cyan-400 transition-colors peer placeholder-transparent"
-            placeholder="Confirm Password" />
-          <label for="confirmPassword" class="absolute left-0 -top-3.5 text-xs text-cyan-400 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-slate-400 peer-placeholder-shown:top-3 peer-focus:-top-3.5 peer-focus:text-xs peer-focus:text-cyan-400 cursor-text">Confirm Password</label>
-          <p v-if="passwordError" class="mt-1 text-xs text-red-400">{{ passwordError }}</p>
+        <!-- 确认密码（注册模式） -->
+        <div v-if="!isLogin" class="field-wrap">
+          <label class="field-label">CONFIRM PASSWORD</label>
+          <div class="field-box" :class="{ 'field-error': passwordError }">
+            <span class="field-prefix">CF</span>
+            <input type="password" v-model="form.confirmPassword" required autocomplete="new-password"
+              class="field-input" placeholder="Repeat password" />
+          </div>
+          <p v-if="passwordError" class="field-hint error">{{ passwordError }}</p>
         </div>
 
         <!-- 提交按钮 -->
-        <button type="submit" :disabled="loading || (!isLogin && !isFormValid)"
-          class="w-full py-4 mt-8 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-medium tracking-wide hover:shadow-[0_0_25px_rgba(6,182,212,0.5)] hover:scale-[1.02] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100">
-          <span v-if="!loading">{{ isLogin ? 'Sign In' : 'Sign Up' }}</span>
-          <span v-else>{{ isLogin ? 'Signing in...' : 'Signing up...' }}</span>
+        <button type="submit" :disabled="loading || (!isLogin && !isFormValid)" class="submit-btn">
+          <span v-if="!loading" class="btn-text">
+            {{ isLogin ? 'AUTHENTICATE' : 'REGISTER' }}
+          </span>
+          <span v-else class="btn-loading">
+            <span></span><span></span><span></span>
+          </span>
+          <div class="btn-scan"></div>
         </button>
       </form>
 
       <!-- 切换模式 -->
-      <div class="mt-8 text-center">
-        <p class="text-sm text-slate-400">
-          {{ isLogin ? "Don't have an account?" : "Already have an account?" }}
-          <button @click="toggleMode" class="text-cyan-400 hover:text-cyan-300 font-medium transition-colors ml-1">
-            {{ isLogin ? 'Create one' : 'Sign in' }}
-          </button>
-        </p>
+      <div class="mode-switch">
+        <span>{{ isLogin ? 'No account?' : 'Have an account?' }}</span>
+        <button @click="toggleMode" class="switch-btn">
+          {{ isLogin ? 'REGISTER' : 'SIGN IN' }}
+        </button>
+      </div>
+
+      <!-- 底部装饰线 -->
+      <div class="card-footer">
+        <span>INTELLIGENT HELMET SYSTEM</span>
+        <span>BUILD 2025.03</span>
       </div>
     </div>
-
-    <!-- 返回主页按钮 -->
-    <router-link to="/" class="absolute top-8 left-8 z-20 flex items-center gap-2 text-sm text-slate-400 hover:text-white transition-colors group">
-      <svg class="w-5 h-5 group-hover:-translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
-      Back to Home
-    </router-link>
   </div>
 </template>
 
@@ -128,7 +150,6 @@ const toggleMode = () => {
   form.confirmPassword = ''
 }
 
-// 注册模式下检查用户名是否已存在
 watch(() => form.username, async (val) => {
   if (isLogin.value) return
   if (val.length < 3) { usernameError.value = ''; return }
@@ -146,7 +167,6 @@ watch(() => form.username, async (val) => {
   }
 })
 
-// 注册模式下校验两次密码
 watch([() => form.password, () => form.confirmPassword], () => {
   if (isLogin.value) return
   passwordError.value = form.password !== form.confirmPassword ? 'Passwords do not match' : ''
@@ -157,7 +177,6 @@ const handleSubmit = async () => {
   loading.value = true
 
   if (isLogin.value) {
-    // 登录
     try {
       const res = await fetch('http://localhost:8082/api/auth/login', {
         method: 'POST',
@@ -166,7 +185,12 @@ const handleSubmit = async () => {
       })
       const data = await res.json()
       if (data.success) {
-        userStore.login({ username: data.username })
+        userStore.login({
+          username: data.username,
+          token: data.token,
+          role: data.role,
+          deviceId: data.deviceId
+        })
         router.push('/app')
       } else {
         errorMessage.value = data.message || 'Invalid username or password'
@@ -177,7 +201,6 @@ const handleSubmit = async () => {
       loading.value = false
     }
   } else {
-    // 注册
     if (!isFormValid.value) {
       errorMessage.value = 'Please check your input'
       loading.value = false
@@ -192,9 +215,6 @@ const handleSubmit = async () => {
       const data = await res.json()
       if (res.ok) {
         toggleMode()
-        errorMessage.value = ''
-        // 用 cyan 色临时提示注册成功
-        setTimeout(() => { errorMessage.value = '' }, 3000)
       } else {
         errorMessage.value = data.error || 'Registration failed, please try again'
       }
@@ -206,110 +226,468 @@ const handleSubmit = async () => {
   }
 }
 
-// ==========================================
-// 高端科技粒子背景 (Canvas Particle System)
-// ==========================================
-let animationFrameId
+// ── Canvas 背景：网格 + 流动节点 ──
+let animFrameId
 
 onMounted(() => {
   const canvas = canvasRef.value
   if (!canvas) return
   const ctx = canvas.getContext('2d')
 
-  let width = window.innerWidth
-  let height = window.innerHeight
-  canvas.width = width
-  canvas.height = height
+  let W = canvas.width = window.innerWidth
+  let H = canvas.height = window.innerHeight
 
-  const particles = []
-  const particleCount = Math.min(Math.floor(window.innerWidth / 12), 120)
-
-  let mouse = { x: null, y: null }
-
-  const handleMouseMove = (e) => { mouse.x = e.clientX; mouse.y = e.clientY }
-  const handleMouseLeave = () => { mouse.x = null; mouse.y = null }
-
-  window.addEventListener('mousemove', handleMouseMove)
-  window.addEventListener('mouseleave', handleMouseLeave)
-
-  class Particle {
-    constructor() {
-      this.x = Math.random() * width
-      this.y = Math.random() * height
-      this.vx = (Math.random() - 0.5) * 0.6
-      this.vy = (Math.random() - 0.5) * 0.6
-      this.radius = Math.random() * 1.5 + 0.5
+  // 网格节点
+  const nodes = []
+  const cols = Math.ceil(W / 80)
+  const rows = Math.ceil(H / 80)
+  for (let i = 0; i <= cols; i++) {
+    for (let j = 0; j <= rows; j++) {
+      nodes.push({
+        x: i * 80 + (Math.random() - 0.5) * 20,
+        y: j * 80 + (Math.random() - 0.5) * 20,
+        ox: i * 80,
+        oy: j * 80,
+        vx: (Math.random() - 0.5) * 0.3,
+        vy: (Math.random() - 0.5) * 0.3,
+        r: Math.random() * 1.2 + 0.4,
+        pulse: Math.random() * Math.PI * 2
+      })
     }
-    update() {
-      this.x += this.vx
-      this.y += this.vy
-      if (this.x < 0 || this.x > width) this.vx = -this.vx
-      if (this.y < 0 || this.y > height) this.vy = -this.vy
-    }
-    draw() {
+  }
+
+  // 流动数据粒子
+  const streams = Array.from({ length: 8 }, () => ({
+    x: Math.random() * W,
+    y: Math.random() * H,
+    speed: Math.random() * 1.5 + 0.5,
+    len: Math.random() * 60 + 30,
+    alpha: Math.random() * 0.4 + 0.1
+  }))
+
+  let t = 0
+
+  const draw = () => {
+    t += 0.008
+    ctx.fillStyle = 'rgba(8, 10, 18, 0.18)'
+    ctx.fillRect(0, 0, W, H)
+
+    // 网格线
+    ctx.strokeStyle = 'rgba(251, 146, 60, 0.04)'
+    ctx.lineWidth = 1
+    for (let i = 0; i <= cols; i++) {
       ctx.beginPath()
-      ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2)
-      ctx.fillStyle = 'rgba(6, 182, 212, 0.6)'
+      ctx.moveTo(i * 80, 0)
+      ctx.lineTo(i * 80, H)
+      ctx.stroke()
+    }
+    for (let j = 0; j <= rows; j++) {
+      ctx.beginPath()
+      ctx.moveTo(0, j * 80)
+      ctx.lineTo(W, j * 80)
+      ctx.stroke()
+    }
+
+    // 节点
+    nodes.forEach(n => {
+      n.x += n.vx
+      n.y += n.vy
+      n.pulse += 0.02
+      if (Math.abs(n.x - n.ox) > 15) n.vx *= -1
+      if (Math.abs(n.y - n.oy) > 15) n.vy *= -1
+
+      const alpha = 0.25 + Math.sin(n.pulse) * 0.15
+      ctx.beginPath()
+      ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2)
+      ctx.fillStyle = `rgba(251, 146, 60, ${alpha})`
       ctx.fill()
-    }
-  }
+    })
 
-  for (let i = 0; i < particleCount; i++) particles.push(new Particle())
-
-  const animate = () => {
-    ctx.fillStyle = 'rgba(3, 7, 18, 0.2)'
-    ctx.fillRect(0, 0, width, height)
-
-    for (let i = 0; i < particles.length; i++) {
-      particles[i].update()
-      particles[i].draw()
-
-      for (let j = i + 1; j < particles.length; j++) {
-        const dx = particles[i].x - particles[j].x
-        const dy = particles[i].y - particles[j].y
-        const dist = Math.sqrt(dx * dx + dy * dy)
-        if (dist < 120) {
+    // 节点连线
+    for (let i = 0; i < nodes.length; i++) {
+      for (let j = i + 1; j < nodes.length; j++) {
+        const dx = nodes[i].x - nodes[j].x
+        const dy = nodes[i].y - nodes[j].y
+        const d = Math.sqrt(dx * dx + dy * dy)
+        if (d < 100) {
           ctx.beginPath()
-          ctx.strokeStyle = `rgba(6, 182, 212, ${0.15 - dist / 120 * 0.15})`
-          ctx.lineWidth = 0.6
-          ctx.moveTo(particles[i].x, particles[i].y)
-          ctx.lineTo(particles[j].x, particles[j].y)
-          ctx.stroke()
-        }
-      }
-
-      if (mouse.x != null && mouse.y != null) {
-        const dx = particles[i].x - mouse.x
-        const dy = particles[i].y - mouse.y
-        const dist = Math.sqrt(dx * dx + dy * dy)
-        if (dist < 150) {
-          ctx.beginPath()
-          ctx.strokeStyle = `rgba(6, 182, 212, ${0.3 - dist / 150 * 0.3})`
-          ctx.lineWidth = 1
-          ctx.moveTo(particles[i].x, particles[i].y)
-          ctx.lineTo(mouse.x, mouse.y)
+          ctx.strokeStyle = `rgba(251, 146, 60, ${0.08 * (1 - d / 100)})`
+          ctx.lineWidth = 0.5
+          ctx.moveTo(nodes[i].x, nodes[i].y)
+          ctx.lineTo(nodes[j].x, nodes[j].y)
           ctx.stroke()
         }
       }
     }
-    animationFrameId = requestAnimationFrame(animate)
+
+    // 流动数据流
+    streams.forEach(s => {
+      s.y += s.speed
+      if (s.y > H + s.len) { s.y = -s.len; s.x = Math.random() * W }
+      const grad = ctx.createLinearGradient(s.x, s.y - s.len, s.x, s.y)
+      grad.addColorStop(0, 'rgba(251,146,60,0)')
+      grad.addColorStop(1, `rgba(251,146,60,${s.alpha})`)
+      ctx.beginPath()
+      ctx.strokeStyle = grad
+      ctx.lineWidth = 1
+      ctx.moveTo(s.x, s.y - s.len)
+      ctx.lineTo(s.x, s.y)
+      ctx.stroke()
+    })
+
+    animFrameId = requestAnimationFrame(draw)
   }
 
-  animate()
+  draw()
 
-  const handleResize = () => {
-    width = window.innerWidth
-    height = window.innerHeight
-    canvas.width = width
-    canvas.height = height
+  const onResize = () => {
+    W = canvas.width = window.innerWidth
+    H = canvas.height = window.innerHeight
   }
-  window.addEventListener('resize', handleResize)
+  window.addEventListener('resize', onResize)
 
   onBeforeUnmount(() => {
-    window.removeEventListener('resize', handleResize)
-    window.removeEventListener('mousemove', handleMouseMove)
-    window.removeEventListener('mouseleave', handleMouseLeave)
-    cancelAnimationFrame(animationFrameId)
+    window.removeEventListener('resize', onResize)
+    cancelAnimationFrame(animFrameId)
   })
 })
 </script>
+
+<style scoped>
+/* ── 根容器 ── */
+.auth-root {
+  position: relative;
+  min-height: 100vh;
+  background: #080a12;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  font-family: 'Courier New', 'Consolas', monospace;
+}
+
+.auth-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+/* 扫描线 */
+.scanline-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.08) 2px,
+    rgba(0, 0, 0, 0.08) 4px
+  );
+  pointer-events: none;
+}
+
+/* ── 主卡片 ── */
+.auth-card {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 420px;
+  margin: 16px;
+  background: rgba(12, 15, 26, 0.92);
+  border: 1px solid rgba(251, 146, 60, 0.25);
+  box-shadow:
+    0 0 0 1px rgba(251, 146, 60, 0.08),
+    0 0 40px rgba(251, 146, 60, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  clip-path: polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 20px 100%, 0 calc(100% - 20px));
+}
+
+/* ── 顶部状态栏 ── */
+.card-topbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  border-bottom: 1px solid rgba(251, 146, 60, 0.15);
+  background: rgba(251, 146, 60, 0.04);
+}
+.topbar-tag {
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  color: #fb923c;
+  background: rgba(251, 146, 60, 0.15);
+  padding: 2px 6px;
+  border: 1px solid rgba(251, 146, 60, 0.3);
+}
+.topbar-title {
+  flex: 1;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  color: #9ca3af;
+}
+.topbar-status {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  color: #4ade80;
+}
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #4ade80;
+  box-shadow: 0 0 6px #4ade80;
+  animation: blink 2s ease-in-out infinite;
+}
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* ── Logo ── */
+.logo-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 28px 0 16px;
+  gap: 12px;
+}
+.logo-hex {
+  width: 64px;
+  height: 64px;
+  background: rgba(251, 146, 60, 0.08);
+  border: 1px solid rgba(251, 146, 60, 0.4);
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fb923c;
+  box-shadow: 0 0 20px rgba(251, 146, 60, 0.2);
+}
+.logo-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 40px;
+}
+.logo-line-1 {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #fb923c, transparent);
+  animation: scan 2s ease-in-out infinite;
+}
+.logo-line-2 {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(251,146,60,0.4), transparent);
+  animation: scan 2s ease-in-out infinite 0.3s;
+}
+@keyframes scan {
+  0%, 100% { opacity: 0.3; transform: scaleX(0.5); }
+  50% { opacity: 1; transform: scaleX(1); }
+}
+
+/* ── 标题 ── */
+.auth-title {
+  text-align: center;
+  padding: 0 32px 24px;
+}
+.auth-title h2 {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: #f1f5f9;
+  margin: 0 0 6px;
+}
+.auth-title p {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* ── 错误提示 ── */
+.error-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 24px 16px;
+  padding: 10px 14px;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.08);
+  border: 1px solid rgba(248, 113, 113, 0.25);
+  border-left: 3px solid #f87171;
+}
+
+/* ── 表单 ── */
+.auth-form {
+  padding: 0 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.field-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.field-label {
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  color: #fb923c;
+  font-weight: 600;
+}
+.field-box {
+  display: flex;
+  align-items: center;
+  border: 1px solid rgba(251, 146, 60, 0.2);
+  border-left: 3px solid rgba(251, 146, 60, 0.5);
+  background: rgba(251, 146, 60, 0.03);
+  transition: border-color 0.2s, background 0.2s;
+}
+.field-box:focus-within {
+  border-color: rgba(251, 146, 60, 0.6);
+  border-left-color: #fb923c;
+  background: rgba(251, 146, 60, 0.06);
+  box-shadow: 0 0 12px rgba(251, 146, 60, 0.08);
+}
+.field-box.field-error {
+  border-color: rgba(248, 113, 113, 0.4);
+  border-left-color: #f87171;
+}
+.field-prefix {
+  padding: 0 10px;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: rgba(251, 146, 60, 0.5);
+  border-right: 1px solid rgba(251, 146, 60, 0.15);
+  user-select: none;
+}
+.field-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  padding: 11px 12px;
+  font-size: 13px;
+  font-family: inherit;
+  color: #e2e8f0;
+  letter-spacing: 0.05em;
+}
+.field-input::placeholder { color: #374151; }
+.field-checking {
+  padding: 0 10px;
+  font-size: 14px;
+  color: #fb923c;
+  letter-spacing: 0.2em;
+  animation: blink 0.8s ease-in-out infinite;
+}
+.field-hint {
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  margin: 0;
+}
+.field-hint.error { color: #f87171; }
+
+/* ── 提交按钮 ── */
+.submit-btn {
+  position: relative;
+  overflow: hidden;
+  margin-top: 8px;
+  padding: 14px;
+  background: rgba(251, 146, 60, 0.1);
+  border: 1px solid rgba(251, 146, 60, 0.4);
+  color: #fb923c;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  cursor: pointer;
+  transition: all 0.2s;
+  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+}
+.submit-btn:hover:not(:disabled) {
+  background: rgba(251, 146, 60, 0.18);
+  border-color: #fb923c;
+  color: #fff;
+  box-shadow: 0 0 20px rgba(251, 146, 60, 0.25);
+}
+.submit-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.btn-text { position: relative; z-index: 1; }
+.btn-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+.btn-loading span {
+  width: 5px;
+  height: 5px;
+  background: #fb923c;
+  animation: dot-pulse 1s ease-in-out infinite;
+}
+.btn-loading span:nth-child(2) { animation-delay: 0.2s; }
+.btn-loading span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes dot-pulse {
+  0%, 100% { opacity: 0.2; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+/* 扫描动画 */
+.btn-scan {
+  position: absolute;
+  top: 0; left: -100%;
+  width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(251,146,60,0.12), transparent);
+  animation: btn-scan 3s ease-in-out infinite;
+}
+@keyframes btn-scan {
+  0% { left: -100%; }
+  50%, 100% { left: 100%; }
+}
+
+/* ── 切换模式 ── */
+.mode-switch {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 20px 24px 0;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: #6b7280;
+}
+.switch-btn {
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: #fb923c;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.2s;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.switch-btn:hover { color: #fdba74; }
+
+/* ── 底部 ── */
+.card-footer {
+  display: flex;
+  justify-content: space-between;
+  padding: 16px 24px 20px;
+  margin-top: 20px;
+  border-top: 1px solid rgba(251, 146, 60, 0.1);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: #374151;
+}
+</style>

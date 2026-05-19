@@ -1,81 +1,93 @@
 package com.demo.controller;
 
+import com.demo.config.JwtUtil;
 import com.demo.model.SensorData;
+import com.demo.model.User;
 import com.demo.service.SensorDataService;
+import com.demo.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
-/**
- * 传感器数据REST API控制器
- * 提供各种数据查询接口给前端调用
- */
 @RestController
 @RequestMapping("/api/sensor")
-@CrossOrigin(origins = "*") // 允许跨域访问
+@CrossOrigin(origins = "*")
 public class SensorDataController {
-    
+
     @Autowired
     private SensorDataService sensorDataService;
-    
-    /**
-     * 获取所有设备的最新传感器数据
-     * GET /api/sensor/latest
-     */
+
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private JwtUtil jwtUtil;
+
     @GetMapping("/latest")
     public ResponseEntity<List<SensorData>> getAllLatestData() {
-        List<SensorData> latestData = sensorDataService.getAllLatestSensorData();
-        return ResponseEntity.ok(latestData);
+        return ResponseEntity.ok(sensorDataService.getAllLatestSensorData());
     }
-    
-    /**
-     * 获取指定设备的最新传感器数据
-     * GET /api/sensor/latest/{deviceId}
-     */
+
     @GetMapping("/latest/{deviceId}")
     public ResponseEntity<SensorData> getLatestDataByDevice(@PathVariable String deviceId) {
         SensorData latestData = sensorDataService.getLatestSensorData(deviceId);
-        if (latestData != null) {
-            return ResponseEntity.ok(latestData);
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+        return latestData != null ? ResponseEntity.ok(latestData) : ResponseEntity.notFound().build();
     }
-    
-    /**
-     * 获取指定设备的历史数据
-     * GET /api/sensor/history/{deviceId}?limit=100
-     */
+
+    // 小时级别历史（按 token 过滤，返回最近N小时每小时均值）
+    @GetMapping("/history/hourly")
+    public ResponseEntity<?> getHourlyHistoryByToken(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestParam(defaultValue = "24") int hours) {
+        String deviceId = resolveDeviceId(authHeader);
+        if (deviceId == null) return ResponseEntity.ok(List.of());
+        return ResponseEntity.ok(sensorDataService.getHourlyHistoryFromDB(deviceId, hours));
+    }
+
+    // 天级别历史（按 token 过滤，返回最近N天每天均值）
+    @GetMapping("/history/daily")
+    public ResponseEntity<?> getDailyHistoryByToken(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestParam(defaultValue = "30") int days) {
+        String deviceId = resolveDeviceId(authHeader);
+        if (deviceId == null) return ResponseEntity.ok(List.of());
+        return ResponseEntity.ok(sensorDataService.getDailyHistoryFromDB(deviceId, days));
+    }
+
+    // 从数据库查历史数据，按 token 中的用户绑定设备过滤
+    @GetMapping("/history")
+    public ResponseEntity<?> getHistoryByToken(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestParam(defaultValue = "20") int limit) {
+
+        String deviceId = resolveDeviceId(authHeader);
+        if (deviceId == null) {
+            // 未登录或未绑定设备，返回空数组而不是 401，避免前端跳转登录页
+            return ResponseEntity.ok(List.of());
+        }
+        List<SensorData> data = sensorDataService.getHistoryFromDB(deviceId, limit);
+        return ResponseEntity.ok(data);
+    }
+
+    // 按 deviceId 直接查（管理员或内部使用）
     @GetMapping("/history/{deviceId}")
     public ResponseEntity<List<SensorData>> getHistoryData(
             @PathVariable String deviceId,
             @RequestParam(defaultValue = "100") int limit) {
-        List<SensorData> historyData = sensorDataService.getHistoryData(deviceId, limit);
-        return ResponseEntity.ok(historyData);
+        return ResponseEntity.ok(sensorDataService.getHistoryData(deviceId, limit));
     }
-    
 
-    
-    /**
-     * 获取所有设备ID列表
-     * GET /api/sensor/devices
-     */
     @GetMapping("/devices")
     public ResponseEntity<List<String>> getAllDevices() {
-        List<String> deviceIds = sensorDataService.getAllDeviceIds();
-        return ResponseEntity.ok(deviceIds);
+        return ResponseEntity.ok(sensorDataService.getAllDeviceIds());
     }
-    
-    /**
-     * 获取系统状态和统计信息
-     * GET /api/sensor/status
-     */
+
     @GetMapping("/status")
     public ResponseEntity<Map<String, Object>> getSystemStatus() {
         Map<String, Object> status = new HashMap<>();
@@ -83,14 +95,9 @@ public class SensorDataController {
         status.put("timestamp", LocalDateTime.now());
         status.put("statistics", sensorDataService.getDataStatistics());
         status.put("deviceCount", sensorDataService.getAllDeviceIds().size());
-        
         return ResponseEntity.ok(status);
     }
-    
-    /**
-     * 清除指定设备的数据
-     * DELETE /api/sensor/data/{deviceId}
-     */
+
     @DeleteMapping("/data/{deviceId}")
     public ResponseEntity<Map<String, String>> clearDeviceData(@PathVariable String deviceId) {
         sensorDataService.clearDeviceData(deviceId);
@@ -98,11 +105,7 @@ public class SensorDataController {
         response.put("message", "设备 " + deviceId + " 的数据已清除");
         return ResponseEntity.ok(response);
     }
-    
-    /**
-     * 清除所有数据
-     * DELETE /api/sensor/data/all
-     */
+
     @DeleteMapping("/data/all")
     public ResponseEntity<Map<String, String>> clearAllData() {
         sensorDataService.clearAllData();
@@ -110,43 +113,7 @@ public class SensorDataController {
         response.put("message", "所有数据已清除");
         return ResponseEntity.ok(response);
     }
-    
-    /**
-     * 清除测试设备数据，只保留真实设备
-     * DELETE /api/sensor/data/test-devices
-     */
-    @DeleteMapping("/data/test-devices")
-    public ResponseEntity<Map<String, Object>> clearTestDevices() {
-        try {
-            // 获取所有设备ID
-            List<String> allDevices = sensorDataService.getAllDeviceIds();
-            int removedCount = 0;
-            
-            // 清除以"smart_helmet_"开头的测试设备
-            for (String deviceId : allDevices) {
-                if (deviceId.startsWith("smart_helmet_") || deviceId.startsWith("test_") || deviceId.startsWith("demo_")) {
-                    sensorDataService.clearDeviceData(deviceId);
-                    removedCount++;
-                }
-            }
-            
-            Map<String, Object> response = new HashMap<>();
-            response.put("message", "测试设备数据清除完成");
-            response.put("removedDevices", removedCount);
-            response.put("remainingDevices", sensorDataService.getAllDeviceIds());
-            
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            Map<String, Object> error = new HashMap<>();
-            error.put("error", "清除测试设备失败: " + e.getMessage());
-            return ResponseEntity.internalServerError().body(error);
-        }
-    }
-    
-    /**
-     * 健康检查接口
-     * GET /api/sensor/health
-     */
+
     @GetMapping("/health")
     public ResponseEntity<Map<String, String>> healthCheck() {
         Map<String, String> health = new HashMap<>();
@@ -155,38 +122,28 @@ public class SensorDataController {
         health.put("timestamp", LocalDateTime.now().toString());
         return ResponseEntity.ok(health);
     }
-    
-    /**
-     * 生成测试数据接口（用于验证前端显示）
-     * POST /api/sensor/test
-     */
+
     @PostMapping("/test")
     public ResponseEntity<Map<String, String>> generateTestData() {
         try {
-            // 创建测试数据
             SensorData testData = new SensorData();
             testData.setDeviceId("test_smart_helmet");
             testData.setAppId("test_app_id");
             testData.setTemperature(25.6);
             testData.setHumidity(65.2);
-            // 按照GPS坐标显示规范，使用4位小数的十进制度格式
-            testData.setLongitude(116.3974); // 东经116.3974°（北京天安门附近）
-            testData.setLatitude(39.9093);   // 北纬39.9093°
-            testData.setRoll(10.0);          // 横滚角
-            testData.setPitch(5.0);          // 俯仰角
-            testData.setAvm(8.5);            // 角速度合量
-            testData.setGvm(11.2);           // 倾斜合量
+            testData.setLongitude(116.3974);
+            testData.setLatitude(39.9093);
+            testData.setRoll(10.0);
+            testData.setPitch(5.0);
+            testData.setAvm(8.5);
+            testData.setGvm(11.2);
             testData.setFallFlag(true);
             testData.setSlowFlag(false);
             testData.setReceiveTime(LocalDateTime.now());
-            
-            // 保存测试数据
             sensorDataService.saveSensorData(testData);
-            
             Map<String, String> response = new HashMap<>();
-            response.put("message", "测试数据已生成（包含GPS坐标）");
+            response.put("message", "测试数据已生成");
             response.put("deviceId", testData.getDeviceId());
-            response.put("gps", "东经" + testData.getLongitude() + "°, 北纬" + testData.getLatitude() + "°");
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             Map<String, String> error = new HashMap<>();
@@ -194,6 +151,13 @@ public class SensorDataController {
             return ResponseEntity.internalServerError().body(error);
         }
     }
-    
 
+    private String resolveDeviceId(String authHeader) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) return null;
+        String token = authHeader.substring(7);
+        if (!jwtUtil.validateToken(token)) return null;
+        String username = jwtUtil.extractUsername(token);
+        Optional<User> userOpt = userService.findByUsername(username);
+        return userOpt.map(User::getDeviceId).orElse(null);
+    }
 }

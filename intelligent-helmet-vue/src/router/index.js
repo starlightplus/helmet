@@ -1,5 +1,4 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import Home from '@/views/Home.vue'
 import App from '@/views/App.vue'
 import Auth from '@/views/Auth.vue'
 import { setupRouterGuards } from './guards'
@@ -7,8 +6,7 @@ import { setupRouterGuards } from './guards'
 const routes = [
   {
     path: '/',
-    name: 'Home',
-    component: Home
+    redirect: '/auth'
   },
   {
     path: '/app',

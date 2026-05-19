@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @SpringBootApplication
+@org.springframework.scheduling.annotation.EnableAsync
 public class ApplicationAMQPJavaDemo {
     private final static ExecutorService executorService = new ThreadPoolExecutor(
             Runtime.getRuntime().availableProcessors(), Runtime.getRuntime().availableProcessors() * 2,

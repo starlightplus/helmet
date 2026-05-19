@@ -96,7 +96,11 @@ use([
 const props = defineProps({
   chartData: {
     type: Array,
-    default: () => [] // 格式: [{ time: '12:00', temp: 24.5, hum: 45 }, ...]
+    default: () => []
+  },
+  timeRange: {
+    type: String,
+    default: 'minute' // 'minute' | 'hour' | 'day'
   }
 })
 
@@ -135,7 +139,8 @@ const chartOption = computed(() => ({
     },
     padding: [10, 15],
     formatter: (params) => {
-      let res = `<div style="margin-bottom: 5px; color: #666; font-size: 10px;">TIMESTAMP: ${params[0].name}</div>`
+      const label = props.timeRange === 'day' ? `DATE: ${params[0].name}` : props.timeRange === 'hour' ? `HOUR: ${params[0].name}` : `TIMESTAMP: ${params[0].name}`
+      let res = `<div style="margin-bottom: 5px; color: #666; font-size: 10px;">${label}</div>`
       params.forEach(item => {
         const color = item.seriesName === 'TEMP' ? '#00f2ff' : '#ff0055'
         res += `<div style="display: flex; justify-content: space-between; gap: 20px;">
@@ -158,14 +163,16 @@ const chartOption = computed(() => ({
   xAxis: {
     type: 'category',
     data: props.chartData.map(d => d.time),
-    boundaryGap: false, // 重要：让线条从边缘开始
+    boundaryGap: false,
     axisLine: { lineStyle: { color: 'rgba(255,255,255,0.1)' } },
     axisTick: { show: false },
     axisLabel: {
       color: 'rgba(255,255,255,0.3)',
       fontFamily: 'JetBrains Mono',
       fontSize: 9,
-      margin: 15
+      margin: 15,
+      // 天级别只显示 MM-DD，小时级直接显示 HH:00，分钟级显示完整时间
+      formatter: (val) => props.timeRange === 'day' ? val.slice(5) : val
     }
   },
 
