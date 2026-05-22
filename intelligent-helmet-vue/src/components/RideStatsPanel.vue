@@ -7,17 +7,10 @@
     <div class="ride-card__body">
       <!-- 左：Lottie动画 + 速度 -->
       <div class="ride-card__speed-col">
-        <!-- 骑行动画：仅骑行中显示 -->
-        <canvas v-if="isRiding" ref="lottieCanvas" class="ride-lottie"></canvas>
-        <!-- 未骑行时占位图标 -->
-        <div v-else class="ride-lottie ride-lottie--idle">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" opacity="0.25">
-            <circle cx="18.5" cy="17.5" r="3.5"/>
-            <circle cx="5.5" cy="17.5" r="3.5"/>
-            <path d="M15 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2z" fill="currentColor"/>
-            <path d="M12 17.5V14l-3-3 4-3 2 3h2"/>
-          </svg>
-        </div>
+        <!-- 骑行中动画 -->
+        <canvas v-if="isRiding"  ref="lottieCanvas"     class="ride-lottie"></canvas>
+        <!-- 待机动画 -->
+        <canvas v-else           ref="lottieIdleCanvas" class="ride-lottie"></canvas>
 
         <div class="ride-card__label-row">
           <div class="ride-card__badge" :class="{ 'ride-card__badge--idle': !isRiding }">
@@ -76,7 +69,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { formatDuration } from '@/composables/useRideTracking.js'
 import { DotLottie } from '@lottiefiles/dotlottie-web'
@@ -105,14 +98,31 @@ const formattedPace = computed(() => {
   return `${mins}'${String(secs).padStart(2, '0')}"`
 })
 
-// Lottie
-const lottieCanvas = ref(null)
-let dotLottie = null
+const lottieCanvas     = ref(null)
+const lottieIdleCanvas = ref(null)
+let dotLottie     = null
+let dotLottieIdle = null
 
-// 骑行开始时初始化，结束时销毁
+// 待机动画：组件挂载后立即启动，骑行时销毁
+onMounted(() => {
+  setTimeout(() => {
+    if (!lottieIdleCanvas.value) return
+    dotLottieIdle = new DotLottie({
+      canvas: lottieIdleCanvas.value,
+      src: '/animations/ride_free.lottie',
+      loop: true,
+      autoplay: true,
+    })
+  }, 50)
+})
+
+// 骑行开始时初始化骑行动画，结束时恢复待机动画
 watch(() => props.isRiding, (riding) => {
   if (riding) {
-    // 等 canvas 渲染到 DOM 后再初始化
+    // 销毁待机动画
+    dotLottieIdle?.destroy()
+    dotLottieIdle = null
+    // 等 canvas 渲染到 DOM 后再初始化骑行动画
     setTimeout(() => {
       if (!lottieCanvas.value) return
       dotLottie = new DotLottie({
@@ -124,8 +134,19 @@ watch(() => props.isRiding, (riding) => {
       })
     }, 50)
   } else {
+    // 销毁骑行动画
     dotLottie?.destroy()
     dotLottie = null
+    // 恢复待机动画
+    setTimeout(() => {
+      if (!lottieIdleCanvas.value) return
+      dotLottieIdle = new DotLottie({
+        canvas: lottieIdleCanvas.value,
+        src: '/animations/ride_free.lottie',
+        loop: true,
+        autoplay: true,
+      })
+    }, 50)
   }
 })
 
@@ -139,6 +160,7 @@ watch(() => props.currentSpeed, (speed) => {
 
 onUnmounted(() => {
   dotLottie?.destroy()
+  dotLottieIdle?.destroy()
 })
 </script>
 

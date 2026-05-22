@@ -1,6 +1,10 @@
 <template>
   <SportBackground />
   <div class="app-layout">
+    <!-- 全屏星光层（绝对定位，不影响布局） -->
+    <canvas ref="starsLeftRef"  class="stars-side stars-side--left"  aria-hidden="true"></canvas>
+    <canvas ref="starsRightRef" class="stars-side stars-side--right" aria-hidden="true"></canvas>
+
     <!-- Top Navigation HUD -->
     <nav class="app-nav cyber-corner-box">
       <div class="app-nav__left">
@@ -289,6 +293,10 @@ onMounted(async () => {
   } catch {
     // 无数据时保持 null 显示 '--'
   }
+  // 初始化两侧星光
+  await nextTick()
+  if (starsLeftRef.value)  initStars(starsLeftRef.value)
+  if (starsRightRef.value) initStars(starsRightRef.value)
 })
 
 onUnmounted(()=>{
@@ -296,7 +304,112 @@ onUnmounted(()=>{
   disconnect()
   rideTracking.destroy()
   if (deviceOfflineTimer) clearTimeout(deviceOfflineTimer)
+  starsAnimId && cancelAnimationFrame(starsAnimId)
 })
+
+// ── 两侧星光动画 ──────────────────────────────────────────────────
+const starsLeftRef  = ref(null)
+const starsRightRef = ref(null)
+let starsAnimId = null
+
+function initStars(canvas) {
+  const rect = canvas.getBoundingClientRect()
+  const W = rect.width  || 180
+  const H = rect.height || window.innerHeight
+  canvas.width  = W
+  canvas.height = H
+  const ctx = canvas.getContext('2d')
+
+  // 生成粒子：普通星点 + 少量流星
+  const STAR_COUNT   = Math.floor(W * H / 800)
+  const METEOR_COUNT = 3
+
+  const stars = Array.from({ length: STAR_COUNT }, () => ({
+    x: Math.random() * W,
+    y: Math.random() * H,
+    r: Math.random() * 1.2 + 0.2,
+    alpha: Math.random(),
+    dAlpha: (Math.random() * 0.008 + 0.002) * (Math.random() < 0.5 ? 1 : -1),
+    // 颜色：青色 / 白色 / 紫色
+    hue: [180, 200, 270, 0][Math.floor(Math.random() * 4)],
+  }))
+
+  const meteors = Array.from({ length: METEOR_COUNT }, () => newMeteor(W, H))
+
+  function newMeteor(w, h) {
+    const angle = Math.PI / 4 + (Math.random() - 0.5) * 0.4
+    return {
+      x: Math.random() * w,
+      y: Math.random() * h * 0.5,
+      len: 60 + Math.random() * 80,
+      speed: 2 + Math.random() * 3,
+      angle,
+      dx: Math.cos(angle),
+      dy: Math.sin(angle),
+      alpha: 0,
+      phase: 'in', // in → hold → out → dead
+      life: 0,
+      maxLife: 40 + Math.random() * 40,
+    }
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H)
+
+    // 星点
+    for (const s of stars) {
+      s.alpha += s.dAlpha
+      if (s.alpha > 1)  { s.alpha = 1;  s.dAlpha = -Math.abs(s.dAlpha) }
+      if (s.alpha < 0)  { s.alpha = 0;  s.dAlpha =  Math.abs(s.dAlpha) }
+      ctx.beginPath()
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2)
+      ctx.fillStyle = s.hue === 0
+        ? `rgba(255,255,255,${s.alpha * 0.85})`
+        : `hsla(${s.hue},100%,80%,${s.alpha * 0.7})`
+      ctx.fill()
+    }
+
+    // 流星
+    for (let i = 0; i < meteors.length; i++) {
+      const m = meteors[i]
+      m.life++
+      if (m.phase === 'in')   { m.alpha = Math.min(1, m.alpha + 0.06) ; if (m.alpha >= 1) m.phase = 'hold' }
+      if (m.phase === 'hold') { if (m.life > m.maxLife) m.phase = 'out' }
+      if (m.phase === 'out')  { m.alpha = Math.max(0, m.alpha - 0.04) ; if (m.alpha <= 0) m.phase = 'dead' }
+      if (m.phase === 'dead') { meteors[i] = newMeteor(W, H); continue }
+
+      m.x += m.dx * m.speed
+      m.y += m.dy * m.speed
+
+      const grad = ctx.createLinearGradient(m.x, m.y, m.x - m.dx * m.len, m.y - m.dy * m.len)
+      grad.addColorStop(0, `rgba(0,242,255,${m.alpha * 0.9})`)
+      grad.addColorStop(0.4, `rgba(180,100,255,${m.alpha * 0.4})`)
+      grad.addColorStop(1, 'rgba(0,0,0,0)')
+      ctx.beginPath()
+      ctx.moveTo(m.x, m.y)
+      ctx.lineTo(m.x - m.dx * m.len, m.y - m.dy * m.len)
+      ctx.strokeStyle = grad
+      ctx.lineWidth = 1.5
+      ctx.stroke()
+
+      // 流星头部光晕
+      const glow = ctx.createRadialGradient(m.x, m.y, 0, m.x, m.y, 4)
+      glow.addColorStop(0, `rgba(0,242,255,${m.alpha * 0.8})`)
+      glow.addColorStop(1, 'rgba(0,0,0,0)')
+      ctx.beginPath()
+      ctx.arc(m.x, m.y, 4, 0, Math.PI * 2)
+      ctx.fillStyle = glow
+      ctx.fill()
+
+      // 超出边界重置
+      if (m.x > W + 100 || m.y > H + 100) meteors[i] = newMeteor(W, H)
+    }
+
+    starsAnimId = requestAnimationFrame(draw)
+  }
+
+  draw()
+}
 </script>
 
 <style scoped>
@@ -306,12 +419,34 @@ onUnmounted(()=>{
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  position: relative;
 }
 .app-body {
   flex: 1;
   display: flex;
   min-height: 0;
   overflow: hidden;
+}
+
+/* ── 两侧星光柱 ──────────────────────────────────────────────────── */
+.stars-side {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: 180px;
+  display: block;
+  pointer-events: none;
+  z-index: 0;
+}
+.stars-side--left {
+  left: 0;
+  -webkit-mask-image: linear-gradient(to right, black 55%, transparent 100%);
+  mask-image: linear-gradient(to right, black 55%, transparent 100%);
+}
+.stars-side--right {
+  right: 0;
+  -webkit-mask-image: linear-gradient(to left, black 55%, transparent 100%);
+  mask-image: linear-gradient(to left, black 55%, transparent 100%);
 }
 
 /* ── 顶部导航 HUD ────────────────────────────────────────────────── */
@@ -542,6 +677,8 @@ onUnmounted(()=>{
   overflow-x: hidden;
   display: flex;
   flex-direction: column;
+  padding: 0 160px;
+  box-sizing: border-box;
 }
 .page-wrapper {
   flex: 1;
@@ -568,10 +705,10 @@ onUnmounted(()=>{
 
 /* ── 终端布局 ─────────────────────────────────────────────────────── */
 .terminal-layout {
-  max-width: 1400px;
+  max-width: 1100px;
   width: 100%;
   margin: 0 auto;
-  padding: 24px 28px;
+  padding: 24px 20px;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -604,10 +741,16 @@ onUnmounted(()=>{
     grid-template-columns: 1fr;
   }
 }
+@media (max-width: 1200px) {
+  .app-content { padding: 0 80px; }
+  .stars-side { width: 100px; }
+}
 @media (max-width: 768px) {
   .app-nav { padding: 0 14px; }
   .nav-metric { display: none; }
   .terminal-layout { padding: 14px; gap: 14px; }
+  .app-content { padding: 0; }
+  .stars-side { display: none; }
 }
 </style>
 

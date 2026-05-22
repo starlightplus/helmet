@@ -30,13 +30,23 @@
         </div>
       </div>
 
-      <!-- 消息列表 -->
-      <div v-for="(msg, i) in messages" :key="i" class="ai-msg" :class="'ai-msg--' + msg.role">
-        <div class="ai-msg__bubble">
-          <span v-if="msg.role === 'assistant'" class="ai-msg__name">灵盔 AI</span>
-          <div class="ai-msg__text" v-html="formatText(msg.content)"></div>
+      <!-- 按日期分组的消息列表 -->
+      <template v-for="group in groupedMessages" :key="group.date">
+        <!-- 日期分隔线 -->
+        <div class="ai-date-divider">
+          <span class="ai-date-divider__line"></span>
+          <span class="ai-date-divider__label">{{ group.dateLabel }}</span>
+          <span class="ai-date-divider__line"></span>
         </div>
-      </div>
+
+        <div v-for="(msg, i) in group.messages" :key="group.date + i" class="ai-msg" :class="'ai-msg--' + msg.role">
+          <div class="ai-msg__bubble">
+            <span v-if="msg.role === 'assistant'" class="ai-msg__name">灵盔 AI</span>
+            <div class="ai-msg__text" v-html="formatText(msg.content)"></div>
+            <span class="ai-msg__time">{{ msg.timeStr }}</span>
+          </div>
+        </div>
+      </template>
 
       <!-- 加载中 -->
       <div v-if="loading" class="ai-msg ai-msg--assistant">
@@ -69,7 +79,7 @@
 </template>
 
 <script setup>
-import { ref, nextTick } from 'vue'
+import { ref, computed, nextTick } from 'vue'
 
 const props = defineProps({
   deviceId: { type: String, default: '' }
@@ -81,7 +91,38 @@ const loading = ref(false)
 const messagesEl = ref(null)
 const inputEl = ref(null)
 
-const hints = ['当前温度正常吗？', '骑行安全建议', '当前位置在哪里？', '设备状态如何？']
+const hints = ['当前温度正常吗？', '骑行安全建议', '当前位置在哪里？']
+
+// 给时间戳生成显示字符串
+function nowTimeStr() {
+  const d = new Date()
+  return d.toTimeString().slice(0, 5)  // "HH:MM"
+}
+function nowDateKey() {
+  const d = new Date()
+  return d.toISOString().slice(0, 10)  // "YYYY-MM-DD"
+}
+function formatDateLabel(dateKey) {
+  const today = new Date().toISOString().slice(0, 10)
+  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10)
+  if (dateKey === today) return '今天'
+  if (dateKey === yesterday) return '昨天'
+  return dateKey.replace(/-/g, ' / ')
+}
+
+// 按日期分组
+const groupedMessages = computed(() => {
+  const groups = []
+  let lastDate = null
+  for (const msg of messages.value) {
+    if (msg.dateKey !== lastDate) {
+      groups.push({ date: msg.dateKey, dateLabel: formatDateLabel(msg.dateKey), messages: [] })
+      lastDate = msg.dateKey
+    }
+    groups[groups.length - 1].messages.push(msg)
+  }
+  return groups
+})
 
 function clearChat() {
   messages.value = []
@@ -96,7 +137,7 @@ async function sendMessage() {
   const text = inputText.value.trim()
   if (!text || loading.value) return
 
-  messages.value.push({ role: 'user', content: text })
+  messages.value.push({ role: 'user', content: text, timeStr: nowTimeStr(), dateKey: nowDateKey() })
   inputText.value = ''
   loading.value = true
   scrollToBottom()
@@ -112,12 +153,12 @@ async function sendMessage() {
     })
     const data = await res.json()
     if (data.error) {
-      messages.value.push({ role: 'assistant', content: '⚠️ ' + data.error })
+      messages.value.push({ role: 'assistant', content: '⚠️ ' + data.error, timeStr: nowTimeStr(), dateKey: nowDateKey() })
     } else {
-      messages.value.push({ role: 'assistant', content: data.content })
+      messages.value.push({ role: 'assistant', content: data.content, timeStr: nowTimeStr(), dateKey: nowDateKey() })
     }
   } catch (e) {
-    messages.value.push({ role: 'assistant', content: '⚠️ 网络错误，请检查后端服务是否运行。' })
+    messages.value.push({ role: 'assistant', content: '⚠️ 网络错误，请检查后端服务是否运行。', timeStr: nowTimeStr(), dateKey: nowDateKey() })
   } finally {
     loading.value = false
     await nextTick()
@@ -140,12 +181,10 @@ function autoResize(e) {
 }
 
 function formatText(text) {
-  // 安全转义，避免正则回溯卡死
   const escaped = String(text)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
-  // 换行转 <br>，**粗体** 转 <strong>（限制长度防卡）
   return escaped.length < 5000
     ? escaped.replace(/\n/g, '<br>').replace(/\*\*([^*]{1,100})\*\*/g, '<strong>$1</strong>')
     : escaped.replace(/\n/g, '<br>')
@@ -232,18 +271,62 @@ function formatText(text) {
 /* Messages */
 .ai-panel__messages {
   flex: 1;
-  overflow-y: auto;
+  overflow-y: scroll;
   padding: 12px 14px;
   display: flex;
   flex-direction: column;
   gap: 10px;
   scrollbar-width: thin;
-  scrollbar-color: rgba(0, 243, 255, 0.15) transparent;
+  scrollbar-color: rgba(0, 243, 255, 0.35) rgba(0, 243, 255, 0.05);
 }
-.ai-panel__messages::-webkit-scrollbar { width: 2px; }
+.ai-panel__messages::-webkit-scrollbar {
+  width: 5px;
+}
+.ai-panel__messages::-webkit-scrollbar-track {
+  background: rgba(0, 243, 255, 0.04);
+  border-left: 1px solid rgba(0, 243, 255, 0.08);
+}
 .ai-panel__messages::-webkit-scrollbar-thumb {
-  background: rgba(0, 243, 255, 0.2);
-  border-radius: 1px;
+  background: rgba(0, 243, 255, 0.35);
+  border-radius: 2px;
+}
+.ai-panel__messages::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 243, 255, 0.6);
+}
+
+/* 日期分隔线 */
+.ai-date-divider {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0 2px;
+  flex-shrink: 0;
+}
+.ai-date-divider__line {
+  flex: 1;
+  height: 1px;
+  background: rgba(0, 243, 255, 0.08);
+}
+.ai-date-divider__label {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.60rem;
+  color: rgba(0, 243, 255, 0.30);
+  letter-spacing: 0.10em;
+  white-space: nowrap;
+  padding: 0 4px;
+}
+
+/* 消息时间戳 */
+.ai-msg__time {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.58rem;
+  color: rgba(255, 255, 255, 0.18);
+  letter-spacing: 0.04em;
+  margin-top: 2px;
+  align-self: flex-end;
+}
+.ai-msg--user .ai-msg__time {
+  align-self: flex-end;
 }
 
 /* Welcome */

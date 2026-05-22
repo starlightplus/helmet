@@ -11,11 +11,6 @@
           <span class="card-tag">SENSOR_NODE_01</span>
           <span class="card-title">环境温度</span>
         </div>
-        <div class="card-icon card-icon--temp">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/>
-          </svg>
-        </div>
       </div>
 
       <!-- Body: animation left, value+status right -->
@@ -43,11 +38,6 @@
         <div class="card-label-group">
           <span class="card-tag">SENSOR_NODE_02</span>
           <span class="card-title">相对湿度</span>
-        </div>
-        <div class="card-icon card-icon--hum">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
-          </svg>
         </div>
       </div>
 
