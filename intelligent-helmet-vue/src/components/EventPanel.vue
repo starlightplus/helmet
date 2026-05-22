@@ -52,6 +52,7 @@
 import { ref } from 'vue'
 import EventItem from './EventItem.vue'
 import { eventDefinitions } from '@/utils/eventConfig.js'
+import request from '@/utils/request'
 
 const eventHistory = ref([])
 const lastEventState = ref({})
@@ -117,6 +118,14 @@ function processDeviceEvents(data) {
 function addEvent(ev) {
   eventHistory.value.unshift(ev)
   if (eventHistory.value.length > 200) eventHistory.value.length = 200
+  // persist to server (best-effort, no await to avoid blocking UI)
+  request.post('/api/user/events', {
+    eventType: ev.type,
+    eventName: ev.name,
+    deviceId:  ev.deviceId || '',
+    longitude: ev.longitude ?? null,
+    latitude:  ev.latitude  ?? null
+  }).catch(() => { /* silent fallback */ })
 }
 
 function speakText(text) {
@@ -150,40 +159,49 @@ defineExpose({ processDeviceEvents, clearAllEvents, addEvent })
 </script>
 
 <style scoped>
+/* ── Panel Container ───────────────────────────────────────────── */
 .event-panel {
   position: relative;
-  background: linear-gradient(145deg, #0f1624 0%, #151d2b 100%);
-  border-radius: 20px;
-  padding: 0;
-  margin-top: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(7, 7, 7, 0.90);
+  border: 1px solid rgba(0, 243, 255, 0.10);
   width: 100%;
   box-sizing: border-box;
   overflow: hidden;
-  box-shadow: 0 4px 24px -8px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(12px);
   transition: border-color 0.4s ease, box-shadow 0.4s ease;
+  /* Cut-corner top-right */
+  clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 0 100%);
+}
+/* Cyber anchor: top-left */
+.event-panel::before {
+  content: "";
+  position: absolute;
+  top: -1px; left: -1px;
+  width: 12px; height: 12px;
+  border-top: 2px solid #00F3FF;
+  border-left: 2px solid #00F3FF;
+  pointer-events: none;
+  z-index: 10;
 }
 
 .event-panel--active {
-  border-color: rgba(255, 71, 87, 0.15);
-  box-shadow: 0 4px 30px -8px rgba(255, 71, 87, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  border-color: rgba(239, 68, 68, 0.20);
+  box-shadow: 0 0 24px -6px rgba(239, 68, 68, 0.12);
 }
 
 /* Top severity strip */
 .event-panel__strip {
-  height: 3px;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+  height: 2px;
+  background: rgba(0,243,255,0.06);
   transition: background 0.4s ease;
 }
-
 .event-panel__strip--danger {
-  background: linear-gradient(90deg, transparent, #A855F7, #00D9FF, #A855F7, transparent);
+  background: linear-gradient(90deg, transparent, #EF4444, #FFAA00, #EF4444, transparent);
   animation: strip-glow 3s ease infinite;
 }
-
 @keyframes strip-glow {
-  0%, 100% { opacity: 0.6; }
-  50% { opacity: 1; }
+  0%, 100% { opacity: 0.5; }
+  50%       { opacity: 1; }
 }
 
 /* Header */
@@ -191,138 +209,119 @@ defineExpose({ processDeviceEvents, clearAllEvents, addEvent })
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 24px 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 16px 20px 14px;
+  border-bottom: 1px solid rgba(0, 243, 255, 0.08);
 }
 
 .event-panel__title-group {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
 }
 
 .event-panel__icon-wrap {
-  width: 42px;
-  height: 42px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width: 38px; height: 38px;
+  display: flex; align-items: center; justify-content: center;
 }
 
-/* Radar animation */
+/* Radar rings */
 .radar {
   position: relative;
-  width: 42px;
-  height: 42px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width: 38px; height: 38px;
+  display: flex; align-items: center; justify-content: center;
 }
-
 .radar__ring {
   position: absolute;
   border-radius: 50%;
-  border: 1px solid rgba(255, 71, 87, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.15);
   animation: radar-expand 3s ease-out infinite;
 }
-
-.radar__ring--1 {
-  width: 20px;
-  height: 20px;
-  animation-delay: 0s;
-}
-
-.radar__ring--2 {
-  width: 20px;
-  height: 20px;
-  animation-delay: 1.5s;
-}
-
+.radar__ring--1 { width: 20px; height: 20px; animation-delay: 0s; }
+.radar__ring--2 { width: 20px; height: 20px; animation-delay: 1.5s; }
 @keyframes radar-expand {
-  0% { width: 16px; height: 16px; opacity: 0.6; border-color: rgba(255, 71, 87, 0.4); }
-  100% { width: 42px; height: 42px; opacity: 0; border-color: rgba(255, 71, 87, 0); }
+  0%   { width: 14px; height: 14px; opacity: 0.7; border-color: rgba(239,68,68,0.5); }
+  100% { width: 38px; height: 38px; opacity: 0;   border-color: rgba(239,68,68,0); }
 }
-
 .radar__core {
-  width: 12px;
-  height: 12px;
+  width: 10px; height: 10px;
   border-radius: 50%;
-  background: rgba(255, 71, 87, 0.15);
-  border: 2px solid rgba(255, 71, 87, 0.3);
+  background: rgba(239, 68, 68, 0.12);
+  border: 2px solid rgba(239, 68, 68, 0.25);
   z-index: 1;
   transition: all 0.3s ease;
 }
-
 .radar__core--alert {
-  background: #A855F7;
-  border-color: #A855F7;
-  box-shadow: 0 0 12px rgba(255, 71, 87, 0.6);
+  background: #EF4444;
+  border-color: #EF4444;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.7);
 }
 
 .event-panel__title {
-  font-size: 1.05rem;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.78rem;
   font-weight: 700;
-  color: #E0F2FE;
+  color: #fff;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
   line-height: 1.2;
 }
-
 .event-panel__subtitle {
-  font-size: 0.65rem;
-  color: #4a5568;
-  font-weight: 500;
-  letter-spacing: 1.5px;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.6rem;
+  color: rgba(0, 243, 255, 0.4);
+  letter-spacing: 0.15em;
   margin-top: 2px;
 }
 
 .event-panel__header-right {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .event-panel__status {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 12px;
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 20px;
-  font-size: 0.7rem;
+  gap: 5px;
+  padding: 3px 10px;
+  border: 1px solid rgba(0, 243, 255, 0.10);
+  background: rgba(0, 243, 255, 0.03);
+  clip-path: polygon(5px 0%, 100% 0%, 100% 100%, 0% 100%, 0% 5px);
+  font-family: var(--font-mono, monospace);
+  font-size: 0.62rem;
   font-weight: 600;
-  color: #8892A0;
-  letter-spacing: 1px;
+  color: rgba(0, 243, 255, 0.6);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .event-panel__live-dot {
-  width: 6px;
-  height: 6px;
+  width: 5px; height: 5px;
   border-radius: 50%;
-  background: #4a5568;
+  background: rgba(0, 243, 255, 0.25);
   transition: all 0.3s ease;
 }
-
 .event-panel__live-dot--active {
-  background: #A855F7;
-  box-shadow: 0 0 8px rgba(255, 71, 87, 0.6);
+  background: #EF4444;
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.7);
   animation: blink-dot 1s ease infinite;
 }
-
 @keyframes blink-dot {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
+  50%       { opacity: 0.2; }
 }
 
 .event-panel__counter {
-  font-size: 0.85rem;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.78rem;
   font-weight: 700;
-  color: #00D9FF;
-  background: rgba(255, 107, 53, 0.1);
-  padding: 5px 14px;
-  border-radius: 20px;
-  min-width: 24px;
+  color: #EF4444;
+  background: rgba(239, 68, 68, 0.08);
+  padding: 4px 12px;
+  min-width: 20px;
   text-align: center;
-  border: 1px solid rgba(255, 107, 53, 0.15);
-  font-family: 'Segoe UI', monospace;
+  border: 1px solid rgba(239, 68, 68, 0.20);
+  clip-path: polygon(5px 0%,100% 0%,100% calc(100% - 5px),calc(100% - 5px) 100%,0% 100%,0% 5px);
 }
 
 /* List */
@@ -330,21 +329,14 @@ defineExpose({ processDeviceEvents, clearAllEvents, addEvent })
   max-height: 420px;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 16px 20px 20px 20px;
+  padding: 14px 18px 18px;
 }
-
-.event-panel__list::-webkit-scrollbar {
-  width: 3px;
-}
-
+.event-panel__list::-webkit-scrollbar { width: 2px; }
 .event-panel__list::-webkit-scrollbar-thumb {
-  background: rgba(255, 71, 87, 0.25);
-  border-radius: 2px;
+  background: rgba(239, 68, 68, 0.3);
+  border-radius: 1px;
 }
-
-.event-panel__list::-webkit-scrollbar-track {
-  background: transparent;
-}
+.event-panel__list::-webkit-scrollbar-track { background: transparent; }
 
 /* Empty state */
 .event-panel__empty {
@@ -353,43 +345,36 @@ defineExpose({ processDeviceEvents, clearAllEvents, addEvent })
   align-items: center;
   gap: 10px;
   text-align: center;
-  padding: 48px 40px;
+  padding: 40px 32px;
 }
-
 .empty-shield {
   position: relative;
-  width: 64px;
-  height: 64px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width: 56px; height: 56px;
+  display: flex; align-items: center; justify-content: center;
 }
-
 .empty-shield__pulse {
   position: absolute;
-  width: 50px;
-  height: 50px;
+  width: 44px; height: 44px;
   border-radius: 50%;
-  border: 1px solid rgba(61, 74, 92, 0.2);
+  border: 1px solid rgba(0, 243, 255, 0.12);
   animation: shield-pulse 3s ease infinite;
 }
-
 @keyframes shield-pulse {
-  0% { transform: scale(0.8); opacity: 0.5; }
-  50% { transform: scale(1.3); opacity: 0; }
+  0%   { transform: scale(0.8); opacity: 0.5; }
+  50%  { transform: scale(1.3); opacity: 0; }
   100% { transform: scale(0.8); opacity: 0.5; }
 }
-
 .empty-text {
-  color: #8892A0;
-  font-size: 0.9rem;
-  font-weight: 500;
+  font-family: var(--font-mono, monospace);
+  color: rgba(0, 243, 255, 0.5);
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
 }
-
 .empty-sub {
-  color: #3d4a5c;
-  font-size: 0.7rem;
-  letter-spacing: 1px;
+  font-family: var(--font-mono, monospace);
+  color: rgba(255, 255, 255, 0.15);
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 </style>

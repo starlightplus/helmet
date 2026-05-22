@@ -3,8 +3,9 @@
     <!-- Temperature Card -->
     <div class="sensor-card sensor-card--temp">
       <div class="card-accent card-accent--temp"></div>
+      <div class="card-cyber-corner"></div>
 
-      <!-- Top row: label + icon -->
+      <!-- Header -->
       <div class="card-header">
         <div class="card-label-group">
           <span class="card-tag">SENSOR_NODE_01</span>
@@ -17,55 +18,17 @@
         </div>
       </div>
 
-      <!-- Gauge ring + value -->
-      <div class="card-gauge-row">
-        <div class="gauge-ring-wrap">
-          <svg class="gauge-svg" viewBox="0 0 100 100">
-            <!-- Track -->
-            <circle class="gauge-track" cx="50" cy="50" r="38"
-              fill="none" stroke="rgba(0,242,255,0.08)" stroke-width="6"
-              stroke-dasharray="200 40" stroke-dashoffset="-10"
-              stroke-linecap="round" transform="rotate(126 50 50)" />
-            <!-- Fill -->
-            <circle class="gauge-fill gauge-fill--temp" cx="50" cy="50" r="38"
-              fill="none" stroke="#00f2ff" stroke-width="6"
-              stroke-dasharray="200 40" stroke-linecap="round"
-              transform="rotate(126 50 50)"
-              :stroke-dashoffset="tempGaugeOffset" />
-            <!-- Center dot -->
-            <circle cx="50" cy="50" r="3" fill="#00f2ff" opacity="0.6" />
-          </svg>
-          <div class="gauge-value-wrap">
-            <span class="gauge-value gauge-value--temp">{{ temperature != null ? temperature.toFixed(1) : '--' }}</span>
-            <span class="gauge-unit">°C</span>
+      <!-- Body: animation left, value+status right -->
+      <div class="card-body">
+        <canvas ref="tempCanvasRef" class="lottie-canvas"></canvas>
+        <div class="card-value-block">
+          <div class="value-row">
+            <span class="value-num value-num--temp">{{ temperature != null ? temperature.toFixed(1) : '--' }}</span>
+            <span class="value-unit">°C</span>
           </div>
-        </div>
-
-        <!-- Side stats -->
-        <div class="card-stats">
-          <div class="stat-row">
-            <span class="stat-label">状态</span>
-            <span class="stat-value" :style="{ color: tempStatusColor }">{{ tempStatus }}</span>
+          <div class="status-badge" :style="{ color: tempStatusColor, borderColor: tempStatusColor + '40', background: tempStatusColor + '12' }">
+            {{ tempStatus }}
           </div>
-          <div class="stat-row">
-            <span class="stat-label">范围</span>
-            <span class="stat-value">-10 ~ 50°C</span>
-          </div>
-          <div class="stat-row">
-            <span class="stat-label">精度</span>
-            <span class="stat-value">±0.1°C</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Progress bar -->
-      <div class="card-bar-wrap">
-        <div class="card-bar-track">
-          <div class="card-bar-fill card-bar-fill--temp" :style="{ width: tempPercent + '%' }"></div>
-        </div>
-        <div class="card-bar-labels">
-          <span>-10°C</span>
-          <span>50°C</span>
         </div>
       </div>
     </div>
@@ -73,8 +36,9 @@
     <!-- Humidity Card -->
     <div class="sensor-card sensor-card--hum">
       <div class="card-accent card-accent--hum"></div>
+      <div class="card-cyber-corner card-cyber-corner--hum"></div>
 
-      <!-- Top row: label + icon -->
+      <!-- Header -->
       <div class="card-header">
         <div class="card-label-group">
           <span class="card-tag">SENSOR_NODE_02</span>
@@ -87,52 +51,17 @@
         </div>
       </div>
 
-      <!-- Gauge ring + value -->
-      <div class="card-gauge-row">
-        <div class="gauge-ring-wrap">
-          <svg class="gauge-svg" viewBox="0 0 100 100">
-            <circle class="gauge-track" cx="50" cy="50" r="38"
-              fill="none" stroke="rgba(255,0,85,0.08)" stroke-width="6"
-              stroke-dasharray="200 40" stroke-dashoffset="-10"
-              stroke-linecap="round" transform="rotate(126 50 50)" />
-            <circle class="gauge-fill gauge-fill--hum" cx="50" cy="50" r="38"
-              fill="none" stroke="#ff0055" stroke-width="6"
-              stroke-dasharray="200 40" stroke-linecap="round"
-              transform="rotate(126 50 50)"
-              :stroke-dashoffset="humGaugeOffset" />
-            <circle cx="50" cy="50" r="3" fill="#ff0055" opacity="0.6" />
-          </svg>
-          <div class="gauge-value-wrap">
-            <span class="gauge-value gauge-value--hum">{{ humidity != null ? humidity.toFixed(1) : '--' }}</span>
-            <span class="gauge-unit">%</span>
+      <!-- Body: animation left, value+status right -->
+      <div class="card-body">
+        <canvas ref="humCanvasRef" class="lottie-canvas"></canvas>
+        <div class="card-value-block">
+          <div class="value-row">
+            <span class="value-num value-num--hum">{{ humidity != null ? humidity.toFixed(1) : '--' }}</span>
+            <span class="value-unit">%</span>
           </div>
-        </div>
-
-        <!-- Side stats -->
-        <div class="card-stats">
-          <div class="stat-row">
-            <span class="stat-label">状态</span>
-            <span class="stat-value" :style="{ color: humStatusColor }">{{ humStatus }}</span>
+          <div class="status-badge" :style="{ color: humStatusColor, borderColor: humStatusColor + '40', background: humStatusColor + '12' }">
+            {{ humStatus }}
           </div>
-          <div class="stat-row">
-            <span class="stat-label">范围</span>
-            <span class="stat-value">0 ~ 100%</span>
-          </div>
-          <div class="stat-row">
-            <span class="stat-label">精度</span>
-            <span class="stat-value">±0.5%</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Progress bar -->
-      <div class="card-bar-wrap">
-        <div class="card-bar-track">
-          <div class="card-bar-fill card-bar-fill--hum" :style="{ width: humPercent + '%' }"></div>
-        </div>
-        <div class="card-bar-labels">
-          <span>0%</span>
-          <span>100%</span>
         </div>
       </div>
     </div>
@@ -140,32 +69,46 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
+import { DotLottie } from '@lottiefiles/dotlottie-web'
 
 const props = defineProps({
   temperature: { type: Number, default: null },
-  humidity: { type: Number, default: null }
+  humidity:    { type: Number, default: null }
 })
 
-// Temperature: -10 to 50°C → 0-100%
-const tempPercent = computed(() => {
-  if (props.temperature == null) return 0
-  return Math.min(Math.max(((props.temperature + 10) / 60) * 100, 0), 100)
+const tempCanvasRef = ref(null)
+const humCanvasRef  = ref(null)
+let tempLottie = null
+let humLottie  = null
+
+onMounted(() => {
+  if (tempCanvasRef.value) {
+    tempLottie = new DotLottie({
+      canvas: tempCanvasRef.value,
+      src: '/animations/temp.lottie',
+      loop: true,
+      autoplay: true,
+    })
+  }
+  if (humCanvasRef.value) {
+    humLottie = new DotLottie({
+      canvas: humCanvasRef.value,
+      src: '/animations/humid.lottie',
+      loop: true,
+      autoplay: true,
+    })
+  }
 })
 
-// Humidity: 0-100%
-const humPercent = computed(() => {
-  if (props.humidity == null) return 0
-  return Math.min(Math.max(props.humidity, 0), 100)
+onUnmounted(() => {
+  tempLottie?.destroy()
+  humLottie?.destroy()
 })
-
-// Gauge arc: 200 units total arc, offset shrinks as value increases
-const tempGaugeOffset = computed(() => 200 - (tempPercent.value / 100) * 200)
-const humGaugeOffset = computed(() => 200 - (humPercent.value / 100) * 200)
 
 const tempStatus = computed(() => {
   if (props.temperature == null) return '等待数据'
-  if (props.temperature < 0) return '极冷'
+  if (props.temperature < 0)  return '极冷'
   if (props.temperature < 10) return '寒冷'
   if (props.temperature < 20) return '凉爽'
   if (props.temperature < 26) return '舒适'
@@ -210,36 +153,47 @@ const humStatusColor = computed(() => {
 
 .sensor-card {
   position: relative;
-  background: rgba(5, 10, 20, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 16px;
-  padding: 20px;
+  background: rgba(7, 7, 7, 0.88);
+  border: 1px solid rgba(0, 243, 255, 0.10);
+  padding: 18px 18px 16px;
   overflow: hidden;
   backdrop-filter: blur(12px);
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
+  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%);
 }
-
 .sensor-card--temp {
-  box-shadow: 0 0 30px rgba(0, 242, 255, 0.06), inset 0 1px 0 rgba(0, 242, 255, 0.08);
+  box-shadow: 0 0 24px -6px rgba(0, 242, 255, 0.08), inset 0 1px 0 rgba(0, 242, 255, 0.06);
+}
+.sensor-card--hum {
+  box-shadow: 0 0 24px -6px rgba(255, 0, 85, 0.08), inset 0 1px 0 rgba(255, 0, 85, 0.06);
 }
 
-.sensor-card--hum {
-  box-shadow: 0 0 30px rgba(255, 0, 85, 0.06), inset 0 1px 0 rgba(255, 0, 85, 0.08);
+/* Cyber corner */
+.card-cyber-corner {
+  position: absolute;
+  top: -1px; right: -1px;
+  width: 12px; height: 12px;
+  border-top: 2px solid #00F3FF;
+  border-right: 2px solid #00F3FF;
+  pointer-events: none;
+  z-index: 5;
+}
+.card-cyber-corner--hum {
+  border-top-color: #ff0055;
+  border-right-color: #ff0055;
 }
 
 /* Left accent bar */
 .card-accent {
   position: absolute;
-  top: 16px;
-  left: 0;
-  width: 3px;
-  height: calc(100% - 32px);
-  border-radius: 0 2px 2px 0;
+  top: 14px; left: 0;
+  width: 2px;
+  height: calc(100% - 28px);
 }
-.card-accent--temp { background: linear-gradient(180deg, #00f2ff, rgba(0,242,255,0.1)); }
-.card-accent--hum  { background: linear-gradient(180deg, #ff0055, rgba(255,0,85,0.1)); }
+.card-accent--temp { background: linear-gradient(180deg, #00f2ff, rgba(0,242,255,0.05)); }
+.card-accent--hum  { background: linear-gradient(180deg, #ff0055, rgba(255,0,85,0.05)); }
 
 /* Header */
 .card-header {
@@ -247,167 +201,88 @@ const humStatusColor = computed(() => {
   justify-content: space-between;
   align-items: flex-start;
 }
-
 .card-label-group {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
 }
-
 .card-tag {
-  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
   font-size: 9px;
   letter-spacing: 0.15em;
-  color: rgba(255, 255, 255, 0.25);
+  color: rgba(0, 243, 255, 0.30);
   text-transform: uppercase;
 }
-
 .card-title {
-  font-size: 13px;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.75rem;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.75);
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
-
 .card-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
+  width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  clip-path: polygon(4px 0%,100% 0%,100% calc(100% - 4px),calc(100% - 4px) 100%,0% 100%,0% 4px);
+}
+.card-icon--temp { background: rgba(0, 242, 255, 0.08); color: #00f2ff; }
+.card-icon--hum  { background: rgba(255, 0, 85, 0.08);  color: #ff0055; }
+
+/* Body: lottie left + value right */
+.card-body {
   display: flex;
   align-items: center;
-  justify-content: center;
-}
-.card-icon--temp {
-  background: rgba(0, 242, 255, 0.1);
-  color: #00f2ff;
-  box-shadow: 0 0 12px rgba(0, 242, 255, 0.2);
-}
-.card-icon--hum {
-  background: rgba(255, 0, 85, 0.1);
-  color: #ff0055;
-  box-shadow: 0 0 12px rgba(255, 0, 85, 0.2);
+  gap: 14px;
 }
 
-/* Gauge row */
-.card-gauge-row {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.gauge-ring-wrap {
-  position: relative;
-  width: 90px;
-  height: 90px;
+.lottie-canvas {
+  width: 80px;
+  height: 80px;
   flex-shrink: 0;
 }
 
-.gauge-svg {
-  width: 100%;
-  height: 100%;
-}
-
-.gauge-fill {
-  transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.gauge-fill--temp {
-  filter: drop-shadow(0 0 4px rgba(0, 242, 255, 0.7));
-}
-
-.gauge-fill--hum {
-  filter: drop-shadow(0 0 4px rgba(255, 0, 85, 0.7));
-}
-
-.gauge-value-wrap {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  line-height: 1;
-}
-
-.gauge-value {
-  font-family: 'JetBrains Mono', 'Courier New', monospace;
-  font-size: 20px;
-  font-weight: 700;
-  letter-spacing: -0.03em;
-}
-.gauge-value--temp { color: #00f2ff; text-shadow: 0 0 10px rgba(0, 242, 255, 0.6); }
-.gauge-value--hum  { color: #ff0055; text-shadow: 0 0 10px rgba(255, 0, 85, 0.6); }
-
-.gauge-unit {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 10px;
-  color: rgba(255, 255, 255, 0.3);
-  margin-top: 2px;
-}
-
-/* Side stats */
-.card-stats {
+/* Value block */
+.card-value-block {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
-.stat-row {
+.value-row {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.stat-label {
-  font-size: 10px;
-  color: rgba(255, 255, 255, 0.25);
-  font-family: monospace;
-  letter-spacing: 0.05em;
-}
-
-.stat-value {
-  font-size: 11px;
-  font-family: 'JetBrains Mono', monospace;
-  color: rgba(255, 255, 255, 0.6);
-  transition: color 0.4s;
-}
-
-/* Progress bar */
-.card-bar-wrap {
-  display: flex;
-  flex-direction: column;
+  align-items: baseline;
   gap: 4px;
+  line-height: 1;
 }
 
-.card-bar-track {
-  height: 3px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 2px;
-  overflow: hidden;
+.value-num {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+.value-num--temp { color: #00f2ff; text-shadow: 0 0 14px rgba(0, 242, 255, 0.55); }
+.value-num--hum  { color: #ff0055; text-shadow: 0 0 14px rgba(255, 0, 85, 0.55); }
+
+.value-unit {
+  font-family: var(--font-mono, monospace);
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.30);
 }
 
-.card-bar-fill {
-  height: 100%;
-  border-radius: 2px;
-  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.card-bar-fill--temp {
-  background: linear-gradient(90deg, rgba(0,242,255,0.4), #00f2ff);
-  box-shadow: 0 0 6px rgba(0, 242, 255, 0.5);
-}
-
-.card-bar-fill--hum {
-  background: linear-gradient(90deg, rgba(255,0,85,0.4), #ff0055);
-  box-shadow: 0 0 6px rgba(255, 0, 85, 0.5);
-}
-
-.card-bar-labels {
-  display: flex;
-  justify-content: space-between;
-  font-size: 9px;
-  font-family: monospace;
-  color: rgba(255, 255, 255, 0.2);
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  padding: 3px 10px;
+  border: 1px solid;
+  border-radius: 4px;
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  transition: color 0.4s, border-color 0.4s, background 0.4s;
 }
 </style>

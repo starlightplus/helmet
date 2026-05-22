@@ -79,9 +79,12 @@ function handleMouseMove(e) {
   const deltaX = dragStartX.value - e.clientX
   const deltaY = dragStartY.value - e.clientY
 
+  const maxRight  = window.innerWidth  - 200
+  const maxBottom = window.innerHeight - 200
+
   currentPosition.value = {
-    x: Math.max(0, currentPosition.value.x + deltaX),
-    y: Math.max(0, currentPosition.value.y + deltaY)
+    x: Math.max(0, Math.min(currentPosition.value.x + deltaX, maxRight)),
+    y: Math.max(0, Math.min(currentPosition.value.y + deltaY, maxBottom))
   }
 
   dragStartX.value = e.clientX
@@ -107,17 +110,9 @@ function handleClick(e) {
   // 如果刚刚在拖拽，不触发点击
   if (isDragging.value) return
 
-  // 播放点击动画
+  // 只播放动画，不打开聊天框
   playAnimation('wave')
-  showMessage('让我们聊聊吧！💬')
-
-  // 触发打开 AiChat 面板
-  setTimeout(() => {
-    const aiFab = document.querySelector('.ai-fab')
-    if (aiFab) {
-      aiFab.click()
-    }
-  }, 500)
+  showMessage('有什么需要帮忙的吗？')
 }
 
 // 初始化 Three.js 场景
@@ -519,11 +514,17 @@ watch(() => props.sensorData, (newData) => {
 // 定时随机互动
 let interactionTimer
 onMounted(() => {
-  // 从 localStorage 恢复位置
+  // 从 localStorage 恢复位置，并钳制到当前视口范围内
   const savedPosition = localStorage.getItem('aiAssistantPosition')
   if (savedPosition) {
     try {
-      currentPosition.value = JSON.parse(savedPosition)
+      const saved = JSON.parse(savedPosition)
+      const maxRight  = window.innerWidth  - 200   // 200 = canvas 宽度
+      const maxBottom = window.innerHeight - 200   // 200 = canvas 高度
+      currentPosition.value = {
+        x: Math.max(0, Math.min(saved.x, maxRight)),
+        y: Math.max(0, Math.min(saved.y, maxBottom))
+      }
     } catch (e) {
       console.error('[AiAssistant] 恢复位置失败:', e)
     }

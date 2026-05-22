@@ -32,7 +32,7 @@ export function useWebSocket() {
 
     ws.onopen = () => {
       isConnected.value = true
-      connectionStatus.value = '已连接 WebSocket'
+      connectionStatus.value = '已连接设备'
       lastUpdateTime.value = new Date()
       // start heartbeat
       if (heartbeatTimer) clearInterval(heartbeatTimer)

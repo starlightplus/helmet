@@ -1,116 +1,103 @@
 <template>
   <SportBackground />
   <div class="app-layout">
-    <!-- Top Navigation Bar -->
-    <nav class="app-nav">
+    <!-- Top Navigation HUD -->
+    <nav class="app-nav cyber-corner-box">
       <div class="app-nav__left">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00D9FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 2v10l6.5-3"/></svg>
-        <span class="app-nav__brand">灵盔佑驰终端</span>
+        <!-- 旋转切角图标 + 闪烁质点 -->
+        <div class="nav-logo">
+          <div class="nav-logo__frame">
+            <span class="nav-logo__omega">Ω</span>
+          </div>
+        </div>
+        <div class="app-nav__brand">
+          <span class="brand-main">X-TERN PROTOCOL</span>
+          <span class="brand-ver">v.0.42</span>
+        </div>
+        <!-- 连接状态 -->
         <div class="app-nav__status">
           <div :class="indicatorClass"></div>
           <span class="app-nav__status-text">{{ wsStatus }}</span>
         </div>
       </div>
+
+      <!-- 中间：选项卡 -->
+      <div class="nav-tabs">
+        <button class="nav-tab" :class="{ 'nav-tab--active': activePage === 'terminal' }" @click="activePage = 'terminal'">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+          终端
+        </button>
+        <button class="nav-tab" :class="{ 'nav-tab--active': activePage === 'twin' }" @click="activePage = 'twin'">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          数字孪生
+        </button>
+        <button class="nav-tab" :class="{ 'nav-tab--active': activePage === 'dataviz' }" @click="activePage = 'dataviz'">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
+          数据可视化
+        </button>
+      </div>
+
+      <!-- 右侧：实时状态指标 -->
       <div class="app-nav__right">
-        <button class="app-nav__btn app-nav__btn--secondary" @click="goToProfile">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <div class="nav-metric">
+          <span class="nav-metric__dot nav-metric__dot--green"></span>
+          <span class="nav-metric__label">LATENCY</span>
+          <span class="nav-metric__val">14MS</span>
+        </div>
+        <div class="nav-metric">
+          <span class="nav-metric__dot nav-metric__dot--green"></span>
+          <span class="nav-metric__label">SYNC</span>
+          <span class="nav-metric__val nav-metric__val--green">STABLE</span>
+        </div>
+        <div class="nav-metric nav-metric--clock">
+          <span class="nav-metric__label">UTC</span>
+          <span class="nav-metric__val nav-metric__val--mono">{{ utcClock }}</span>
+        </div>
+        <button class="app-nav__btn" @click="goToProfile">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           个人资料
         </button>
-        <button class="app-nav__btn app-nav__btn--secondary" @click="goToRideHistory">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="5.5" cy="17.5" r="3.5"/><path d="M15 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2z" fill="currentColor"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></svg>
-          骑行记录
-        </button>
-        <button class="app-nav__btn app-nav__btn--secondary" @click="handleClearAllData">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-          清除数据
-        </button>
-        <button class="app-nav__btn app-nav__btn--secondary" @click="onLogout">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-          退出
+        <button class="app-nav__btn app-nav__btn--exit" @click="onLogout">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          EXIT
         </button>
       </div>
     </nav>
 
     <!-- Main Content -->
     <div class="app-body">
-      <!-- 左侧导航栏 -->
-      <aside class="side-nav">
-        <button
-          class="side-nav__item"
-          :class="{ 'side-nav__item--active': activePage === 'terminal' }"
-          @click="activePage = 'terminal'"
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
-          <span>终端</span>
-        </button>
-        <button
-          class="side-nav__item"
-          :class="{ 'side-nav__item--active': activePage === 'twin' }"
-          @click="activePage = 'twin'"
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-          <span>数字孪生</span>
-        </button>
-        <button
-          class="side-nav__item"
-          :class="{ 'side-nav__item--active': activePage === 'dataviz' }"
-          @click="activePage = 'dataviz'"
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
-          <span>数据可视化</span>
-        </button>
-      </aside>
-
-      <!-- 右侧内容区 -->
+      <!-- 内容区 -->
       <div class="app-content">
         <!-- 终端页面 -->
         <div v-show="activePage === 'terminal'" class="page-wrapper page-wrapper--terminal">
           <div class="terminal-layout">
-            <!-- Environment Dashboard -->
-            <div class="env-dashboard" data-aos="fade-up">
-              <TempHumidityCards
-                :temperature="latestTemp"
-                :humidity="latestHumidity"
-              />
-              <!-- Device Count Card -->
-              <div class="device-card">
-                <div class="device-card__header">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00D9FF" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 3h-8l-2 4h12z"/></svg>
-                  <span>在线设备</span>
+            <!-- 上半部分：左侧环境+骑行 / 右侧AI聊天 等高 -->
+            <div class="terminal-top">
+              <div class="terminal-top__left">
+                <div class="env-dashboard">
+                  <TempHumidityCards
+                    :temperature="latestTemp"
+                    :humidity="latestHumidity"
+                  />
                 </div>
-                <div class="device-card__body">
-                  <div class="device-card__number">{{ deviceCount }}</div>
-                  <div class="device-card__ring">
-                    <svg viewBox="0 0 80 80">
-                      <circle cx="40" cy="40" r="32" fill="none" stroke="rgba(0, 217, 255, 0.1)" stroke-width="6" />
-                      <circle cx="40" cy="40" r="32" fill="none" stroke="#00D9FF" stroke-width="6" stroke-linecap="round" stroke-dasharray="201" :stroke-dashoffset="deviceCount > 0 ? 201 * 0.25 : 201" class="device-ring-arc" />
-                      <circle cx="40" cy="40" r="32" fill="none" stroke="rgba(0, 217, 255, 0.15)" stroke-width="6" stroke-dasharray="4 8" class="device-ring-dashed">
-                        <animateTransform attributeName="transform" type="rotate" from="0 40 40" to="360 40 40" dur="30s" repeatCount="indefinite" />
-                      </circle>
-                    </svg>
-                  </div>
-                </div>
-                <div class="device-card__status">
-                  <div class="device-card__dot" :class="{ 'device-card__dot--active': deviceCount > 0 && deviceOnline, 'device-card__dot--offline': deviceCount > 0 && !deviceOnline }"></div>
-                  <span>{{ deviceCount > 0 ? (deviceOnline ? '数据传输中' : '暂无数据') : '等待连接' }}</span>
-                </div>
+                <RideStatsPanel
+                  :isRiding="rideTracking.isRiding.value"
+                  :currentSpeed="rideTracking.currentSpeed.value"
+                  :rideDistance="rideTracking.rideDistance.value"
+                  :rideDuration="rideTracking.rideDuration.value"
+                  :maxSpeed="rideTracking.maxSpeed.value"
+                  :avgSpeed="rideTracking.avgSpeed.value"
+                  :speedWarning="rideTracking.speedWarning.value"
+                  :calories="rideTracking.calories.value"
+                  :pace="rideTracking.pace.value"
+                />
+              </div>
+              <div class="terminal-top__right">
+                <AiChat :deviceId="latestSensorData.deviceId || ''" />
               </div>
             </div>
 
-            <!-- Ride Stats Panel -->
-            <RideStatsPanel
-              :isRiding="rideTracking.isRiding.value"
-              :currentSpeed="rideTracking.currentSpeed.value"
-              :rideDistance="rideTracking.rideDistance.value"
-              :rideDuration="rideTracking.rideDuration.value"
-              :maxSpeed="rideTracking.maxSpeed.value"
-              :avgSpeed="rideTracking.avgSpeed.value"
-              :speedWarning="rideTracking.speedWarning.value"
-              :calories="rideTracking.calories.value"
-              :pace="rideTracking.pace.value"
-            />
-
-            <!-- Event Panel -->
+            <!-- 下半部分：事件面板全宽 -->
             <EventPanel ref="eventPanel" />
           </div>
         </div>
@@ -130,13 +117,10 @@
     </div>
   </div>
 
-  <!-- AI 对话浮动组件 -->
-  <AiChat :deviceId="latestSensorData.deviceId || ''" />
-
-  <!-- AI 助手 3D 模型 - 紧贴在 AI 对话按钮左边 -->
+  <!-- AI 助手 3D 模型 - 固定在右下角，可拖拽 -->
   <AiAssistant
     :sensor-data="latestSensorData"
-    :position="{ x: -10, y: -8 }"
+    :position="{ x: 24, y: 24 }"
   />
 </template>
 
@@ -168,6 +152,15 @@ const userStore = useUserStore()
 const activePage = ref('terminal')
 const latestSensorData = ref({})
 const helmetTwin = ref(null)
+
+// UTC 时钟
+const utcClock = ref('')
+let clockTimer = null
+function updateClock() {
+  const now = new Date()
+  utcClock.value = now.toUTCString().slice(17, 25) + '.' + String(now.getMilliseconds()).padStart(3,'0')
+}
+updateClock()
 
 watch(activePage, (val) => {
   if (val === 'twin') {
@@ -283,6 +276,7 @@ function goToRideHistory() {
 }
 
 onMounted(async () => {
+  clockTimer = setInterval(updateClock, 100)
   connect('ws://localhost:8082/ws/sensor-data')
   // 从数据库加载最新一条数据，初始化温湿度显示
   try {
@@ -298,6 +292,7 @@ onMounted(async () => {
 })
 
 onUnmounted(()=>{
+  if (clockTimer) clearInterval(clockTimer)
   disconnect()
   rideTracking.destroy()
   if (deviceOfflineTimer) clearTimeout(deviceOfflineTimer)
@@ -305,15 +300,13 @@ onUnmounted(()=>{
 </script>
 
 <style scoped>
+/* ── 布局骨架 ──────────────────────────────────────────────────── */
 .app-layout {
   height: 100vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  --nav-h: 48px;
 }
-
-/* 导航栏下方整体布局 */
 .app-body {
   flex: 1;
   display: flex;
@@ -321,49 +314,227 @@ onUnmounted(()=>{
   overflow: hidden;
 }
 
-/* 左侧导航栏 */
-.side-nav {
-  width: 80px;
+/* ── 顶部导航 HUD ────────────────────────────────────────────────── */
+.app-nav {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  padding: 16px 0;
-  gap: 8px;
-  background: rgba(10, 14, 26, 0.95);
-  border-right: 1px solid rgba(0, 217, 255, 0.15);
+  justify-content: space-between;
+  padding: 0 24px;
+  height: 56px;
+  flex-shrink: 0;
+  z-index: 300;
+  background: rgba(5, 5, 5, 0.92);
+  border-bottom: 1px solid rgba(0, 243, 255, 0.18);
+  backdrop-filter: blur(12px);
+  /* 切角效果 */
+  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%);
+  position: relative;
+}
+/* cyber-corner-box 左上角定位锚点 */
+.cyber-corner-box::before {
+  content: "";
+  position: absolute;
+  top: -1px; left: -1px;
+  width: 12px; height: 12px;
+  border-top: 2px solid #00F3FF;
+  border-left: 2px solid #00F3FF;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* 左侧 Logo + 品牌 */
+.app-nav__left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.nav-logo__frame {
+  width: 32px; height: 32px;
+  border: 1.5px solid #00F3FF;
+  transform: rotate(45deg);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 0 8px rgba(0,243,255,0.35), inset 0 0 6px rgba(0,243,255,0.1);
   flex-shrink: 0;
 }
+.nav-logo__omega {
+  display: block;
+  transform: rotate(-45deg);
+  font-size: 14px; font-weight: 700;
+  color: #00F3FF;
+  text-shadow: 0 0 8px rgba(0,243,255,0.8);
+  animation: omega-blink 2.4s ease infinite;
+}
+@keyframes omega-blink {
+  0%,100% { opacity: 1; }
+  48%     { opacity: 1; }
+  50%     { opacity: 0.2; }
+  52%     { opacity: 1; }
+}
 
-.side-nav__item {
+.app-nav__brand {
   display: flex;
   flex-direction: column;
+  gap: 1px;
+  line-height: 1;
+}
+.brand-main {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.brand-ver {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.6rem;
+  color: rgba(0,243,255,0.5);
+  letter-spacing: 0.08em;
+}
+
+.app-nav__status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border: 1px solid rgba(0,243,255,0.12);
+  background: rgba(0,243,255,0.04);
+  clip-path: polygon(6px 0%, 100% 0%, 100% 100%, 0% 100%, 0% 6px);
+}
+.app-nav__dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+}
+.app-nav__dot--ok {
+  background: #00FF66;
+  box-shadow: 0 0 6px rgba(0,255,102,0.8);
+  animation: pulse-ok 2s infinite;
+}
+@keyframes pulse-ok {
+  0%,100% { box-shadow: 0 0 0 0 rgba(0,255,102,0.5); }
+  50%      { box-shadow: 0 0 0 4px rgba(0,255,102,0); }
+}
+.app-nav__dot--warning { background: #FFAA00; box-shadow: 0 0 6px rgba(255,170,0,0.7); }
+.app-nav__dot--error   { background: #EF4444; box-shadow: 0 0 6px rgba(239,68,68,0.7); }
+.app-nav__status-text {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.65rem;
+  color: rgba(0,243,255,0.7);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* 中间选项卡 */
+.nav-tabs {
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  height: 100%;
+}
+.nav-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 20px;
+  height: 100%;
+  background: transparent;
+  border: none;
+  border-top: 2px solid transparent;
+  border-bottom: 2px solid transparent;
+  color: rgba(255,255,255,0.35);
+  font-family: var(--font-mono, monospace);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+}
+.nav-tab:hover {
+  color: rgba(0,243,255,0.7);
+  background: rgba(0,243,255,0.04);
+}
+.nav-tab--active {
+  border-top-color: #00F3FF;
+  color: #00F3FF;
+  background: rgba(0,243,255,0.06);
+  text-shadow: 0 0 8px rgba(0,243,255,0.5);
+}
+.nav-tab--active svg { stroke: #00F3FF; filter: drop-shadow(0 0 3px rgba(0,243,255,0.6)); }
+
+/* 右侧状态指标 */
+.app-nav__right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.nav-metric {
+  display: flex;
   align-items: center;
   gap: 5px;
-  width: 64px;
-  padding: 10px 6px;
-  border-radius: 10px;
-  border: none;
-  background: transparent;
-  color: #8892A0;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  padding: 4px 10px;
+  border: 1px solid rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.02);
+  clip-path: polygon(4px 0%,100% 0%,100% 100%,0% 100%,0% 4px);
+}
+.nav-metric__dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+}
+.nav-metric__dot--green {
+  background: #00FF66;
+  box-shadow: 0 0 5px rgba(0,255,102,0.8);
+  animation: pulse-ok 1.8s infinite;
+}
+.nav-metric__label {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.58rem;
+  color: rgba(255,255,255,0.25);
+  letter-spacing: 0.08em;
+}
+.nav-metric__val {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.7);
+}
+.nav-metric__val--green { color: #00FF66; text-shadow: 0 0 6px rgba(0,255,102,0.5); }
+.nav-metric__val--mono  { color: #00F3FF; letter-spacing: 0.04em; }
+
+.app-nav__btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border: 1px solid rgba(0,243,255,0.15);
+  background: rgba(0,243,255,0.04);
+  color: rgba(0,243,255,0.7);
+  font-family: var(--font-mono, monospace);
   font-size: 0.65rem;
-  font-weight: 500;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  clip-path: polygon(6px 0%,100% 0%,100% calc(100% - 6px),calc(100% - 6px) 100%,0% 100%,0% 6px);
+  transition: all 0.15s;
+}
+.app-nav__btn:hover {
+  background: rgba(0,243,255,0.1);
+  color: #00F3FF;
+  box-shadow: 0 0 10px rgba(0,243,255,0.2);
+}
+.app-nav__btn--exit {
+  border-color: rgba(239,68,68,0.2);
+  color: rgba(239,68,68,0.7);
+  background: rgba(239,68,68,0.04);
+}
+.app-nav__btn--exit:hover {
+  background: rgba(239,68,68,0.1);
+  color: #EF4444;
+  box-shadow: 0 0 10px rgba(239,68,68,0.2);
 }
 
-.side-nav__item:hover {
-  background: rgba(0, 217, 255, 0.08);
-  color: #E0F2FE;
-}
-
-.side-nav__item--active {
-  background: rgba(0, 217, 255, 0.15);
-  color: #00D9FF;
-  box-shadow: 0 0 15px rgba(0, 217, 255, 0.2);
-  border: 1px solid rgba(0, 217, 255, 0.3);
-}
-
-/* 右侧内容区 */
+/* ── 内容区 ──────────────────────────────────────────────────────── */
 .app-content {
   flex: 1;
   min-width: 0;
@@ -372,120 +543,6 @@ onUnmounted(()=>{
   display: flex;
   flex-direction: column;
 }
-
-/* Navigation Bar */
-.app-nav {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 24px;
-  background: rgba(10, 14, 26, 0.95);
-  border-bottom: 1px solid rgba(0, 217, 255, 0.2);
-  backdrop-filter: blur(12px);
-  box-shadow: 0 4px 20px rgba(0, 217, 255, 0.1);
-}
-
-.app-nav__left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.app-nav__brand {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: #E0F2FE;
-  text-shadow: 0 0 10px rgba(0, 217, 255, 0.5);
-}
-
-.app-nav__status {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 12px;
-  background: rgba(0, 217, 255, 0.08);
-  border-radius: 20px;
-  margin-left: 8px;
-  border: 1px solid rgba(0, 217, 255, 0.2);
-}
-
-.app-nav__dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-}
-
-.app-nav__dot--ok {
-  background: #00D9FF;
-  box-shadow: 0 0 8px rgba(0, 217, 255, 0.8);
-  animation: pulse-cyan 2s infinite;
-}
-
-@keyframes pulse-cyan {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 217, 255, 0.6); }
-  50% { box-shadow: 0 0 0 6px rgba(0, 217, 255, 0); }
-}
-
-.app-nav__dot--warning {
-  background: #FFD93D;
-  box-shadow: 0 0 6px rgba(255, 217, 61, 0.5);
-}
-
-.app-nav__dot--error {
-  background: #FF4757;
-  box-shadow: 0 0 6px rgba(255, 71, 87, 0.5);
-}
-
-.app-nav__status-text {
-  font-size: 0.75rem;
-  color: #8892A0;
-}
-
-.app-nav__right {
-  display: flex;
-  gap: 8px;
-}
-
-.app-nav__btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-  font-size: 0.8rem;
-  font-weight: 500;
-  transition: all 0.2s ease;
-}
-
-.app-nav__btn--secondary {
-  background: rgba(0, 217, 255, 0.08);
-  color: #E0F2FE;
-  border: 1px solid rgba(0, 217, 255, 0.2);
-}
-
-.app-nav__btn--secondary:hover {
-  background: rgba(0, 217, 255, 0.15);
-  box-shadow: 0 0 15px rgba(0, 217, 255, 0.2);
-}
-
-/* Main Content */
-.terminal-layout {
-  max-width: 1400px;
-  width: 100%;
-  margin: 0 auto;
-  padding: 24px;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-/* 页面包装器 - 默认不滚动（数字孪生） */
 .page-wrapper {
   flex: 1;
   display: flex;
@@ -493,19 +550,14 @@ onUnmounted(()=>{
   min-height: 0;
   overflow: hidden;
 }
-
-/* 终端页面允许滚动 */
 .page-wrapper--terminal {
   overflow-y: auto;
   overflow-x: hidden;
 }
-
-/* 数据可视化页面占满整个区域 */
 .page-wrapper--dataviz {
   overflow: hidden;
   padding: 0;
 }
-
 .twin-page {
   flex: 1;
   display: flex;
@@ -514,346 +566,57 @@ onUnmounted(()=>{
   overflow: hidden;
 }
 
-/* ===== Environment Dashboard ===== */
-.env-dashboard {
-  display: grid;
-  grid-template-columns: 1fr 220px;
-  gap: 20px;
-}
-
-/* --- Comfort Gauge Card --- */
-.comfort-card {
-  position: relative;
-  background: linear-gradient(145deg, #0f1624 0%, #0a0e1a 100%);
-  border-radius: 20px;
-  padding: 24px 28px 20px;
-  border: 1px solid rgba(0, 217, 255, 0.2);
-  overflow: hidden;
-  transition: border-color 0.6s ease, box-shadow 0.6s ease;
-  border-color: var(--c-glow, rgba(0, 217, 255, 0.2));
-  box-shadow: 0 0 30px -10px var(--c-glow, rgba(0, 217, 255, 0.2)), inset 0 1px 0 rgba(0, 217, 255, 0.1);
-}
-
-.comfort-card__glow {
-  position: absolute;
-  top: -60%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 300px;
-  height: 200px;
-  background: radial-gradient(ellipse, var(--c-glow, transparent) 0%, transparent 70%);
-  opacity: 0.3;
-  pointer-events: none;
-  transition: background 0.6s ease;
-}
-
-.comfort-card__header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 4px;
-}
-
-.comfort-card__label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #8892A0;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.comfort-card__badge {
-  font-size: 0.75rem;
-  font-weight: 700;
-  padding: 4px 14px;
-  border-radius: 20px;
-  border: 1px solid;
-  letter-spacing: 0.5px;
-  transition: all 0.4s ease;
-}
-
-.comfort-card__gauge {
-  display: flex;
-  justify-content: center;
-  margin: -4px 0 0;
-}
-
-.gauge-svg {
-  width: 260px;
-  height: 170px;
-}
-
-.gauge-arc {
-  transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-  filter: drop-shadow(0 0 6px var(--c-glow, transparent));
-}
-
-.gauge-needle {
-  transition: cx 0.8s cubic-bezier(0.4, 0, 0.2, 1), cy 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-  filter: drop-shadow(0 0 8px var(--c-color, #8892A0));
-}
-
-.gauge-text {
-  transition: fill 0.4s ease;
-}
-
-/* THI Legend */
-.thi-legend {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  margin: 4px 0 0;
-  flex-wrap: wrap;
-}
-
-.thi-legend__item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 12px;
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.04);
-}
-
-.thi-legend__dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.thi-legend__range {
-  font-size: 0.8rem;
-  font-family: 'Segoe UI', monospace;
-  color: #8892A0;
-}
-
-.thi-legend__label {
-  font-size: 0.8rem;
-  color: #E8ECF1;
-  font-weight: 600;
-}
-
-/* Sub-metrics */
-.comfort-card__metrics {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-top: 4px;
-  padding-top: 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.metric-item__head {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 8px;
-}
-
-.metric-item__label {
-  font-size: 0.75rem;
-  color: #8892A0;
-  flex: 1;
-}
-
-.metric-item__val {
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: #E8ECF1;
-  font-family: 'Segoe UI', monospace;
-}
-
-.metric-item__bar {
-  height: 4px;
-  border-radius: 2px;
-  background: rgba(255, 255, 255, 0.06);
-  overflow: hidden;
-}
-
-.metric-item__fill {
-  height: 100%;
-  border-radius: 2px;
-  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.metric-item__fill--temp {
-  background: linear-gradient(90deg, #00D9FF, #A855F7, #E879F9);
-  box-shadow: 0 0 10px rgba(0, 217, 255, 0.5);
-}
-
-.metric-item__fill--humi {
-  background: linear-gradient(90deg, #A855F7, #00D9FF);
-  box-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
-}
-
-/* --- Device Card --- */
-.device-card {
-  background: linear-gradient(145deg, #0f1624 0%, #0a0e1a 100%);
-  border-radius: 20px;
-  padding: 24px;
-  border: 1px solid rgba(0, 217, 255, 0.2);
+/* ── 终端布局 ─────────────────────────────────────────────────────── */
+.terminal-layout {
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 24px 28px;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 0 30px -10px rgba(0, 217, 255, 0.3), inset 0 1px 0 rgba(0, 217, 255, 0.1);
+  gap: 20px;
 }
-
-.device-card__header {
+/* 上半：左右两列等高 */
+.terminal-top {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 20px;
+  align-items: stretch;
+}
+.terminal-top__left {
   display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #8892A0;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 16px;
+  flex-direction: column;
+  gap: 20px;
 }
-
-.device-card__body {
-  flex: 1;
+.terminal-top__right {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
+  flex-direction: column;
 }
-
-.device-card__number {
-  position: absolute;
-  font-size: 2.8rem;
-  font-weight: 800;
-  color: #E0F2FE;
-  z-index: 1;
-  font-family: 'Segoe UI', monospace;
-  text-shadow: 0 0 25px rgba(0, 217, 255, 0.6);
-}
-
-.device-card__ring {
-  width: 120px;
-  height: 120px;
-}
-
-.device-card__ring svg {
-  width: 100%;
-  height: 100%;
-  transform: rotate(-90deg);
-}
-
-.device-ring-arc {
-  transition: stroke-dashoffset 0.6s ease;
-  filter: drop-shadow(0 0 6px rgba(0, 217, 255, 0.6));
-}
-
-.device-card__status {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 16px;
-  padding-top: 14px;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
-  font-size: 0.75rem;
-  color: #8892A0;
-}
-
-.device-card__dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #556;
-  transition: all 0.3s ease;
-}
-
-.device-card__dot--active {
-  background: #00D9FF;
-  box-shadow: 0 0 10px rgba(0, 217, 255, 0.8);
-  animation: pulse-cyan 2s infinite;
-}
-
-@keyframes pulse-cyan {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 217, 255, 0.6); }
-  50% { box-shadow: 0 0 0 6px rgba(0, 217, 255, 0); }
-}
-
-.device-card__dot--offline {
-  background: #A855F7;
-  box-shadow: 0 0 8px rgba(168, 85, 247, 0.6);
-}
-
-@keyframes pulse-cyan {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 217, 255, 0.6); }
-  50% { box-shadow: 0 0 0 6px rgba(0, 217, 255, 0); }
-}
-
-/* Responsive */
-@media (max-width: 1280px) {
-  .app-content {
-    grid-template-columns: 1fr 360px;
-    gap: 16px;
-  }
+.env-dashboard {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
 }
 
 @media (max-width: 1024px) {
-  .app-content {
-    grid-template-columns: 1fr;
-  }
-
-  .app-sidebar {
-    position: static;
-  }
-
-  .env-dashboard {
+  .terminal-top {
     grid-template-columns: 1fr;
   }
 }
-
 @media (max-width: 768px) {
-  .app-nav {
-    flex-direction: column;
-    gap: 10px;
-    padding: 10px 16px;
-  }
-
-  .app-nav__right {
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-
-  .app-content {
-    padding: 16px;
-  }
-
-  .env-dashboard {
-    grid-template-columns: 1fr;
-    gap: 14px;
-  }
-
-  .comfort-card {
-    padding: 20px;
-  }
-
-  .gauge-svg {
-    width: 220px;
-    height: 145px;
-  }
-
-  .comfort-card__metrics {
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
+  .app-nav { padding: 0 14px; }
+  .nav-metric { display: none; }
+  .terminal-layout { padding: 14px; gap: 14px; }
 }
 </style>
 
 <style>
-:global(body) {
-  font-family: 'Segoe UI', 'Roboto', Arial;
-  background: #0a0e1a;
-  color: #E0F2FE;
-  margin: 0;
-  padding: 0;
+body {
+  font-family: "Inter", system-ui, sans-serif;
+  background: #050505;
+  color: #e2e8f0;
+  margin: 0; padding: 0;
   overflow-x: hidden;
 }
 </style>
