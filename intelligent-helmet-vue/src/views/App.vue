@@ -110,9 +110,6 @@
               :pace="rideTracking.pace.value"
             />
 
-            <!-- Map Section -->
-            <GaodeMap ref="gaodeMap" class="app-map" />
-
             <!-- Event Panel -->
             <EventPanel ref="eventPanel" />
           </div>
@@ -153,7 +150,6 @@ import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import request from '@/utils/request'
 import SportBackground from '@/components/SportBackground.vue'
-import GaodeMap from '@/components/GaodeMap.vue'
 import EventPanel from '@/components/EventPanel.vue'
 import RideStatsPanel from '@/components/RideStatsPanel.vue'
 import HelmetTwin from '@/components/HelmetTwin.vue'
@@ -182,7 +178,6 @@ watch(activePage, (val) => {
   }
 })
 
-const gaodeMap = ref(null)
 const eventPanel = ref(null)
 
 const {
@@ -230,11 +225,7 @@ function handleSensorDataFromWS(payload) {
   // 同步到数字孪生
   latestSensorData.value = { ...payload }
   console.log('[App] latestSensorData 已更新:', latestSensorData.value)
-  // 1) update map
-  if (gaodeMap.value && gaodeMap.value.updateMapLocation) {
-    gaodeMap.value.updateMapLocation(payload)
-  }
-  // 2) events
+  // 1) events
   if (eventPanel.value && eventPanel.value.processDeviceEvents) {
     eventPanel.value.processDeviceEvents(payload)
   }
@@ -273,7 +264,6 @@ setOnSensorData(handleSensorDataFromWS)
 
 function handleClearAllData() {
   if (eventPanel.value && eventPanel.value.clearAllEvents) eventPanel.value.clearAllEvents()
-  if (gaodeMap.value && gaodeMap.value.clearAllTracks) gaodeMap.value.clearAllTracks()
   deviceSet.clear(); deviceCount.value = 0; lastUpdate.value = new Date()
   latestTemp.value = null
   latestHumidity.value = null
@@ -796,11 +786,6 @@ onUnmounted(()=>{
 @keyframes pulse-cyan {
   0%, 100% { box-shadow: 0 0 0 0 rgba(0, 217, 255, 0.6); }
   50% { box-shadow: 0 0 0 6px rgba(0, 217, 255, 0); }
-}
-
-/* Map Section */
-.app-map {
-  margin-bottom: 24px;
 }
 
 /* Responsive */

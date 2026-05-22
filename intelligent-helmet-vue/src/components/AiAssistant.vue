@@ -107,8 +107,6 @@ function handleClick(e) {
   // 如果刚刚在拖拽，不触发点击
   if (isDragging.value) return
 
-  console.log('[AiAssistant] 点击了 AI 助手')
-
   // 播放点击动画
   playAnimation('wave')
   showMessage('让我们聊聊吧！💬')
@@ -125,8 +123,6 @@ function handleClick(e) {
 // 初始化 Three.js 场景
 function initScene() {
   if (!containerRef.value) return
-
-  console.log('[AiAssistant] 初始化场景')
 
   // 场景
   scene = new THREE.Scene()
@@ -147,8 +143,6 @@ function initScene() {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
   renderer.setClearColor(0x000000, 0) // 透明背景
   containerRef.value.appendChild(renderer.domElement)
-
-  console.log('[AiAssistant] 渲染器创建完成，canvas 尺寸:', renderer.domElement.width, 'x', renderer.domElement.height)
 
   // 光照 - 增强光照
   const ambientLight = new THREE.AmbientLight(0xffffff, 3.0)
@@ -194,36 +188,21 @@ function loadModel() {
       const size = box.getSize(new THREE.Vector3())
       const center = box.getCenter(new THREE.Vector3())
 
-      console.log('[AiAssistant] 模型原始尺寸:', size.x.toFixed(2), 'x', size.y.toFixed(2), 'x', size.z.toFixed(2))
-      console.log('[AiAssistant] 模型原始中心:', center.x.toFixed(2), center.y.toFixed(2), center.z.toFixed(2))
-
       // 自动调整模型大小 - 让模型高度约为 1.8 单位（适中大小）
       const maxDim = Math.max(size.x, size.y, size.z)
       const scale = 2.0 / maxDim
       model.scale.set(scale, scale, scale)
-
-      console.log('[AiAssistant] 缩放比例:', scale.toFixed(4))
 
       // 居中模型并调整位置 - 让模型底部在 y=0，这样整个模型都在可视范围内
       model.position.x = -center.x * scale
       model.position.y = -center.y * scale + size.y * scale / 2 + 0.2 // 底部稍微抬高一点
       model.position.z = -center.z * scale
 
-      console.log('[AiAssistant] 模型最终位置:', model.position.x.toFixed(2), model.position.y.toFixed(2), model.position.z.toFixed(2))
-
       scene.add(model)
-
-      console.log('[AiAssistant] 模型加载成功')
-      console.log('[AiAssistant] 可用动画数量:', gltf.animations.length)
 
       // 设置动画
       if (gltf.animations && gltf.animations.length > 0) {
         mixer = new THREE.AnimationMixer(model)
-
-        // 打印所有可用动画名称
-        gltf.animations.forEach((clip, index) => {
-          console.log(`[AiAssistant] 动画 ${index}: ${clip.name}`)
-        })
 
         // 根据动画数量设置动作
         idleAction = mixer.clipAction(gltf.animations[0]) // 第一个动画作为空闲
@@ -237,14 +216,12 @@ function loadModel() {
         // 播放空闲动画
         idleAction.play()
       } else {
-        console.log('[AiAssistant] 模型没有动画，使用程序化动画')
         startIdleAnimation()
       }
 
       // 遍历模型的所有材质，确保它们可见
       model.traverse((child) => {
         if (child.isMesh) {
-          console.log('[AiAssistant] 网格:', child.name, '材质:', child.material?.type)
           if (child.material) {
             child.material.needsUpdate = true
             // 确保材质可见
@@ -256,12 +233,9 @@ function loadModel() {
       })
     },
     (progress) => {
-      const percent = (progress.loaded / progress.total * 100).toFixed(2)
-      console.log(`[AiAssistant] 加载中: ${percent}%`)
     },
     (error) => {
       console.error('[AiAssistant] 模型加载失败:', error)
-      console.log('[AiAssistant] 使用占位符模型')
       createPlaceholderModel()
     }
   )

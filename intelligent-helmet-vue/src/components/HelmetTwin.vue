@@ -43,28 +43,43 @@
         </div>
       </transition>
 
-      <!-- 悬浮姿态仪表盘（左下角） -->
-      <div class="gauge-overlay">
-        <div class="gauge-panel">
-          <div class="gauge-item">
-            <canvas ref="rollGaugeRef" class="gauge-canvas"></canvas>
-            <div class="gauge-label">Roll · 横滚角</div>
-            <div class="gauge-value" style="color:#FF6B6B">{{ roll.toFixed(1) }}°</div>
+      <!-- 左上角：3D头盔 + 状态面板 -->
+      <div class="side-panel">
+        <!-- 3D 头盔姿态视图 -->
+        <div class="helmet3d-panel">
+          <canvas ref="helmetCanvasRef" class="helmet3d-canvas"></canvas>
+          <div class="helmet3d-label">头盔姿态 · 实时</div>
+        </div>
+
+        <!-- 直观状态卡片 -->
+        <div class="status-panel">
+          <div class="status-item">
+            <span class="status-icon">↔</span>
+            <div class="status-text">
+              <div class="status-name">左右倾斜</div>
+              <div class="status-val" :style="{ color: rollStatusColor }">{{ rollStatusText }}</div>
+            </div>
           </div>
-          <div class="gauge-item">
-            <canvas ref="pitchGaugeRef" class="gauge-canvas"></canvas>
-            <div class="gauge-label">Pitch · 俯仰角</div>
-            <div class="gauge-value" style="color:#00D9FF">{{ pitch.toFixed(1) }}°</div>
+          <div class="status-item">
+            <span class="status-icon">↕</span>
+            <div class="status-text">
+              <div class="status-name">前后俯仰</div>
+              <div class="status-val" :style="{ color: pitchStatusColor }">{{ pitchStatusText }}</div>
+            </div>
           </div>
-          <div class="gauge-item">
-            <canvas ref="avmGaugeRef" class="gauge-canvas"></canvas>
-            <div class="gauge-label">AVM · 角速度</div>
-            <div class="gauge-value" style="color:#FFD93D">{{ avm.toFixed(1) }}°/s</div>
+          <div class="status-item">
+            <span class="status-icon">⚡</span>
+            <div class="status-text">
+              <div class="status-name">运动强度</div>
+              <div class="status-val" :style="{ color: avmStatusColor }">{{ avmStatusText }}</div>
+            </div>
           </div>
-          <div class="gauge-item">
-            <canvas ref="gvmGaugeRef" class="gauge-canvas"></canvas>
-            <div class="gauge-label">GVM · 倾斜合量</div>
-            <div class="gauge-value" style="color:#A855F7">{{ gvm.toFixed(1) }}°</div>
+          <div class="status-item">
+            <span class="status-icon">⬡</span>
+            <div class="status-text">
+              <div class="status-name">整体稳定</div>
+              <div class="status-val" :style="{ color: gvmStatusColor }">{{ gvmStatusText }}</div>
+            </div>
           </div>
         </div>
       </div>
@@ -79,7 +94,9 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import * as THREE from 'three'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import request from '@/utils/request'
 
 const props = defineProps({
@@ -90,10 +107,14 @@ const props = defineProps({
 
 // DOM refs
 const mapContainerRef = ref(null)
-const rollGaugeRef = ref(null)
-const pitchGaugeRef = ref(null)
-const avmGaugeRef = ref(null)
-const gvmGaugeRef = ref(null)
+const helmetCanvasRef = ref(null)
+
+// Three.js
+let threeRenderer = null
+let threeScene = null
+let threeCamera = null
+let helmetModel = null
+let threeAnimId = null
 
 // State
 const fallAlert = ref(false)
@@ -104,8 +125,56 @@ const replaySpeed = ref(1)
 // Sensor values
 const roll = ref(0)
 const pitch = ref(0)
+const yaw = ref(0)
 const avm = ref(0)
 const gvm = ref(0)
+
+// ── 直观状态描述 ──────────────────────────────────────────────────────────────
+const rollStatusText = computed(() => {
+  const v = roll.value
+  if (Math.abs(v) < 5) return '水平'
+  if (v > 0) return v > 20 ? `右倾 ${v.toFixed(0)}° ⚠` : `右倾 ${v.toFixed(0)}°`
+  return Math.abs(v) > 20 ? `左倾 ${Math.abs(v).toFixed(0)}° ⚠` : `左倾 ${Math.abs(v).toFixed(0)}°`
+})
+const rollStatusColor = computed(() => {
+  const v = Math.abs(roll.value)
+  return v > 20 ? '#FF6B6B' : v > 10 ? '#FFD93D' : '#4ade80'
+})
+
+const pitchStatusText = computed(() => {
+  const v = pitch.value
+  if (Math.abs(v) < 5) return '平视'
+  if (v > 0) return v > 20 ? `低头 ${v.toFixed(0)}° ⚠` : `低头 ${v.toFixed(0)}°`
+  return Math.abs(v) > 20 ? `抬头 ${Math.abs(v).toFixed(0)}° ⚠` : `抬头 ${Math.abs(v).toFixed(0)}°`
+})
+const pitchStatusColor = computed(() => {
+  const v = Math.abs(pitch.value)
+  return v > 20 ? '#FF6B6B' : v > 10 ? '#FFD93D' : '#4ade80'
+})
+
+const avmStatusText = computed(() => {
+  const v = avm.value
+  if (v < 10) return '静止'
+  if (v < 30) return '轻微晃动'
+  if (v < 60) return '中等运动'
+  return '剧烈运动 ⚠'
+})
+const avmStatusColor = computed(() => {
+  const v = avm.value
+  return v > 60 ? '#FF6B6B' : v > 30 ? '#FFD93D' : '#4ade80'
+})
+
+const gvmStatusText = computed(() => {
+  const v = gvm.value
+  if (v < 5) return '非常稳定'
+  if (v < 15) return '基本稳定'
+  if (v < 30) return '轻微倾斜'
+  return '大幅倾斜 ⚠'
+})
+const gvmStatusColor = computed(() => {
+  const v = gvm.value
+  return v > 30 ? '#FF6B6B' : v > 15 ? '#FFD93D' : '#4ade80'
+})
 
 // Track
 const trackPoints = ref([]) // [{ lat, lng, yaw }]
@@ -144,6 +213,89 @@ function buildHelmetMarkerHTML(yawDeg) {
       </svg>
     </div>
   `
+}
+
+// ── Three.js 3D 头盔姿态视图 ──────────────────────────────────────────────────
+function initHelmet3D() {
+  const canvas = helmetCanvasRef.value
+  if (!canvas) return
+
+  threeRenderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true })
+  threeRenderer.setPixelRatio(1)
+  threeRenderer.setSize(220, 220, false)
+  threeRenderer.setClearColor(0x000000, 0)
+
+  threeScene = new THREE.Scene()
+
+  threeCamera = new THREE.PerspectiveCamera(45, 1, 0.1, 100)
+  threeCamera.position.set(0, 0, 3)
+  threeCamera.lookAt(0, 0, 0)
+
+  // 环境光
+  threeScene.add(new THREE.AmbientLight(0xffffff, 0.6))
+  // 主方向光（青色调）
+  const dirLight = new THREE.DirectionalLight(0x00D9FF, 1.2)
+  dirLight.position.set(2, 4, 3)
+  threeScene.add(dirLight)
+  // 补光
+  const fillLight = new THREE.DirectionalLight(0xffffff, 0.4)
+  fillLight.position.set(-2, -1, -2)
+  threeScene.add(fillLight)
+
+  const loader = new GLTFLoader()
+  loader.load(
+    '/models/envoy.glb',
+    (gltf) => {
+      const model = gltf.scene
+      // 以高度为基准归一化，让头盔垂直方向充满视口
+      const box = new THREE.Box3().setFromObject(model)
+      const center = new THREE.Vector3()
+      box.getCenter(center)
+      const size = new THREE.Vector3()
+      box.getSize(size)
+
+      // 先缩放，再居中（顺序不能反）
+      const maxDim = Math.max(size.x, size.y, size.z)
+      const scale = 1.2 / maxDim
+      model.scale.setScalar(scale)
+
+      // 世界中心 = position + scale × localCenter，要让它为 0：position = -scale × center
+      model.position.set(-center.x * scale, -center.y * scale, -center.z * scale)
+
+      // 相机距离：视野高度覆盖缩放后最大尺寸，留 20% 边距
+      const fovRad = THREE.MathUtils.degToRad(45)
+      const camDist = (1.2 / 2) / Math.tan(fovRad / 2) * 1.2
+      threeCamera.position.set(0, 0, camDist)
+      threeCamera.lookAt(0, 0, 0)
+
+      console.log('[HelmetTwin] 模型原始尺寸:', size.x.toFixed(2), 'x', size.y.toFixed(2), 'x', size.z.toFixed(2), '缩放:', scale.toFixed(4), '相机距离:', camDist.toFixed(2))
+
+      threeScene.add(model)
+      helmetModel = model
+      console.log('[HelmetTwin] 3D 头盔模型加载完成')
+    },
+    undefined,
+    (err) => {
+      console.warn('[HelmetTwin] 3D 模型加载失败:', err)
+    }
+  )
+
+  renderHelmet3D()
+}
+
+function renderHelmet3D() {
+  threeAnimId = requestAnimationFrame(renderHelmet3D)
+  if (helmetModel) {
+    helmetModel.rotation.set(
+      THREE.MathUtils.degToRad(pitch.value),
+      THREE.MathUtils.degToRad(-yaw.value),
+      THREE.MathUtils.degToRad(roll.value),
+      'YXZ'
+    )
+  }
+  if (threeRenderer && threeScene && threeCamera) {
+    threeRenderer.render(threeScene, threeCamera)
+  }
 }
 
 // ── AMap 初始化 ───────────────────────────────────────────────────────────────
@@ -392,72 +544,7 @@ function replayTrack() {
 }
 
 // ── Gauge 绘制 ────────────────────────────────────────────────────────────────
-function drawGauge(canvas, value, min, max, color) {
-  if (!canvas) return
-  const ctx = canvas.getContext('2d')
-  const w = canvas.width = canvas.clientWidth * 2
-  const h = canvas.height = canvas.clientHeight * 2
-  const cx = w / 2
-  const cy = h * 0.75
-  const radius = Math.min(w, h) * 0.35
-
-  ctx.clearRect(0, 0, w, h)
-
-  // 背景弧
-  ctx.beginPath()
-  ctx.arc(cx, cy, radius, Math.PI, 2 * Math.PI)
-  ctx.strokeStyle = 'rgba(255,255,255,0.1)'
-  ctx.lineWidth = 8
-  ctx.stroke()
-
-  // 刻度线
-  for (let i = 0; i <= 10; i++) {
-    const angle = Math.PI + (i / 10) * Math.PI
-    const x1 = cx + Math.cos(angle) * (radius - 5)
-    const y1 = cy + Math.sin(angle) * (radius - 5)
-    const x2 = cx + Math.cos(angle) * (radius - 15)
-    const y2 = cy + Math.sin(angle) * (radius - 15)
-    ctx.beginPath()
-    ctx.moveTo(x1, y1)
-    ctx.lineTo(x2, y2)
-    ctx.strokeStyle = 'rgba(255,255,255,0.3)'
-    ctx.lineWidth = 2
-    ctx.stroke()
-  }
-
-  // 值弧
-  const normalized = Math.max(0, Math.min(1, (value - min) / (max - min)))
-  const valueAngle = Math.PI + normalized * Math.PI
-  ctx.beginPath()
-  ctx.arc(cx, cy, radius, Math.PI, valueAngle)
-  ctx.strokeStyle = color
-  ctx.lineWidth = 8
-  ctx.stroke()
-
-  // 指针
-  const pointerLength = radius - 20
-  const px = cx + Math.cos(valueAngle) * pointerLength
-  const py = cy + Math.sin(valueAngle) * pointerLength
-  ctx.beginPath()
-  ctx.moveTo(cx, cy)
-  ctx.lineTo(px, py)
-  ctx.strokeStyle = color
-  ctx.lineWidth = 3
-  ctx.stroke()
-
-  // 中心点
-  ctx.beginPath()
-  ctx.arc(cx, cy, 5, 0, 2 * Math.PI)
-  ctx.fillStyle = color
-  ctx.fill()
-}
-
-function updateGauges() {
-  drawGauge(rollGaugeRef.value, roll.value, -45, 45, '#FF6B6B')
-  drawGauge(pitchGaugeRef.value, pitch.value, -45, 45, '#00D9FF')
-  drawGauge(avmGaugeRef.value, avm.value, 0, 100, '#FFD93D')
-  drawGauge(gvmGaugeRef.value, gvm.value, 0, 45, '#A855F7')
-}
+// (已移除 canvas gauge，改用直观文字状态卡片)
 
 // ── Watch sensor data ─────────────────────────────────────────────────────────
 watch(() => props.sensorData, (data) => {
@@ -465,6 +552,7 @@ watch(() => props.sensorData, (data) => {
 
   roll.value = Number(data.roll) || 0
   pitch.value = Number(data.pitch) || 0
+  yaw.value = Number(data.yaw) || 0
   avm.value = Number(data.avm) || 0
   gvm.value = Number(data.gvm) || 0
 
@@ -492,19 +580,24 @@ watch(() => props.sensorData, (data) => {
       }
     }
   }
-
-  updateGauges()
 }, { deep: true })
 
 // ── Lifecycle ─────────────────────────────────────────────────────────────────
 onMounted(async () => {
   await nextTick()   // 等 DOM 渲染，确保容器有尺寸
   initAMap()
-  setTimeout(updateGauges, 200)
+  initHelmet3D()
 })
 
 onUnmounted(() => {
   if (replayTimer) clearTimeout(replayTimer)
+  if (threeAnimId) cancelAnimationFrame(threeAnimId)
+  if (threeRenderer) threeRenderer.dispose()
+  threeRenderer = null
+  threeScene = null
+  threeCamera = null
+  helmetModel = null
+  threeAnimId = null
   if (amap) {
     amap.destroy()
     amap = null
@@ -598,49 +691,82 @@ defineExpose({
 .alert-fade-enter-active, .alert-fade-leave-active { transition: opacity 0.3s, transform 0.3s; }
 .alert-fade-enter-from, .alert-fade-leave-to { opacity: 0; transform: translateX(-50%) translateY(-8px); }
 
-/* 悬浮仪表盘（左下角） */
-.gauge-overlay {
+/* 左上角侧边面板容器 */
+.side-panel {
   position: absolute;
-  bottom: 20px;
-  left: 20px;
+  top: 12px;
+  left: 12px;
   z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   pointer-events: none;
 }
-.gauge-panel {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-  background: rgba(10, 14, 26, 0.75);
-  backdrop-filter: blur(10px);
+
+/* 3D 头盔姿态面板 */
+.helmet3d-panel {
+  background: rgba(8,12,22,0.6);
   border: 1px solid rgba(0,217,255,0.2);
   border-radius: 10px;
-  padding: 10px;
-}
-.gauge-item {
+  padding: 8px 8px 4px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: rgba(255,255,255,0.02);
-  border-radius: 6px;
-  padding: 6px 8px;
-  min-width: 90px;
+  backdrop-filter: blur(6px);
 }
-.gauge-canvas {
-  width: 90px;
-  height: 55px;
+.helmet3d-canvas {
+  width: 220px;
+  height: 220px;
+  display: block;
 }
-.gauge-label {
+.helmet3d-label {
   font-size: 10px;
-  font-weight: 600;
-  color: rgba(255,255,255,0.6);
+  color: rgba(0,217,255,0.55);
   margin-top: 2px;
-  white-space: nowrap;
+  letter-spacing: 0.5px;
 }
-.gauge-value {
+
+/* 直观状态卡片 */
+.status-panel {
+  background: rgba(8,12,22,0.6);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  backdrop-filter: blur(6px);
+  width: 236px;
+  box-sizing: border-box;
+}
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.status-icon {
   font-size: 14px;
-  font-weight: 700;
-  margin-top: 2px;
-  font-variant-numeric: tabular-nums;
+  width: 20px;
+  text-align: center;
+  color: rgba(255,255,255,0.4);
+  flex-shrink: 0;
+}
+.status-text {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex: 1;
+}
+.status-name {
+  font-size: 11px;
+  color: rgba(255,255,255,0.45);
+  white-space: nowrap;
+  min-width: 56px;
+}
+.status-val {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
 }
 
 /* 轨迹信息（右下角） */
@@ -652,13 +778,13 @@ defineExpose({
   display: flex;
   align-items: center;
   gap: 5px;
-  background: rgba(10,14,26,0.75);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(0,217,255,0.2);
+  background: rgba(8,12,22,0.6);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255,255,255,0.08);
   border-radius: 6px;
   padding: 5px 10px;
   font-size: 11px;
-  color: #00D9FF;
+  color: rgba(0,217,255,0.8);
   pointer-events: none;
 }
 </style>
