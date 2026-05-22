@@ -2,11 +2,13 @@ com\demo\config\JwtUtil.class
 com\demo\service\SensorDataPersistService.class
 com\demo\service\UserService.class
 com\demo\repository\EmergencyContactRepository.class
+com\demo\repository\ChatMessageRepository.class
 com\demo\repository\UserRepository.class
 com\demo\model\UserProfile.class
 com\demo\controller\UserDataController.class
 com\demo\model\User.class
 com\demo\service\ClaudeService.class
+com\demo\model\ChatMessage.class
 com\demo\model\HelmetEvent.class
 com\demo\ApplicationAMQPJavaDemo$1.class
 com\demo\repository\SensorDataRepository.class

@@ -15,7 +15,7 @@
           </div>
         </div>
         <div class="app-nav__brand">
-          <span class="brand-main">X-TERN PROTOCOL</span>
+          <span class="brand-main">{{ userProfileStore.nickname || 'X-TERN PROTOCOL' }}</span>
           <span class="brand-ver">v.0.42</span>
         </div>
         <!-- 连接状态 -->
@@ -53,9 +53,10 @@
           <span class="nav-metric__label">SYNC</span>
           <span class="nav-metric__val nav-metric__val--green">STABLE</span>
         </div>
-        <div class="nav-metric nav-metric--clock">
-          <span class="nav-metric__label">UTC</span>
-          <span class="nav-metric__val nav-metric__val--mono">{{ utcClock }}</span>
+        <div class="nav-metric nav-metric--battery">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="16" height="10" rx="2"/><path d="M22 11v2"/><rect x="4" y="9" :width="batteryBarWidth" height="6" rx="1" :fill="batteryColor" stroke="none"/></svg>
+          <span class="nav-metric__label">BAT</span>
+          <span class="nav-metric__val" :style="{ color: batteryColor }">{{ batteryDisplay }}</span>
         </div>
         <button class="app-nav__btn" @click="goToProfile">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -156,6 +157,23 @@ const userStore = useUserStore()
 const activePage = ref('terminal')
 const latestSensorData = ref({})
 const helmetTwin = ref(null)
+
+// 设备电量（从传感器数据读取，字段名 battery，0-100）
+const batteryLevel = computed(() => {
+  const v = latestSensorData.value?.battery
+  return (v != null && !isNaN(v)) ? Math.max(0, Math.min(100, Number(v))) : null
+})
+const batteryDisplay = computed(() => batteryLevel.value != null ? batteryLevel.value + '%' : '--')
+const batteryColor = computed(() => {
+  if (batteryLevel.value == null) return 'rgba(255,255,255,0.35)'
+  if (batteryLevel.value > 50) return '#00F3FF'
+  if (batteryLevel.value > 20) return '#FFAA00'
+  return '#EF4444'
+})
+const batteryBarWidth = computed(() => {
+  if (batteryLevel.value == null) return 0
+  return Math.round(batteryLevel.value / 100 * 12)
+})
 
 // UTC 时钟
 const utcClock = ref('')
@@ -720,6 +738,7 @@ function initStars(canvas) {
   grid-template-columns: 1fr 380px;
   gap: 20px;
   align-items: stretch;
+  min-height: 450px;
 }
 .terminal-top__left {
   display: flex;
@@ -729,11 +748,17 @@ function initStars(canvas) {
 .terminal-top__right {
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  height: 450px;
 }
 .env-dashboard {
   display: grid;
   grid-template-columns: 1fr;
   gap: 16px;
+}
+/* RideStatsPanel 撑满左列剩余高度，底部与 AI 面板对齐 */
+.terminal-top__left > *:last-child {
+  flex: 1;
 }
 
 @media (max-width: 1024px) {

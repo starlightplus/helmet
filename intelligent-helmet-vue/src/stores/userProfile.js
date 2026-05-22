@@ -41,24 +41,19 @@ export const useUserProfileStore = defineStore('userProfile', () => {
 
   // ── 保存到后端 ──────────────────────────────────────────────────
   async function saveToServer() {
-    try {
-      await request.put('/api/user/profile', {
-        nickname:   nickname.value,
-        age:        age.value,
-        height:     height.value,
-        weight:     weight.value,
-        gender:     gender.value,
-        avatarData: avatarData.value,
-        bio:        bio.value,
-        weightUnit: weightUnit.value,
-        bloodType:  bloodType.value,
-        allergies:  allergies.value
-      })
-      _saveToStorage()
-    } catch (e) {
-      console.warn('[UserProfile] 保存到服务器失败，仅保存本地:', e)
-      _saveToStorage()
-    }
+    await request.put('/api/user/profile', {
+      nickname:   nickname.value,
+      age:        age.value,
+      height:     height.value,
+      weight:     weight.value,
+      gender:     gender.value,
+      avatarData: avatarData.value,
+      bio:        bio.value,
+      weightUnit: weightUnit.value,
+      bloodType:  bloodType.value,
+      allergies:  allergies.value
+    })
+    _saveToStorage()
   }
 
   // ── localStorage 兜底 ───────────────────────────────────────────

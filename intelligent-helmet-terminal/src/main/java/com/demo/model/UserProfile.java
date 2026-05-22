@@ -26,7 +26,7 @@ public class UserProfile {
     @Column(length = 10)
     private String gender;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "MEDIUMTEXT")
     private String avatarData;
 
     @Column(length = 200)

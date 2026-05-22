@@ -528,12 +528,21 @@ function selectPresetAvatar(i) {
   triggerToast('已应用预设头像: ' + gradientPresets[i].name)
 }
 
-function handleAvatarUpload(e) {
+async function handleAvatarUpload(e) {
   const file = e.target.files?.[0]
   if (!file) return
   if (file.size > 2 * 1024 * 1024) { triggerToast('图片大小不能超过 2MB', 'error'); return }
   const reader = new FileReader()
-  reader.onload = ev => { store.setAvatarData(ev.target.result); triggerToast('自定义头像上传成功！') }
+  reader.onload = async ev => {
+    try {
+      store.avatarData = ev.target.result
+      await store.saveToServer()
+      triggerToast('自定义头像上传成功！')
+    } catch (err) {
+      store.avatarData = ''
+      triggerToast('头像保存失败，请重试', 'error')
+    }
+  }
   reader.readAsDataURL(file)
 }
 

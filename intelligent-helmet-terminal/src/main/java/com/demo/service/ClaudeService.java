@@ -33,9 +33,56 @@ public class ClaudeService {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     /**
+     * 预设问答表：key 是关键词（用户消息包含该词即命中），value 是直接返回的答案。
+     * 支持多个关键词命中同一答案，用 List 包多条 entry 即可。
+     * 修改后重启后端生效。
+     */
+    private static final List<Map.Entry<String[], String>> FAQ = List.of(
+        Map.entry(new String[]{"你是谁", "你叫什么", "介绍一下你自己"},
+            "我是**灵盔 AI 助手**，专为智能头盔终端设计。我能帮你分析实时传感器数据、提供骑行安全建议、解读环境状况，以及回答头盔使用相关问题。"),
+        Map.entry(new String[]{"紧急联系", "急救", "救援电话"},
+            "紧急情况请立即拨打 **120**（急救）或 **110**（报警）。您也可以在「个人资料」页面设置紧急联系人，系统检测到跌倒时会自动提醒。"),
+        Map.entry(new String[]{"头盔怎么用", "如何使用头盔", "头盔使用说明"},
+            "智能头盔使用步骤：\n1. 开机后等待设备连接（设备ID会出现在主界面）\n2. 佩戴头盔，确保传感器贴合\n3. 主界面实时显示温度、湿度、姿态角和GPS位置\n4. 跌倒检测自动触发，无需手动操作\n5. 可在「骑行记录」查看历史轨迹"),
+        Map.entry(new String[]{"跌倒检测", "摔倒检测", "fall"},
+            "跌倒检测基于 IMU 传感器的角速度合量和倾斜合量综合判断。当检测到异常姿态变化时，系统会在界面顶部显示红色警告，并记录事件到「紧急事件预览」列表。"),
+        Map.entry(new String[]{"电量", "没电", "充电"},
+            "关于头盔电量：请参考头盔硬件说明书中的充电指引。建议每次骑行前确认电量充足，低电量时传感器数据可能不稳定。"),
+        Map.entry(new String[]{"隐私", "数据安全", "数据会泄露吗"},
+            "您的数据安全说明：\n- 传感器数据仅存储在本地服务器，不上传第三方\n- 账号使用 JWT 认证，token 24小时过期\n- 对话历史仅您本人可见\n- 如需删除数据，可在设置中清空")
+    );
+
+    /**
+     * 检查用户消息是否命中预设问答，命中返回答案，否则返回 null
+     */
+    private String matchFaq(String userMessage) {
+        if (userMessage == null || userMessage.isBlank()) return null;
+        String lower = userMessage.toLowerCase();
+        for (Map.Entry<String[], String> entry : FAQ) {
+            for (String keyword : entry.getKey()) {
+                if (lower.contains(keyword.toLowerCase())) {
+                    return entry.getValue();
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
      * 发送对话请求到 DeepSeek API（OpenAI 兼容格式）
      */
     public String chat(List<Map<String, String>> messages, String deviceId) throws Exception {
+        // 取最后一条 user 消息做 FAQ 匹配
+        String lastUserContent = null;
+        for (int i = messages.size() - 1; i >= 0; i--) {
+            if ("user".equals(messages.get(i).get("role"))) {
+                lastUserContent = messages.get(i).get("content");
+                break;
+            }
+        }
+        String faqAnswer = matchFaq(lastUserContent);
+        if (faqAnswer != null) return faqAnswer;
+
         String systemPrompt = buildSystemPrompt(deviceId);
 
         // 构建请求体

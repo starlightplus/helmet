@@ -79,7 +79,7 @@
 </template>
 
 <script setup>
-import { ref, computed, nextTick } from 'vue'
+import { ref, computed, nextTick, onMounted } from 'vue'
 
 const props = defineProps({
   deviceId: { type: String, default: '' }
@@ -93,6 +93,16 @@ const inputEl = ref(null)
 
 const hints = ['当前温度正常吗？', '骑行安全建议', '当前位置在哪里？']
 
+function getToken() {
+  return sessionStorage.getItem('token') || ''
+}
+
+function authHeaders() {
+  const token = getToken()
+  return token ? { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }
+               : { 'Content-Type': 'application/json' }
+}
+
 // 给时间戳生成显示字符串
 function nowTimeStr() {
   const d = new Date()
@@ -101,6 +111,13 @@ function nowTimeStr() {
 function nowDateKey() {
   const d = new Date()
   return d.toISOString().slice(0, 10)  // "YYYY-MM-DD"
+}
+function isoToTimeStr(iso) {
+  // "2026-05-23T14:30:00" → "14:30"
+  return iso ? iso.slice(11, 16) : nowTimeStr()
+}
+function isoToDateKey(iso) {
+  return iso ? iso.slice(0, 10) : nowDateKey()
 }
 function formatDateLabel(dateKey) {
   const today = new Date().toISOString().slice(0, 10)
@@ -124,7 +141,32 @@ const groupedMessages = computed(() => {
   return groups
 })
 
-function clearChat() {
+// 加载历史消息
+async function loadHistory() {
+  if (!getToken()) return
+  try {
+    const res = await fetch('/api/chat/history?limit=200', { headers: authHeaders() })
+    if (!res.ok) return
+    const data = await res.json()
+    messages.value = data.map(m => ({
+      role:    m.role,
+      content: m.content,
+      timeStr: isoToTimeStr(m.createdAt),
+      dateKey: isoToDateKey(m.createdAt)
+    }))
+    await nextTick()
+    scrollToBottom()
+  } catch (e) {
+    // 加载失败不影响正常使用
+  }
+}
+
+async function clearChat() {
+  if (getToken()) {
+    try {
+      await fetch('/api/chat/history', { method: 'DELETE', headers: authHeaders() })
+    } catch (e) {}
+  }
   messages.value = []
 }
 
@@ -145,7 +187,7 @@ async function sendMessage() {
   try {
     const res = await fetch('/api/chat', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: authHeaders(),
       body: JSON.stringify({
         messages: messages.value.map(m => ({ role: m.role, content: m.content })),
         deviceId: props.deviceId || ''
@@ -189,6 +231,10 @@ function formatText(text) {
     ? escaped.replace(/\n/g, '<br>').replace(/\*\*([^*]{1,100})\*\*/g, '<strong>$1</strong>')
     : escaped.replace(/\n/g, '<br>')
 }
+
+onMounted(() => {
+  loadHistory()
+})
 </script>
 
 <style scoped>

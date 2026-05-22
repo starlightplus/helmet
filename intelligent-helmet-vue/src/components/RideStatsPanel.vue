@@ -57,7 +57,7 @@
         <div class="ride-card__stat ride-card__stat--cal">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M12 6v6l4 2"/></svg>
           <span class="ride-card__stat-val ride-card__stat-val--cal">{{ isRiding ? Math.round(calories) : '--' }}</span>
-          <span class="ride-card__stat-key">卡路里 kcal</span>
+          <span class="ride-card__stat-key">消耗卡路里 kcal</span>
           <button class="ride-history-btn" @click="goToRideHistory">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="5.5" cy="17.5" r="3.5"/><path d="M15 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2z" fill="currentColor"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></svg>
             骑行记录
@@ -200,6 +200,9 @@ onUnmounted(() => {
   backdrop-filter: blur(12px);
   transition: border-color 0.3s, box-shadow 0.3s;
   clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 /* cyber anchor top-left */
 .ride-card::before {
@@ -303,15 +306,17 @@ onUnmounted(() => {
   align-items: stretch;
   padding: 14px 18px;
   gap: 0;
+  flex: 1;
 }
 
 /* Left: speed */
 .ride-card__speed-col {
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: space-between;
   min-width: 130px;
-  padding-right: 18px;
+  padding-left: 12px;
+  padding-right: 15px;
 }
 .ride-card__label-row {
   display: flex;
@@ -422,12 +427,15 @@ onUnmounted(() => {
   grid-template-columns: repeat(2, 1fr);
   gap: 8px 14px;
   flex: 1;
-  align-content: center;
+  align-content: space-between;
+  padding-top: 24px;
 }
 .ride-card__stat {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
+  align-items: center;
+  justify-content: center;
 }
 .ride-card__stat--cal {
   grid-column: 1 / -1;
