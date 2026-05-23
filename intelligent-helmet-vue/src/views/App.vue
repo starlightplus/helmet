@@ -16,7 +16,6 @@
         </div>
         <div class="app-nav__brand">
           <span class="brand-main">{{ userProfileStore.nickname || 'X-TERN PROTOCOL' }}</span>
-          <span class="brand-ver">v.0.42</span>
         </div>
         <!-- 连接状态 -->
         <div class="app-nav__status">

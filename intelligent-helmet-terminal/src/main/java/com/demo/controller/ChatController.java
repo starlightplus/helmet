@@ -73,9 +73,10 @@ public class ChatController {
 
             String reply = claudeService.chat(messages, deviceId);
 
-            // 解析用户身份，保存本轮消息（user + assistant）
+            // saveHistory=false 时（如骑行规划页）不写入对话历史
+            boolean saveHistory = !Boolean.FALSE.equals(body.get("saveHistory"));
             User user = resolveUser(auth);
-            if (user != null) {
+            if (user != null && saveHistory) {
                 // 只保存最后一条 user 消息（避免重复保存历史）
                 Map<String, String> lastUser = messages.get(messages.size() - 1);
                 if ("user".equals(lastUser.get("role"))) {

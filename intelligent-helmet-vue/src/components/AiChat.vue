@@ -91,7 +91,7 @@ const loading = ref(false)
 const messagesEl = ref(null)
 const inputEl = ref(null)
 
-const hints = ['当前温度正常吗？', '骑行安全建议', '当前位置在哪里？']
+const hints = ['骑行规划是什么', '骑行安全建议', '当前位置在哪里？']
 
 function getToken() {
   return sessionStorage.getItem('token') || ''
@@ -242,7 +242,7 @@ onMounted(() => {
 .ai-panel {
   display: flex;
   flex-direction: column;
-  background: rgba(7, 7, 7, 0.90);
+  background: #171717;
   border: 1px solid rgba(0, 243, 255, 0.15);
   backdrop-filter: blur(12px);
   overflow: hidden;

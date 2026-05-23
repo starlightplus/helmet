@@ -10,7 +10,8 @@
       "Bash(npm list:*)",
       "Bash(\"D:\\\\嵌入式\\\\1\\\\amqp-demo\\\\intelligent-helmet-vue\\\\src\\\\views\\\\DataVisualization.vue\":*)",
       "Bash(npm run:*)",
-      "Bash(git clone:*)"
+      "Bash(git clone:*)",
+      "Bash(grep:*)"
     ]
   }
 }

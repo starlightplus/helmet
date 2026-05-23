@@ -58,6 +58,10 @@
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M12 6v6l4 2"/></svg>
           <span class="ride-card__stat-val ride-card__stat-val--cal">{{ isRiding ? Math.round(calories) : '--' }}</span>
           <span class="ride-card__stat-key">消耗卡路里 kcal</span>
+          <button class="ride-history-btn ride-plan-btn" @click="goToRidePlan">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+            骑行规划
+          </button>
           <button class="ride-history-btn" @click="goToRideHistory">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="5.5" cy="17.5" r="3.5"/><path d="M15 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2z" fill="currentColor"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></svg>
             骑行记录
@@ -88,6 +92,7 @@ const props = defineProps({
 
 const router = useRouter()
 function goToRideHistory() { router.push('/ride-history') }
+function goToRidePlan()    { router.push('/ride-plan') }
 
 const formattedDuration = computed(() => formatDuration(props.rideDuration))
 const formattedDistance = computed(() => props.rideDistance.toFixed(2))
@@ -184,6 +189,17 @@ onUnmounted(() => {
   clip-path: polygon(5px 0%,100% 0%,100% calc(100% - 5px),calc(100% - 5px) 100%,0% 100%,0% 5px);
   flex-shrink: 0;
 }
+.ride-plan-btn {
+  border-color: rgba(139, 92, 246, 0.25);
+  color: rgba(167, 139, 250, 0.80);
+  background: rgba(139, 92, 246, 0.05);
+}
+.ride-plan-btn:hover {
+  background: rgba(139, 92, 246, 0.12);
+  border-color: rgba(139, 92, 246, 0.50);
+  color: #a78bfa;
+  box-shadow: 0 0 10px rgba(139, 92, 246, 0.20);
+}
 .ride-history-btn:hover {
   background: rgba(0, 243, 255, 0.12);
   border-color: rgba(0, 243, 255, 0.45);
@@ -194,7 +210,7 @@ onUnmounted(() => {
 /* ── Card Container ─────────────────────────────────────────────── */
 .ride-card {
   position: relative;
-  background: rgba(7, 7, 7, 0.90);
+  background: #171717;
   border: 1px solid rgba(0, 243, 255, 0.10);
   overflow: hidden;
   backdrop-filter: blur(12px);

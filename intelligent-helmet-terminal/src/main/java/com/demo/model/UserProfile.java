@@ -1,6 +1,7 @@
 package com.demo.model;
 
 import javax.persistence.*;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "user_profiles")
@@ -18,10 +19,8 @@ public class UserProfile {
     private String nickname;
 
     private Integer age;
-
     private Integer height;
-
-    private Double weight;
+    private Double  weight;
 
     @Column(length = 10)
     private String gender;
@@ -40,6 +39,20 @@ public class UserProfile {
 
     @Column(length = 200)
     private String allergies;
+
+    // ── 骑行规划 ──────────────────────────────────────────────────
+    private Integer planDailyRideMin;
+    private Integer planDailyIntake;
+    private Double  planTargetWeight;
+    private Integer planWeeks;
+
+    @Column(columnDefinition = "TEXT")
+    private String planSportText;
+
+    @Column(columnDefinition = "TEXT")
+    private String planDietText;
+
+    private LocalDateTime planAcceptedAt;
 
     public UserProfile() {}
 
@@ -78,4 +91,25 @@ public class UserProfile {
 
     public String getAllergies() { return allergies; }
     public void setAllergies(String allergies) { this.allergies = allergies; }
+
+    public Integer getPlanDailyRideMin() { return planDailyRideMin; }
+    public void setPlanDailyRideMin(Integer v) { this.planDailyRideMin = v; }
+
+    public Integer getPlanDailyIntake() { return planDailyIntake; }
+    public void setPlanDailyIntake(Integer v) { this.planDailyIntake = v; }
+
+    public Double getPlanTargetWeight() { return planTargetWeight; }
+    public void setPlanTargetWeight(Double v) { this.planTargetWeight = v; }
+
+    public Integer getPlanWeeks() { return planWeeks; }
+    public void setPlanWeeks(Integer v) { this.planWeeks = v; }
+
+    public String getPlanSportText() { return planSportText; }
+    public void setPlanSportText(String v) { this.planSportText = v; }
+
+    public String getPlanDietText() { return planDietText; }
+    public void setPlanDietText(String v) { this.planDietText = v; }
+
+    public LocalDateTime getPlanAcceptedAt() { return planAcceptedAt; }
+    public void setPlanAcceptedAt(LocalDateTime v) { this.planAcceptedAt = v; }
 }

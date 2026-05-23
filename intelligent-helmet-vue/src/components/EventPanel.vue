@@ -162,7 +162,7 @@ defineExpose({ processDeviceEvents, clearAllEvents, addEvent })
 /* ── Panel Container ───────────────────────────────────────────── */
 .event-panel {
   position: relative;
-  background: rgba(7, 7, 7, 0.90);
+  background: #171717;
   border: 1px solid rgba(0, 243, 255, 0.10);
   width: 100%;
   box-sizing: border-box;

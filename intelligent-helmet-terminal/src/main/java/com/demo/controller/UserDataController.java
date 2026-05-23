@@ -53,6 +53,14 @@ public class UserDataController {
         res.put("weightUnit", profile.getWeightUnit() != null ? profile.getWeightUnit() : "kg");
         res.put("bloodType",  profile.getBloodType());
         res.put("allergies",  profile.getAllergies());
+        // 骑行规划
+        res.put("planDailyRideMin",  profile.getPlanDailyRideMin());
+        res.put("planDailyIntake",   profile.getPlanDailyIntake());
+        res.put("planTargetWeight",  profile.getPlanTargetWeight());
+        res.put("planWeeks",         profile.getPlanWeeks());
+        res.put("planSportText",     profile.getPlanSportText());
+        res.put("planDietText",      profile.getPlanDietText());
+        res.put("planAcceptedAt",    profile.getPlanAcceptedAt() != null ? profile.getPlanAcceptedAt().toString() : null);
         return ResponseEntity.ok(res);
     }
 
@@ -79,6 +87,27 @@ public class UserDataController {
         if (body.containsKey("weightUnit")) profile.setWeightUnit((String) body.get("weightUnit"));
         if (body.containsKey("bloodType"))  profile.setBloodType((String) body.get("bloodType"));
         if (body.containsKey("allergies"))  profile.setAllergies((String) body.get("allergies"));
+        // 骑行规划字段
+        if (body.containsKey("planDailyRideMin") && body.get("planDailyRideMin") != null)
+            profile.setPlanDailyRideMin(((Number) body.get("planDailyRideMin")).intValue());
+        if (body.containsKey("planDailyIntake") && body.get("planDailyIntake") != null)
+            profile.setPlanDailyIntake(((Number) body.get("planDailyIntake")).intValue());
+        if (body.containsKey("planTargetWeight") && body.get("planTargetWeight") != null)
+            profile.setPlanTargetWeight(((Number) body.get("planTargetWeight")).doubleValue());
+        if (body.containsKey("planWeeks") && body.get("planWeeks") != null)
+            profile.setPlanWeeks(((Number) body.get("planWeeks")).intValue());
+        if (body.containsKey("planSportText"))
+            profile.setPlanSportText((String) body.get("planSportText"));
+        if (body.containsKey("planDietText"))
+            profile.setPlanDietText((String) body.get("planDietText"));
+        if (body.containsKey("clearPlan") && Boolean.TRUE.equals(body.get("clearPlan"))) {
+            profile.setPlanDailyRideMin(null); profile.setPlanDailyIntake(null);
+            profile.setPlanTargetWeight(null); profile.setPlanWeeks(null);
+            profile.setPlanSportText(null);    profile.setPlanDietText(null);
+            profile.setPlanAcceptedAt(null);
+        } else if (body.containsKey("planSportText")) {
+            profile.setPlanAcceptedAt(java.time.LocalDateTime.now());
+        }
 
         profileRepository.save(profile);
         return ResponseEntity.ok(Map.of("success", true));

@@ -143,7 +143,7 @@ const humStatusColor = computed(() => {
 
 .sensor-card {
   position: relative;
-  background: rgba(7, 7, 7, 0.88);
+  background: #171717;
   border: 1px solid rgba(0, 243, 255, 0.10);
   padding: 18px 18px 16px;
   overflow: hidden;

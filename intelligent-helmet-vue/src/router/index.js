@@ -39,6 +39,12 @@ const routes = [
     name: 'RideHistory',
     component: () => import('@/views/RideHistory.vue'),
     meta: { requiresAuth: true }
+  },
+  {
+    path: '/ride-plan',
+    name: 'RidePlan',
+    component: () => import('@/views/RidePlan.vue'),
+    meta: { requiresAuth: true }
   }
 ]
 
