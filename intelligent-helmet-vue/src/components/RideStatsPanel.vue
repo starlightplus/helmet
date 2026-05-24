@@ -177,9 +177,9 @@ onUnmounted(() => {
   gap: 10px;
   margin-left: auto;
   padding: 10px 10px;
-  background: rgba(0, 243, 255, 0.05);
-  border: 1px solid rgba(0, 243, 255, 0.18);
-  color: rgba(0, 243, 255, 0.70);
+  background: rgba(56, 189, 248, 0.05);
+  border: 1px solid rgba(56, 189, 248, 0.18);
+  color: rgba(56, 189, 248, 0.70);
   font-family: var(--font-mono, monospace);
   font-size: 0.62rem;
   font-weight: 700;
@@ -201,17 +201,17 @@ onUnmounted(() => {
   box-shadow: 0 0 10px rgba(139, 92, 246, 0.20);
 }
 .ride-history-btn:hover {
-  background: rgba(0, 243, 255, 0.12);
-  border-color: rgba(0, 243, 255, 0.45);
-  color: #00F3FF;
-  box-shadow: 0 0 10px rgba(0, 243, 255, 0.18);
+  background: rgba(56, 189, 248, 0.12);
+  border-color: rgba(56, 189, 248, 0.45);
+  color: #38bdf8;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.18);
 }
 
 /* ── Card Container ─────────────────────────────────────────────── */
 .ride-card {
   position: relative;
-  background: #171717;
-  border: 1px solid rgba(0, 243, 255, 0.10);
+  background: #0f172a;
+  border: 1px solid rgba(56, 189, 248, 0.10);
   overflow: hidden;
   backdrop-filter: blur(12px);
   transition: border-color 0.3s, box-shadow 0.3s;
@@ -226,15 +226,15 @@ onUnmounted(() => {
   position: absolute;
   top: -1px; left: -1px;
   width: 12px; height: 12px;
-  border-top: 2px solid #00F3FF;
-  border-left: 2px solid #00F3FF;
+  border-top: 2px solid #38bdf8;
+  border-left: 2px solid #38bdf8;
   pointer-events: none;
   z-index: 10;
 }
 
 .ride-card--active {
-  border-color: rgba(0, 243, 255, 0.20);
-  box-shadow: 0 0 24px -6px rgba(0, 243, 255, 0.10);
+  border-color: rgba(56, 189, 248, 0.20);
+  box-shadow: 0 0 24px -6px rgba(56, 189, 248, 0.10);
 }
 .ride-card--warning {
   border-color: rgba(255, 170, 0, 0.25);
@@ -244,11 +244,11 @@ onUnmounted(() => {
 /* Top color bar */
 .ride-card__bar {
   height: 2px;
-  background: rgba(0, 243, 255, 0.05);
+  background: rgba(56, 189, 248, 0.05);
   transition: background 0.4s;
 }
 .ride-card--active .ride-card__bar {
-  background: linear-gradient(90deg, transparent, #00F3FF 40%, #00FF66 60%, transparent);
+  background: linear-gradient(90deg, transparent, #38bdf8 40%, #4ade80 60%, transparent);
   animation: bar-flow 3s ease infinite;
 }
 .ride-card--warning .ride-card__bar {
@@ -270,7 +270,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgba(0, 243, 255, 0.2);
+  color: rgba(56, 189, 248, 0.2);
 }
 
 /* 待机 badge */
@@ -294,9 +294,9 @@ onUnmounted(() => {
 .ride-card__idle-icon {
   width: 38px; height: 38px;
   display: flex; align-items: center; justify-content: center;
-  background: rgba(0, 243, 255, 0.04);
-  border: 1px solid rgba(0, 243, 255, 0.08);
-  color: rgba(0, 243, 255, 0.25);
+  background: rgba(56, 189, 248, 0.04);
+  border: 1px solid rgba(56, 189, 248, 0.08);
+  color: rgba(56, 189, 248, 0.25);
   clip-path: polygon(4px 0%,100% 0%,100% calc(100% - 4px),calc(100% - 4px) 100%,0% 100%,0% 4px);
   flex-shrink: 0;
 }
@@ -304,7 +304,7 @@ onUnmounted(() => {
   font-family: var(--font-mono, monospace);
   font-size: 0.75rem;
   font-weight: 600;
-  color: rgba(0, 243, 255, 0.35);
+  color: rgba(56, 189, 248, 0.35);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   margin-bottom: 2px;
@@ -348,17 +348,17 @@ onUnmounted(() => {
   font-family: var(--font-mono, monospace);
   font-size: 0.62rem;
   font-weight: 700;
-  color: #00F3FF;
+  color: #38bdf8;
   letter-spacing: 0.08em;
-  background: rgba(0, 243, 255, 0.06);
-  border: 1px solid rgba(0, 243, 255, 0.15);
+  background: rgba(56, 189, 248, 0.06);
+  border: 1px solid rgba(56, 189, 248, 0.15);
   padding: 2px 8px;
   clip-path: polygon(4px 0%,100% 0%,100% calc(100% - 4px),calc(100% - 4px) 100%,0% 100%,0% 4px);
 }
 .ride-card__dot {
   width: 4px; height: 4px;
   border-radius: 50%;
-  background: #00F3FF;
+  background: #38bdf8;
   animation: dot-pulse 1.5s ease infinite;
 }
 @keyframes dot-pulse {
@@ -386,8 +386,8 @@ onUnmounted(() => {
   font-family: var(--font-mono, monospace);
   font-size: 2.6rem;
   font-weight: 800;
-  color: #00F3FF;
-  text-shadow: 0 0 16px rgba(0, 243, 255, 0.4);
+  color: #38bdf8;
+  text-shadow: 0 0 16px rgba(56, 189, 248, 0.4);
   font-variant-numeric: tabular-nums;
   transition: color 0.3s, text-shadow 0.3s;
 }
@@ -399,7 +399,7 @@ onUnmounted(() => {
   font-family: var(--font-mono, monospace);
   font-size: 0.72rem;
   font-weight: 600;
-  color: rgba(0, 243, 255, 0.4);
+  color: rgba(56, 189, 248, 0.4);
   margin-bottom: 4px;
 }
 .ride-card__speed-hint {
@@ -432,7 +432,7 @@ onUnmounted(() => {
 /* Divider */
 .ride-card__divider {
   width: 1px;
-  background: rgba(0, 243, 255, 0.08);
+  background: rgba(56, 189, 248, 0.08);
   margin: 0 18px;
   flex-shrink: 0;
 }
@@ -459,7 +459,7 @@ onUnmounted(() => {
   align-items: center;
   gap: 5px;
   padding-top: 7px;
-  border-top: 1px solid rgba(0, 243, 255, 0.06);
+  border-top: 1px solid rgba(56, 189, 248, 0.06);
 }
 .ride-card__stat-val {
   font-family: var(--font-mono, monospace);
@@ -473,7 +473,7 @@ onUnmounted(() => {
 .ride-card__stat-key {
   font-family: var(--font-mono, monospace);
   font-size: 0.58rem;
-  color: rgba(0, 243, 255, 0.30);
+  color: rgba(56, 189, 248, 0.30);
   font-weight: 500;
   letter-spacing: 0.06em;
   text-transform: uppercase;

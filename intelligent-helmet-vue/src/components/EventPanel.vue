@@ -162,8 +162,8 @@ defineExpose({ processDeviceEvents, clearAllEvents, addEvent })
 /* ── Panel Container ───────────────────────────────────────────── */
 .event-panel {
   position: relative;
-  background: #171717;
-  border: 1px solid rgba(0, 243, 255, 0.10);
+  background: #0f172a;
+  border: 1px solid rgba(56, 189, 248, 0.10);
   width: 100%;
   box-sizing: border-box;
   overflow: hidden;
@@ -178,8 +178,8 @@ defineExpose({ processDeviceEvents, clearAllEvents, addEvent })
   position: absolute;
   top: -1px; left: -1px;
   width: 12px; height: 12px;
-  border-top: 2px solid #00F3FF;
-  border-left: 2px solid #00F3FF;
+  border-top: 2px solid #38bdf8;
+  border-left: 2px solid #38bdf8;
   pointer-events: none;
   z-index: 10;
 }
@@ -192,7 +192,7 @@ defineExpose({ processDeviceEvents, clearAllEvents, addEvent })
 /* Top severity strip */
 .event-panel__strip {
   height: 2px;
-  background: rgba(0,243,255,0.06);
+  background: rgba(56,189,248,0.06);
   transition: background 0.4s ease;
 }
 .event-panel__strip--danger {
@@ -210,7 +210,7 @@ defineExpose({ processDeviceEvents, clearAllEvents, addEvent })
   justify-content: space-between;
   align-items: center;
   padding: 16px 20px 14px;
-  border-bottom: 1px solid rgba(0, 243, 255, 0.08);
+  border-bottom: 1px solid rgba(56, 189, 248, 0.08);
 }
 
 .event-panel__title-group {
@@ -268,7 +268,7 @@ defineExpose({ processDeviceEvents, clearAllEvents, addEvent })
 .event-panel__subtitle {
   font-family: var(--font-mono, monospace);
   font-size: 0.6rem;
-  color: rgba(0, 243, 255, 0.4);
+  color: rgba(56, 189, 248, 0.4);
   letter-spacing: 0.15em;
   margin-top: 2px;
 }
@@ -284,13 +284,13 @@ defineExpose({ processDeviceEvents, clearAllEvents, addEvent })
   align-items: center;
   gap: 5px;
   padding: 3px 10px;
-  border: 1px solid rgba(0, 243, 255, 0.10);
-  background: rgba(0, 243, 255, 0.03);
+  border: 1px solid rgba(56, 189, 248, 0.10);
+  background: rgba(56, 189, 248, 0.03);
   clip-path: polygon(5px 0%, 100% 0%, 100% 100%, 0% 100%, 0% 5px);
   font-family: var(--font-mono, monospace);
   font-size: 0.62rem;
   font-weight: 600;
-  color: rgba(0, 243, 255, 0.6);
+  color: rgba(56, 189, 248, 0.6);
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -298,7 +298,7 @@ defineExpose({ processDeviceEvents, clearAllEvents, addEvent })
 .event-panel__live-dot {
   width: 5px; height: 5px;
   border-radius: 50%;
-  background: rgba(0, 243, 255, 0.25);
+  background: rgba(56, 189, 248, 0.25);
   transition: all 0.3s ease;
 }
 .event-panel__live-dot--active {
@@ -356,7 +356,7 @@ defineExpose({ processDeviceEvents, clearAllEvents, addEvent })
   position: absolute;
   width: 44px; height: 44px;
   border-radius: 50%;
-  border: 1px solid rgba(0, 243, 255, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.12);
   animation: shield-pulse 3s ease infinite;
 }
 @keyframes shield-pulse {
@@ -366,7 +366,7 @@ defineExpose({ processDeviceEvents, clearAllEvents, addEvent })
 }
 .empty-text {
   font-family: var(--font-mono, monospace);
-  color: rgba(0, 243, 255, 0.5);
+  color: rgba(56, 189, 248, 0.5);
   font-size: 0.75rem;
   letter-spacing: 0.06em;
 }

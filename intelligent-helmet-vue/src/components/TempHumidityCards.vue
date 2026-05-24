@@ -108,7 +108,7 @@ const tempStatus = computed(() => {
 
 const tempStatusColor = computed(() => {
   if (props.temperature == null) return 'rgba(255,255,255,0.3)'
-  if (props.temperature < 10) return '#00f2ff'
+  if (props.temperature < 10) return '#38bdf8'
   if (props.temperature < 26) return '#00ff88'
   if (props.temperature < 35) return '#ffaa00'
   return '#ff4444'
@@ -126,7 +126,7 @@ const humStatus = computed(() => {
 const humStatusColor = computed(() => {
   if (props.humidity == null) return 'rgba(255,255,255,0.3)'
   if (props.humidity < 20) return '#ffaa00'
-  if (props.humidity < 40) return '#00f2ff'
+  if (props.humidity < 40) return '#38bdf8'
   if (props.humidity < 70) return '#00ff88'
   if (props.humidity < 85) return '#ff8800'
   return '#ff0055'
@@ -143,8 +143,8 @@ const humStatusColor = computed(() => {
 
 .sensor-card {
   position: relative;
-  background: #171717;
-  border: 1px solid rgba(0, 243, 255, 0.10);
+  background: #0f172a;
+  border: 1px solid rgba(56, 189, 248, 0.10);
   padding: 18px 18px 16px;
   overflow: hidden;
   backdrop-filter: blur(12px);
@@ -154,7 +154,7 @@ const humStatusColor = computed(() => {
   clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%);
 }
 .sensor-card--temp {
-  box-shadow: 0 0 24px -6px rgba(0, 242, 255, 0.08), inset 0 1px 0 rgba(0, 242, 255, 0.06);
+  box-shadow: 0 0 24px -6px rgba(56, 189, 248, 0.08), inset 0 1px 0 rgba(56, 189, 248, 0.06);
 }
 .sensor-card--hum {
   box-shadow: 0 0 24px -6px rgba(255, 0, 85, 0.08), inset 0 1px 0 rgba(255, 0, 85, 0.06);
@@ -165,8 +165,8 @@ const humStatusColor = computed(() => {
   position: absolute;
   top: -1px; right: -1px;
   width: 12px; height: 12px;
-  border-top: 2px solid #00F3FF;
-  border-right: 2px solid #00F3FF;
+  border-top: 2px solid #38bdf8;
+  border-right: 2px solid #38bdf8;
   pointer-events: none;
   z-index: 5;
 }
@@ -182,7 +182,7 @@ const humStatusColor = computed(() => {
   width: 2px;
   height: calc(100% - 28px);
 }
-.card-accent--temp { background: linear-gradient(180deg, #00f2ff, rgba(0,242,255,0.05)); }
+.card-accent--temp { background: linear-gradient(180deg, #38bdf8, rgba(56,189,248,0.05)); }
 .card-accent--hum  { background: linear-gradient(180deg, #ff0055, rgba(255,0,85,0.05)); }
 
 /* Header */
@@ -200,7 +200,7 @@ const humStatusColor = computed(() => {
   font-family: var(--font-mono, 'JetBrains Mono', monospace);
   font-size: 9px;
   letter-spacing: 0.15em;
-  color: rgba(0, 243, 255, 0.30);
+  color: rgba(56, 189, 248, 0.30);
   text-transform: uppercase;
 }
 .card-title {
@@ -216,7 +216,7 @@ const humStatusColor = computed(() => {
   display: flex; align-items: center; justify-content: center;
   clip-path: polygon(4px 0%,100% 0%,100% calc(100% - 4px),calc(100% - 4px) 100%,0% 100%,0% 4px);
 }
-.card-icon--temp { background: rgba(0, 242, 255, 0.08); color: #00f2ff; }
+.card-icon--temp { background: rgba(56, 189, 248, 0.08); color: #38bdf8; }
 .card-icon--hum  { background: rgba(255, 0, 85, 0.08);  color: #ff0055; }
 
 /* Body: lottie left + value right */
@@ -253,7 +253,7 @@ const humStatusColor = computed(() => {
   font-weight: 700;
   letter-spacing: -0.03em;
 }
-.value-num--temp { color: #00f2ff; text-shadow: 0 0 14px rgba(0, 242, 255, 0.55); }
+.value-num--temp { color: #38bdf8; text-shadow: 0 0 14px rgba(56, 189, 248, 0.55); }
 .value-num--hum  { color: #ff0055; text-shadow: 0 0 14px rgba(255, 0, 85, 0.55); }
 
 .value-unit {

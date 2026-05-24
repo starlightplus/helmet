@@ -622,18 +622,18 @@ defineExpose({
   flex-direction: column;
   height: 100%;
   overflow: hidden;
-  background: #0a0e1a;
+  background: #020817;
 }
 
 /* Header */
 .twin-header {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 8px 14px; border-bottom: 1px solid rgba(0,217,255,0.15);
+  padding: 8px 14px; border-bottom: 1px solid rgba(56,189,248,0.15);
   flex-shrink: 0; z-index: 10; position: relative;
 }
 .twin-header__title {
   display: flex; align-items: center; gap: 6px;
-  font-size: 13px; font-weight: 600; color: #e0f4ff; letter-spacing: 0.5px;
+  font-size: 13px; font-weight: 600; color: #e2e8f0; letter-spacing: 0.5px;
 }
 .twin-header__right { display: flex; align-items: center; gap: 8px; }
 
@@ -649,8 +649,8 @@ defineExpose({
 .track-btn--speed:hover { background: rgba(255,217,61,0.3); }
 .track-btn--clear { background: rgba(255,71,87,0.15); color: #FF4757; border: 1px solid rgba(255,71,87,0.3); }
 .track-btn--clear:hover { background: rgba(255,71,87,0.3); }
-.track-btn--replay { background: rgba(0,217,255,0.15); color: #00D9FF; border: 1px solid rgba(0,217,255,0.3); }
-.track-btn--replay:hover:not(:disabled) { background: rgba(0,217,255,0.3); }
+.track-btn--replay { background: rgba(56,189,248,0.15); color: #38bdf8; border: 1px solid rgba(56,189,248,0.3); }
+.track-btn--replay:hover:not(:disabled) { background: rgba(56,189,248,0.3); }
 .track-btn--replay:disabled, .track-btn--view:disabled { opacity: 0.4; cursor: not-allowed; }
 
 /* Badge */
@@ -659,8 +659,8 @@ defineExpose({
   padding: 3px 10px; border-radius: 20px; font-size: 11px;
 }
 .badge i { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
-.badge--on { background: rgba(0,217,255,0.1); color: #00D9FF; border: 1px solid rgba(0,217,255,0.3); }
-.badge--on i { background: #00D9FF; box-shadow: 0 0 6px #00D9FF; animation: pulse 1.5s infinite; }
+.badge--on { background: rgba(56,189,248,0.1); color: #38bdf8; border: 1px solid rgba(56,189,248,0.3); }
+.badge--on i { background: #38bdf8; box-shadow: 0 0 6px #38bdf8; animation: pulse 1.5s infinite; }
 .badge--off { background: rgba(100,100,100,0.1); color: #888; border: 1px solid rgba(100,100,100,0.2); }
 .badge--off i { background: #666; }
 @keyframes pulse { 0%,100% { opacity:1 } 50% { opacity:0.3 } }
@@ -705,8 +705,8 @@ defineExpose({
 
 /* 3D 头盔姿态面板 */
 .helmet3d-panel {
-  background: rgba(8,12,22,0.6);
-  border: 1px solid rgba(0,217,255,0.2);
+  background: rgba(15,23,42,0.6);
+  border: 1px solid rgba(56,189,248,0.2);
   border-radius: 10px;
   padding: 8px 8px 4px;
   display: flex;
@@ -721,14 +721,14 @@ defineExpose({
 }
 .helmet3d-label {
   font-size: 10px;
-  color: rgba(0,217,255,0.55);
+  color: rgba(56,189,248,0.55);
   margin-top: 2px;
   letter-spacing: 0.5px;
 }
 
 /* 直观状态卡片 */
 .status-panel {
-  background: rgba(8,12,22,0.6);
+  background: rgba(15,23,42,0.6);
   border: 1px solid rgba(255,255,255,0.08);
   border-radius: 10px;
   padding: 8px 10px;
@@ -778,13 +778,13 @@ defineExpose({
   display: flex;
   align-items: center;
   gap: 5px;
-  background: rgba(8,12,22,0.6);
+  background: rgba(15,23,42,0.6);
   backdrop-filter: blur(6px);
   border: 1px solid rgba(255,255,255,0.08);
   border-radius: 6px;
   padding: 5px 10px;
   font-size: 11px;
-  color: rgba(0,217,255,0.8);
+  color: rgba(56,189,248,0.8);
   pointer-events: none;
 }
 </style>

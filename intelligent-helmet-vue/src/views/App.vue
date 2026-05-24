@@ -115,7 +115,7 @@
 
         <!-- 数据可视化页面 -->
         <div v-show="activePage === 'dataviz'" class="page-wrapper page-wrapper--dataviz">
-          <DataVisualization />
+          <DataVisualization :sensor-data="latestSensorData" @back="activePage = 'twin'" />
         </div>
       </div>
     </div>
@@ -475,8 +475,8 @@ function initStars(canvas) {
   height: 56px;
   flex-shrink: 0;
   z-index: 300;
-  background: rgba(5, 5, 5, 0.92);
-  border-bottom: 1px solid rgba(0, 243, 255, 0.18);
+  background: rgba(2, 8, 23, 0.92);
+  border-bottom: 1px solid rgba(56, 189, 248, 0.18);
   backdrop-filter: blur(12px);
   /* 切角效果 */
   clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%);
@@ -488,8 +488,8 @@ function initStars(canvas) {
   position: absolute;
   top: -1px; left: -1px;
   width: 12px; height: 12px;
-  border-top: 2px solid #00F3FF;
-  border-left: 2px solid #00F3FF;
+  border-top: 2px solid #38bdf8;
+  border-left: 2px solid #38bdf8;
   pointer-events: none;
   z-index: 10;
 }
@@ -503,18 +503,18 @@ function initStars(canvas) {
 
 .nav-logo__frame {
   width: 32px; height: 32px;
-  border: 1.5px solid #00F3FF;
+  border: 1.5px solid #38bdf8;
   transform: rotate(45deg);
   display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 0 8px rgba(0,243,255,0.35), inset 0 0 6px rgba(0,243,255,0.1);
+  box-shadow: 0 0 8px rgba(56,189,248,0.35), inset 0 0 6px rgba(56,189,248,0.1);
   flex-shrink: 0;
 }
 .nav-logo__omega {
   display: block;
   transform: rotate(-45deg);
   font-size: 14px; font-weight: 700;
-  color: #00F3FF;
-  text-shadow: 0 0 8px rgba(0,243,255,0.8);
+  color: #38bdf8;
+  text-shadow: 0 0 8px rgba(56,189,248,0.8);
   animation: omega-blink 2.4s ease infinite;
 }
 @keyframes omega-blink {
@@ -541,7 +541,7 @@ function initStars(canvas) {
 .brand-ver {
   font-family: var(--font-mono, monospace);
   font-size: 0.6rem;
-  color: rgba(0,243,255,0.5);
+  color: rgba(56,189,248,0.5);
   letter-spacing: 0.08em;
 }
 
@@ -550,8 +550,8 @@ function initStars(canvas) {
   align-items: center;
   gap: 6px;
   padding: 3px 10px;
-  border: 1px solid rgba(0,243,255,0.12);
-  background: rgba(0,243,255,0.04);
+  border: 1px solid rgba(56,189,248,0.12);
+  background: rgba(56,189,248,0.04);
   clip-path: polygon(6px 0%, 100% 0%, 100% 100%, 0% 100%, 0% 6px);
 }
 .app-nav__dot {
@@ -559,20 +559,20 @@ function initStars(canvas) {
   border-radius: 50%;
 }
 .app-nav__dot--ok {
-  background: #00FF66;
-  box-shadow: 0 0 6px rgba(0,255,102,0.8);
+  background: #4ade80;
+  box-shadow: 0 0 6px rgba(74,222,128,0.8);
   animation: pulse-ok 2s infinite;
 }
 @keyframes pulse-ok {
-  0%,100% { box-shadow: 0 0 0 0 rgba(0,255,102,0.5); }
-  50%      { box-shadow: 0 0 0 4px rgba(0,255,102,0); }
+  0%,100% { box-shadow: 0 0 0 0 rgba(74,222,128,0.5); }
+  50%      { box-shadow: 0 0 0 4px rgba(74,222,128,0); }
 }
 .app-nav__dot--warning { background: #FFAA00; box-shadow: 0 0 6px rgba(255,170,0,0.7); }
 .app-nav__dot--error   { background: #EF4444; box-shadow: 0 0 6px rgba(239,68,68,0.7); }
 .app-nav__status-text {
   font-family: var(--font-mono, monospace);
   font-size: 0.65rem;
-  color: rgba(0,243,255,0.7);
+  color: rgba(56,189,248,0.7);
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
@@ -604,16 +604,16 @@ function initStars(canvas) {
   transition: color 0.2s, border-color 0.2s, background 0.2s;
 }
 .nav-tab:hover {
-  color: rgba(0,243,255,0.7);
-  background: rgba(0,243,255,0.04);
+  color: rgba(56,189,248,0.7);
+  background: rgba(56,189,248,0.04);
 }
 .nav-tab--active {
-  border-top-color: #00F3FF;
-  color: #00F3FF;
-  background: rgba(0,243,255,0.06);
-  text-shadow: 0 0 8px rgba(0,243,255,0.5);
+  border-top-color: #38bdf8;
+  color: #38bdf8;
+  background: rgba(56,189,248,0.06);
+  text-shadow: 0 0 8px rgba(56,189,248,0.5);
 }
-.nav-tab--active svg { stroke: #00F3FF; filter: drop-shadow(0 0 3px rgba(0,243,255,0.6)); }
+.nav-tab--active svg { stroke: #38bdf8; filter: drop-shadow(0 0 3px rgba(56,189,248,0.6)); }
 
 /* 右侧状态指标 */
 .app-nav__right {
@@ -635,8 +635,8 @@ function initStars(canvas) {
   border-radius: 50%;
 }
 .nav-metric__dot--green {
-  background: #00FF66;
-  box-shadow: 0 0 5px rgba(0,255,102,0.8);
+  background: #4ade80;
+  box-shadow: 0 0 5px rgba(74,222,128,0.8);
   animation: pulse-ok 1.8s infinite;
 }
 .nav-metric__label {
@@ -651,17 +651,17 @@ function initStars(canvas) {
   font-weight: 700;
   color: rgba(255,255,255,0.7);
 }
-.nav-metric__val--green { color: #00FF66; text-shadow: 0 0 6px rgba(0,255,102,0.5); }
-.nav-metric__val--mono  { color: #00F3FF; letter-spacing: 0.04em; }
+.nav-metric__val--green { color: #4ade80; text-shadow: 0 0 6px rgba(74,222,128,0.5); }
+.nav-metric__val--mono  { color: #38bdf8; letter-spacing: 0.04em; }
 
 .app-nav__btn {
   display: flex;
   align-items: center;
   gap: 5px;
   padding: 5px 12px;
-  border: 1px solid rgba(0,243,255,0.15);
-  background: rgba(0,243,255,0.04);
-  color: rgba(0,243,255,0.7);
+  border: 1px solid rgba(56,189,248,0.15);
+  background: rgba(56,189,248,0.04);
+  color: rgba(56,189,248,0.7);
   font-family: var(--font-mono, monospace);
   font-size: 0.65rem;
   font-weight: 600;
@@ -671,9 +671,9 @@ function initStars(canvas) {
   transition: all 0.15s;
 }
 .app-nav__btn:hover {
-  background: rgba(0,243,255,0.1);
-  color: #00F3FF;
-  box-shadow: 0 0 10px rgba(0,243,255,0.2);
+  background: rgba(56,189,248,0.1);
+  color: #38bdf8;
+  box-shadow: 0 0 10px rgba(56,189,248,0.2);
 }
 .app-nav__btn--exit {
   border-color: rgba(239,68,68,0.2);
@@ -781,7 +781,7 @@ function initStars(canvas) {
 <style>
 body {
   font-family: "Inter", system-ui, sans-serif;
-  background: #050505;
+  background: #020817;
   color: #e2e8f0;
   margin: 0; padding: 0;
   overflow-x: hidden;

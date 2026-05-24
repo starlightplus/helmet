@@ -2,34 +2,26 @@
   <!-- 外层容器：半透明背景 + 毛玻璃 + 霓虹边框 -->
   <div class="bg-black/40 border border-white/10 rounded-xl p-8 backdrop-blur-md flex flex-col h-full relative overflow-hidden">
 
-    <!-- 装饰性：右上角扫描编号 -->
-    <div class="absolute top-2 right-4 font-mono text-[8px] text-white/10 tracking-widest">
-      DATA_STREAM_v3.1_SEC_B
-    </div>
-
     <!-- 头部：标题与自定义图例 -->
     <div class="flex justify-between items-center mb-8">
       <div class="space-y-1">
-        <h2 class="text-xs font-mono uppercase tracking-[0.3em] text-white/60">
-          Atmospheric Trend Analysis
-        </h2>
         <div class="h-[1px] w-12 bg-[#00f2ff]/50"></div>
       </div>
 
       <div class="flex gap-6">
         <div class="flex items-center gap-2">
           <div class="w-1.5 h-1.5 rounded-full bg-[#00f2ff] animate-pulse-glow" />
-          <span class="text-[10px] font-mono text-white/40 tracking-tighter">TEMP_CORE</span>
+          <span class="text-[10px] font-mono text-white/40 tracking-tighter">温度</span>
         </div>
         <div class="flex items-center gap-2">
           <div class="w-1.5 h-1.5 rounded-full bg-[#ff0055] animate-pulse-glow" />
-          <span class="text-[10px] font-mono text-white/40 tracking-tighter">HUM_REL</span>
+          <span class="text-[10px] font-mono text-white/40 tracking-tighter">湿度</span>
         </div>
       </div>
     </div>
 
     <!-- 图表主区域 -->
-    <div class="flex-grow min-h-[350px] w-full">
+    <div style="height: 350px; width: 100%;">
       <v-chart
         class="chart-container"
         :option="chartOption"
@@ -43,15 +35,15 @@
     <div class="mt-8 pt-6 border-t border-white/5 flex flex-wrap justify-between items-center gap-6">
       <div class="flex gap-10">
         <div class="group">
-          <p class="text-[9px] text-[#00f2ff] uppercase font-mono tracking-widest">Min Temp</p>
+          <p class="text-[9px] text-[#00f2ff] uppercase font-mono tracking-widest">最低温度</p>
           <p class="text-sm font-mono text-white/70 mt-1">{{ stats.minTemp }}°C</p>
         </div>
         <div class="group">
-          <p class="text-[9px] text-[#00f2ff] uppercase font-mono tracking-widest">Max Temp</p>
+          <p class="text-[9px] text-[#00f2ff] uppercase font-mono tracking-widest">最高温度</p>
           <p class="text-sm font-mono text-white/70 mt-1">{{ stats.maxTemp }}°C</p>
         </div>
         <div class="group">
-          <p class="text-[9px] text-[#ff0055] uppercase font-mono tracking-widest">Avg Humidity</p>
+          <p class="text-[9px] text-[#ff0055] uppercase font-mono tracking-widest">平均湿度</p>
           <p class="text-sm font-mono text-white/70 mt-1">{{ stats.avgHum }}%</p>
         </div>
       </div>
@@ -63,7 +55,7 @@
       >
         <div class="absolute inset-0 bg-[#00f2ff]/5 translate-y-full group-hover:translate-y-0 transition-transform"></div>
         <span class="relative text-[#00f2ff] text-[10px] font-mono uppercase tracking-[0.2em]">
-          Export_Data.log
+          保存数据到本地
         </span>
       </button>
     </div>
