@@ -24,6 +24,9 @@ public class User {
     @Column(name = "device_id", length = 100)
     private String deviceId; // 管理员分配的设备ID
 
+    @Column(name = "github_id", unique = true, length = 50)
+    private String githubId; // GitHub OAuth 用户唯一标识
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
@@ -62,6 +65,9 @@ public class User {
 
     public String getDeviceId() { return deviceId; }
     public void setDeviceId(String deviceId) { this.deviceId = deviceId; }
+
+    public String getGithubId() { return githubId; }
+    public void setGithubId(String githubId) { this.githubId = githubId; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

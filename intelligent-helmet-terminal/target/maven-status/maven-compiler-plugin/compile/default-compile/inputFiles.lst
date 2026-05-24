@@ -14,6 +14,7 @@ D:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\src\main\java\com\demo\serv
 D:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\src\main\java\com\demo\repository\UserProfileRepository.java
 D:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\src\main\java\com\demo\model\ChatMessage.java
 D:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\src\main\java\com\demo\config\JacksonConfig.java
+D:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\src\main\java\com\demo\controller\GitHubOAuthController.java
 D:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\src\main\java\com\demo\model\EmergencyContact.java
 D:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\src\main\java\com\demo\controller\AuthController.java
 D:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\src\main\java\com\demo\repository\EmergencyContactRepository.java

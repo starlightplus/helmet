@@ -297,6 +297,8 @@ function goToRideHistory() {
 }
 
 onMounted(async () => {
+  // 按用户加载各自的骑行历史
+  rideHistoryStore.loadFromStorage()
   clockTimer = setInterval(updateClock, 100)
   connect('ws://localhost:8082/ws/sensor-data')
   // 从数据库加载最新一条数据，初始化温湿度显示

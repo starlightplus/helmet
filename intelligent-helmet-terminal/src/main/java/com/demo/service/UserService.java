@@ -62,4 +62,30 @@ public class UserService {
         user.setRole(role);
         return userRepository.save(user);
     }
+
+    /**
+     * GitHub OAuth 登录：按 githubId 查找用户，不存在则自动注册
+     */
+    public User findOrCreateByGithub(String githubId, String githubLogin) {
+        // 先按 github_id 查
+        Optional<User> existing = userRepository.findByGithubId(githubId);
+        if (existing.isPresent()) {
+            return existing.get();
+        }
+        // 用户名冲突时加后缀
+        String username = githubLogin;
+        if (userRepository.existsByUsername(username)) {
+            username = githubLogin + "_gh";
+        }
+        // 仍然冲突则加 githubId 后几位
+        if (userRepository.existsByUsername(username)) {
+            username = githubLogin + "_" + githubId.substring(Math.max(0, githubId.length() - 4));
+        }
+        User newUser = new User();
+        newUser.setUsername(username);
+        newUser.setPassword(""); // OAuth 用户无密码
+        newUser.setRole("user");
+        newUser.setGithubId(githubId);
+        return userRepository.save(newUser);
+    }
 }

@@ -157,9 +157,29 @@
               <div class="flex items-center gap-2"><Droplets class="w-4 h-4 text-slate-400" /><span class="text-sm font-medium text-slate-500">血型</span></div>
               <span class="text-sm font-bold text-slate-900 font-mono">{{ store.bloodType || '--' }}</span>
             </div>
+            <!-- GitHub 绑定状态 -->
             <div class="flex justify-between items-center py-1.5">
-              <div class="flex items-center gap-2"><AlertTriangle class="w-4 h-4 text-slate-400" /><span class="text-sm font-medium text-slate-500">过敏原</span></div>
-              <span class="text-sm text-slate-700 max-w-[55%] text-right">{{ store.allergies || '--' }}</span>
+              <div class="flex items-center gap-2">
+                <svg class="w-4 h-4 text-slate-400" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+                <span class="text-sm font-medium text-slate-500">GitHub 绑定</span>
+              </div>
+              <!-- 已绑定：绿色徽章 + 解绑按钮 -->
+              <div v-if="githubBound" class="flex items-center gap-2">
+                <span class="flex items-center gap-1 text-xs font-semibold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>已绑定
+                </span>
+                <button type="button" @click="unbindGithub" :disabled="githubLoading"
+                  class="flex items-center gap-1 text-xs text-rose-500 hover:text-rose-700 font-semibold border border-rose-200 hover:border-rose-400 bg-rose-50 hover:bg-rose-100 px-2 py-1 rounded-lg transition disabled:opacity-40">
+                  <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
+                  解绑
+                </button>
+              </div>
+              <!-- 未绑定：绑定按钮 -->
+              <button v-else type="button" @click="bindGithub"
+                class="flex items-center gap-1.5 text-xs font-semibold text-white bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg transition">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+                绑定 GitHub
+              </button>
             </div>
           </div>
 
@@ -213,14 +233,29 @@
                 <Info class="w-3.5 h-3.5" />
               </span>
             </div>
-            <div class="flex items-start gap-3 py-2">
-              <label class="text-sm font-medium text-slate-500 w-20 flex-shrink-0 pt-2">过敏原</label>
+            <!-- GitHub 绑定管理 -->
+            <div class="flex items-center gap-3 py-2">
+              <label class="text-sm font-medium text-slate-500 w-20 flex-shrink-0">GitHub</label>
               <div class="flex-1">
-                <input type="text" :value="store.allergies" @change="e => store.setAllergies(e.target.value)"
-                  class="up-input" placeholder="如：青霉素、花粉、坚果等" maxlength="200" />
-                <p class="text-[10px] text-slate-400 mt-1 flex items-center gap-1">
-                  <Info class="w-3 h-3" />紧急救治参考，建议如实填写已知过敏物质
-                </p>
+                <div v-if="githubBound" class="flex items-center justify-between bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2">
+                  <div class="flex items-center gap-2">
+                    <svg class="w-4 h-4 text-slate-700" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+                    <span class="text-xs font-semibold text-emerald-700">已绑定 · ID: {{ githubId }}</span>
+                  </div>
+                  <button type="button" @click="unbindGithub" :disabled="githubLoading"
+                    class="flex items-center gap-1 text-xs text-rose-500 hover:text-rose-700 font-semibold transition disabled:opacity-50">
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
+                    解绑
+                  </button>
+                </div>
+                <div v-else class="flex items-center gap-3">
+                  <button type="button" @click="bindGithub"
+                    class="flex items-center gap-2 px-3 py-2 bg-slate-900 hover:bg-slate-700 text-white text-xs font-semibold rounded-xl transition">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+                    绑定 GitHub 账号
+                  </button>
+                  <span class="text-[10px] text-slate-400">绑定后可用 GitHub 一键登录</span>
+                </div>
               </div>
             </div>
           </div>
@@ -479,17 +514,19 @@ import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import SportBackground from '@/components/SportBackground.vue'
 import { useUserProfileStore } from '@/stores/userProfile'
+import { useUserStore } from '@/stores/user'
 import request from '@/utils/request'
 import { DotLottie } from '@lottiefiles/dotlottie-web'
 import {
   ChevronLeft, User, Calendar, Scale, Phone, Heart, Edit3, Check, X,
   Upload, AlertCircle, AlertTriangle, ShieldAlert, Activity, UserCircle, Sparkles,
   Droplets, Flame, CheckCircle2, Trash2, Star,
-  Plus, Info
+  Plus, Info, Github, Link, Unlink
 } from 'lucide-vue-next'
 
 const router = useRouter()
 const store = useUserProfileStore()
+const userStore = useUserStore()
 
 const gerenCanvasRef = ref(null)
 let gerenLottie = null
@@ -677,9 +714,48 @@ function triggerToast(msg, type = 'success') {
   toastTimer = setTimeout(() => { toastShow.value = false }, 3500)
 }
 
+// ── GitHub 绑定状态 ────────────────────────────────────────────
+const githubBound = ref(false)
+const githubId = ref('')
+const githubLoading = ref(false)
+
+async function loadGithubStatus() {
+  try {
+    const res = await request.get('/api/auth/oauth/github/bind-status')
+    githubBound.value = res.data.bound
+    githubId.value = res.data.githubLogin || ''
+  } catch {
+    githubBound.value = false
+    githubId.value = ''
+  }
+}
+
+function bindGithub() {
+  // 跳转 GitHub OAuth 授权，回调后会自动绑定到当前账号（因为已登录）
+  // 实际上回调是登录流程，当账号已登录时绑定需要单独的 bind 接口
+  // 这里走重定向授权，回调页判断已登录则绑定
+  window.location.href = 'http://localhost:8082/api/auth/oauth/github/authorize?action=bind&token=' + sessionStorage.getItem('token')
+}
+
+async function unbindGithub() {
+  if (!confirm('确认解绑 GitHub？解绑后需使用密码登录。')) return
+  githubLoading.value = true
+  try {
+    await request.post('/api/auth/oauth/github/unbind')
+    githubBound.value = false
+    githubId.value = ''
+    triggerToast('GitHub 解绑成功')
+  } catch (e) {
+    triggerToast(e?.response?.data?.error || '解绑失败，请重试', 'error')
+  } finally {
+    githubLoading.value = false
+  }
+}
+
 onMounted(() => {
   store.loadFromServer()
   loadContacts()
+  loadGithubStatus()
   if (gerenCanvasRef.value) {
     const canvas = gerenCanvasRef.value
     const parent = canvas.parentElement

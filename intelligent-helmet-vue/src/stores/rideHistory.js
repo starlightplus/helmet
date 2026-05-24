@@ -1,39 +1,46 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 
-const STORAGE_KEY = 'helmet_ride_history'
 const MAX_RIDES = 50
 const MAX_TRACK_POINTS = 500
 
+function storageKey() {
+  const username = sessionStorage.getItem('username') || 'anonymous'
+  return `helmet_ride_history_${username}`
+}
+
 export const useRideHistoryStore = defineStore('rideHistory', () => {
-  const rides = ref(loadFromStorage())
+  const rides = ref([])
 
   function loadFromStorage() {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY)
-      if (raw) return JSON.parse(raw)
+      const raw = localStorage.getItem(storageKey())
+      if (raw) rides.value = JSON.parse(raw)
+      else rides.value = []
     } catch (e) {
       console.warn('[RideHistory] localStorage 读取失败:', e)
+      rides.value = []
     }
-    return []
   }
 
   function saveToStorage() {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(rides.value))
+      localStorage.setItem(storageKey(), JSON.stringify(rides.value))
     } catch (e) {
       console.warn('[RideHistory] localStorage 写入失败:', e)
     }
   }
 
+  function $reset() {
+    rides.value = []
+  }
+
   function addRide(rideData) {
-    // 限制 trackPoints 数量
     const record = {
       ...rideData,
       trackPoints: (rideData.trackPoints || []).slice(0, MAX_TRACK_POINTS)
     }
     rides.value.unshift(record)
-    // 限制总记录数
     if (rides.value.length > MAX_RIDES) {
       rides.value = rides.value.slice(0, MAX_RIDES)
     }
@@ -77,15 +84,17 @@ export const useRideHistoryStore = defineStore('rideHistory', () => {
       groups[label].rides.push(ride)
     }
 
-    // 按日期倒序返回
     return Object.values(groups).sort((a, b) => b.date - a.date)
   })
 
+  // 初始化时不立即读取，等 login 后调用 loadFromStorage()
   return {
     rides,
+    loadFromStorage,
     addRide,
     removeRide,
     clearAll,
+    $reset,
     ridesGroupedByDate
   }
 })

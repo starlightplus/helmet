@@ -37,9 +37,6 @@ public class UserProfile {
     @Column(length = 10)
     private String bloodType;
 
-    @Column(length = 200)
-    private String allergies;
-
     // ── 骑行规划 ──────────────────────────────────────────────────
     private Integer planDailyRideMin;
     private Integer planDailyIntake;
@@ -88,9 +85,6 @@ public class UserProfile {
 
     public String getBloodType() { return bloodType; }
     public void setBloodType(String bloodType) { this.bloodType = bloodType; }
-
-    public String getAllergies() { return allergies; }
-    public void setAllergies(String allergies) { this.allergies = allergies; }
 
     public Integer getPlanDailyRideMin() { return planDailyRideMin; }
     public void setPlanDailyRideMin(Integer v) { this.planDailyRideMin = v; }

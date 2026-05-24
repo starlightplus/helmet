@@ -373,6 +373,7 @@ import {
 import VChart from 'vue-echarts'
 import AtmosphericTrendChart from '@/components/AtmosphericTrendChart.vue'
 import { useRideHistoryStore } from '@/stores/rideHistory'
+import { useUserStore } from '@/stores/user'
 
 use([CanvasRenderer, LineChart, BarChart, PieChart,
   GridComponent, TooltipComponent, LegendComponent,
@@ -383,6 +384,13 @@ const props = defineProps({
 })
 const emit = defineEmits(['back'])
 const goBack = () => emit('back')
+
+const userStore = useUserStore()
+
+// 带用户名的 localStorage key，不同用户互不干扰
+function userKey(base) {
+  return `${base}_${sessionStorage.getItem('username') || 'anonymous'}`
+}
 
 // ── Tabs ──────────────────────────────────────────────────────────
 const tabs = [
@@ -497,14 +505,13 @@ const rideChartOption = computed(() => {
 })
 
 // ── Battery ────────────────────────────────────────────────────────
-const BAT_KEY = 'helmet_battery_records'
 const batteryRecords = ref([])
 
 function loadBattery() {
-  try { batteryRecords.value = JSON.parse(localStorage.getItem(BAT_KEY) || '[]') } catch { batteryRecords.value = [] }
+  try { batteryRecords.value = JSON.parse(localStorage.getItem(userKey('helmet_battery_records')) || '[]') } catch { batteryRecords.value = [] }
 }
 function saveBattery() {
-  localStorage.setItem(BAT_KEY, JSON.stringify(batteryRecords.value))
+  localStorage.setItem(userKey('helmet_battery_records'), JSON.stringify(batteryRecords.value))
 }
 
 const batInput = ref({ percentage: 80, temperature: 25, voltage: 3.85, status: 'discharging' })
@@ -580,7 +587,7 @@ const HR_ZONES = [
   { name: '峰值',  range: '≥ 170 BPM',   color: '#ef4444', min: 170, max: 999 },
 ]
 
-const HR_KEY = 'helmet_hr_days'
+// HR_KEY is now dynamic — use userKey('helmet_hr_days') at call site
 
 function makeDefaultHrDays() {
   const days = []
@@ -599,7 +606,7 @@ function makeDefaultHrDays() {
 
 function loadHrDays() {
   try {
-    const saved = JSON.parse(localStorage.getItem(HR_KEY) || 'null')
+    const saved = JSON.parse(localStorage.getItem(userKey('helmet_hr_days')) || 'null')
     if (saved && Array.isArray(saved) && saved.length) return saved
   } catch {}
   return makeDefaultHrDays()
@@ -644,7 +651,7 @@ function updateHrPoint() {
   if (pt) { pt.bpm = hrInput.value.bpm; pt.speed = hrInput.value.speed }
   else day.points.push({ hour: hrInput.value.hour, bpm: hrInput.value.bpm, speed: hrInput.value.speed })
   day.points.sort((a, b) => a.hour - b.hour)
-  localStorage.setItem(HR_KEY, JSON.stringify(hrDays.value))
+  localStorage.setItem(userKey('helmet_hr_days'), JSON.stringify(hrDays.value))
 }
 
 function applyHrPreset(type) {
@@ -658,7 +665,7 @@ function applyHrPreset(type) {
   const p = patterns[type]
   if (!p) return
   day.points = p.map((bpm, h) => ({ hour: h, bpm, speed: bpm > 130 ? 20 : bpm > 100 ? 12 : 0 }))
-  localStorage.setItem(HR_KEY, JSON.stringify(hrDays.value))
+  localStorage.setItem(userKey('helmet_hr_days'), JSON.stringify(hrDays.value))
 }
 
 const hrAreaOption = computed(() => {
@@ -697,6 +704,16 @@ const hrAreaOption = computed(() => {
 onMounted(() => {
   loadBattery()
   loadTempHistory()
+})
+
+// 用户切换时重新加载各用户独立数据（DataVisualization 用 v-show，onMounted 只触发一次）
+watch(() => userStore.username, (newUser, oldUser) => {
+  if (!newUser || newUser === oldUser) return
+  tempHistory.value = []
+  loadTempHistory()
+  loadBattery()
+  hrDays.value = loadHrDays()
+  hrSelectedDate.value = hrDays.value[hrDays.value.length - 1]?.date || ''
 })
 </script>
 

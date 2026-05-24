@@ -52,7 +52,6 @@ public class UserDataController {
         res.put("bio",        profile.getBio());
         res.put("weightUnit", profile.getWeightUnit() != null ? profile.getWeightUnit() : "kg");
         res.put("bloodType",  profile.getBloodType());
-        res.put("allergies",  profile.getAllergies());
         // 骑行规划
         res.put("planDailyRideMin",  profile.getPlanDailyRideMin());
         res.put("planDailyIntake",   profile.getPlanDailyIntake());
@@ -86,7 +85,6 @@ public class UserDataController {
         if (body.containsKey("bio"))        profile.setBio((String) body.get("bio"));
         if (body.containsKey("weightUnit")) profile.setWeightUnit((String) body.get("weightUnit"));
         if (body.containsKey("bloodType"))  profile.setBloodType((String) body.get("bloodType"));
-        if (body.containsKey("allergies"))  profile.setAllergies((String) body.get("allergies"));
         // 骑行规划字段
         if (body.containsKey("planDailyRideMin") && body.get("planDailyRideMin") != null)
             profile.setPlanDailyRideMin(((Number) body.get("planDailyRideMin")).intValue());

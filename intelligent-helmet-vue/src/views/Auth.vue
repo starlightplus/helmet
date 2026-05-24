@@ -1,112 +1,293 @@
 <template>
   <div class="auth-root">
-    <!-- 背景：网格 + 扫描线 -->
+    <!-- Particle canvas background -->
     <canvas ref="canvasRef" class="auth-canvas"></canvas>
 
-    <!-- 扫描线覆盖层 -->
+    <!-- Ambient blur spheres -->
+    <div class="ambient-sphere sphere-cyan"></div>
+    <div class="ambient-sphere sphere-violet"></div>
+
+    <!-- Scanline overlay -->
     <div class="scanline-overlay"></div>
 
-    <!-- 主卡片 -->
-    <div class="auth-card">
+    <!-- Main content -->
+    <div class="auth-content">
+      <!-- Brand label -->
+      <div class="brand-label">HELMET MONITOR PLATFORM</div>
 
-      <!-- 顶部状态栏 -->
-      <div class="card-topbar">
-        <span class="topbar-tag">SYS</span>
-        <span class="topbar-title">HELMET MONITOR v2.0</span>
-        <span class="topbar-status">
-          <span class="status-dot"></span>
-          ONLINE
-        </span>
-      </div>
-
-      <!-- Logo 区 -->
-      <div class="logo-wrap">
-        <div class="logo-hex">
-          <svg width="32" height="32" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
-          </svg>
-        </div>
-        <div class="logo-lines">
-          <div class="logo-line-1"></div>
-          <div class="logo-line-2"></div>
-        </div>
-      </div>
-
-      <!-- 标题 -->
-      <div class="auth-title">
-        <h2>{{ isLogin ? 'ACCESS CONTROL' : 'NEW OPERATOR' }}</h2>
-        <p>{{ isLogin ? 'Enter credentials to authenticate' : 'Register a new operator account' }}</p>
-      </div>
-
-      <!-- 错误提示 -->
-      <div v-if="errorMessage" class="error-bar">
-        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-        </svg>
-        {{ errorMessage }}
-      </div>
-
-      <!-- 表单 -->
-      <form @submit.prevent="handleSubmit" class="auth-form">
-
-        <!-- 用户名 -->
-        <div class="field-wrap">
-          <label class="field-label">USERNAME</label>
-          <div class="field-box" :class="{ 'field-error': !isLogin && usernameError }">
-            <span class="field-prefix">ID</span>
-            <input type="text" v-model="form.username" required autocomplete="username"
-              class="field-input" placeholder="Enter username" />
-            <span v-if="!isLogin && checkingUsername" class="field-checking">···</span>
+      <!-- ── Verifying state ── -->
+      <div v-if="isVerifying" class="auth-card verify-card">
+        <div class="verify-body">
+          <div class="verify-spinner-wrap">
+            <div class="verify-spinner"></div>
+            <div class="verify-spinner-icon">
+              <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-15 3.75H3m18 0h-1.5M8.25 19.5V21M12 3v1.5m0 15V21m3.75-18v1.5m0 15V21m-9-1.5h10.5a2.25 2.25 0 002.25-2.25V6.75a2.25 2.25 0 00-2.25-2.25H6.75A2.25 2.25 0 004.5 6.75v10.5a2.25 2.25 0 002.25 2.25zm.75-12h9v9h-9v-9z" />
+              </svg>
+            </div>
           </div>
-          <p v-if="!isLogin && usernameError" class="field-hint error">{{ usernameError }}</p>
-        </div>
-
-        <!-- 密码 -->
-        <div class="field-wrap">
-          <label class="field-label">PASSWORD</label>
-          <div class="field-box">
-            <span class="field-prefix">PW</span>
-            <input type="password" v-model="form.password" required autocomplete="current-password"
-              class="field-input" placeholder="Enter password" />
+          <h3 class="verify-title">Secure Channel Autologin</h3>
+          <p class="verify-sub">SESSION_ESTABLISHMENT_SEQUENCE</p>
+          <div class="verify-log">
+            <div
+              v-for="(log, i) in verificationLogs.slice(0, verificationStep + 1)"
+              :key="i"
+              class="verify-log-line"
+              :class="{ active: i === verificationStep }"
+            >
+              <span class="log-arrow">&gt;</span>
+              {{ log }}
+            </div>
           </div>
         </div>
+        <div class="verify-footer">Secured with SHA-512 End-to-End Enclosure</div>
+      </div>
 
-        <!-- 确认密码（注册模式） -->
-        <div v-if="!isLogin" class="field-wrap">
-          <label class="field-label">CONFIRM PASSWORD</label>
-          <div class="field-box" :class="{ 'field-error': passwordError }">
-            <span class="field-prefix">CF</span>
-            <input type="password" v-model="form.confirmPassword" required autocomplete="new-password"
-              class="field-input" placeholder="Repeat password" />
+      <!-- ── Success state ── -->
+      <div v-else-if="loggedInUser" class="auth-card success-card">
+        <div class="success-body">
+          <div class="success-icon-wrap">
+            <svg width="32" height="32" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+            </svg>
           </div>
-          <p v-if="passwordError" class="field-hint error">{{ passwordError }}</p>
+          <span class="success-badge">CONNECTION_STABLE</span>
+          <h2 class="success-title">Access Granted</h2>
+          <p class="success-sub">
+            Welcome to the system,
+            <span class="success-name">{{ loggedInUser.username }}</span>
+          </p>
+          <div class="success-board">
+            <div class="board-row">
+              <span class="board-key">AUTHORIZED IDENTIFIER</span>
+              <span class="board-val">{{ loggedInUser.username }}</span>
+            </div>
+            <div class="board-grid">
+              <div class="board-cell">
+                <div class="cell-label cyan">
+                  <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" /></svg>
+                  <span>SEC_LEVEL</span>
+                </div>
+                <div class="cell-val">JWT Auth</div>
+              </div>
+              <div class="board-cell">
+                <div class="cell-label violet">
+                  <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" /></svg>
+                  <span>ROLE</span>
+                </div>
+                <div class="cell-val">{{ loggedInUser.role || 'USER' }}</div>
+              </div>
+            </div>
+            <div class="board-session">
+              <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" class="session-icon"><rect x="2" y="3" width="20" height="14" rx="2" /><path d="M8 21h8M12 17v4" /></svg>
+              <span>Session loaded — redirecting to dashboard...</span>
+            </div>
+          </div>
+          <button class="logout-btn" @click="handleLogout">Terminate Session</button>
+        </div>
+      </div>
+
+      <!-- ── Main auth card ── -->
+      <div v-else class="auth-card main-card">
+        <!-- Top accent line -->
+        <div class="card-accent"></div>
+
+        <!-- Header -->
+        <div class="card-header">
+          <div class="header-icon">
+            <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+            </svg>
+          </div>
+          <h2 class="header-title">Workspace Hub</h2>
+          <p class="header-sub">
+            <template v-if="mode === 'signin'">Access the secure visual computing interface</template>
+            <template v-else-if="mode === 'signup'">Deploy your credentials to establish a profile</template>
+            <template v-else>Send security instructions to your credential terminal</template>
+          </p>
         </div>
 
-        <!-- 提交按钮 -->
-        <button type="submit" :disabled="loading || (!isLogin && !isFormValid)" class="submit-btn">
-          <span v-if="!loading" class="btn-text">
-            {{ isLogin ? 'AUTHENTICATE' : 'REGISTER' }}
-          </span>
-          <span v-else class="btn-loading">
-            <span></span><span></span><span></span>
-          </span>
-          <div class="btn-scan"></div>
-        </button>
-      </form>
+        <!-- Tab switcher (signin / signup) -->
+        <div v-if="mode !== 'forgot'" class="tab-bar">
+          <button
+            class="tab-btn"
+            :class="{ active: mode === 'signin' }"
+            @click="setMode('signin')"
+          >Sign In</button>
+          <button
+            class="tab-btn"
+            :class="{ active: mode === 'signup' }"
+            @click="setMode('signup')"
+          >Sign Up</button>
+        </div>
 
-      <!-- 切换模式 -->
-      <div class="mode-switch">
-        <span>{{ isLogin ? 'No account?' : 'Have an account?' }}</span>
-        <button @click="toggleMode" class="switch-btn">
-          {{ isLogin ? 'REGISTER' : 'SIGN IN' }}
-        </button>
+        <!-- Error block -->
+        <div v-if="errorMessage" class="error-block">
+          <div class="error-dot"></div>
+          <span>{{ errorMessage }}</span>
+        </div>
+
+        <!-- Form -->
+        <form @submit.prevent="handleSubmit" class="auth-form">
+
+          <!-- Full name (signup only) -->
+          <div v-if="mode === 'signup'" class="field-group">
+            <label class="field-label">USERNAME</label>
+            <div class="field-box" :class="{ 'field-error': usernameError }">
+              <svg class="field-icon" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>
+              <input
+                type="text"
+                v-model="form.username"
+                placeholder="your_username"
+                class="field-input"
+                autocomplete="username"
+              />
+              <span v-if="checkingUsername" class="field-checking">···</span>
+            </div>
+            <p v-if="usernameError" class="field-hint-error">{{ usernameError }}</p>
+          </div>
+
+          <!-- Username / email (signin) -->
+          <div v-if="mode === 'signin' || mode === 'forgot'" class="field-group">
+            <label class="field-label">USERNAME</label>
+            <div class="field-box">
+              <svg class="field-icon" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>
+              <input
+                type="text"
+                v-model="form.username"
+                placeholder="your_username"
+                class="field-input"
+                autocomplete="username"
+              />
+            </div>
+          </div>
+
+          <!-- Password -->
+          <div v-if="mode !== 'forgot'" class="field-group">
+            <div class="field-label-row">
+              <label class="field-label">SECURITY PHRASE</label>
+              <button
+                v-if="mode === 'signin'"
+                type="button"
+                class="forgot-link"
+                @click="setMode('forgot')"
+              >FORGOT KEY?</button>
+            </div>
+            <div class="field-box">
+              <svg class="field-icon" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" /></svg>
+              <input
+                :type="showPassword ? 'text' : 'password'"
+                v-model="form.password"
+                placeholder="••••••••"
+                class="field-input"
+                autocomplete="current-password"
+              />
+              <button type="button" class="eye-btn" @click="showPassword = !showPassword">
+                <svg v-if="showPassword" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" /></svg>
+                <svg v-else width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+              </button>
+            </div>
+
+            <!-- Password strength meter (signup only) -->
+            <div v-if="mode === 'signup' && form.password.length > 0" class="strength-meter">
+              <div class="strength-header">
+                <span class="strength-key">Phrase integrity:</span>
+                <span class="strength-val" :class="strengthTextClass">{{ strengthLabel }}</span>
+              </div>
+              <div class="strength-bars">
+                <div
+                  v-for="n in 4"
+                  :key="n"
+                  class="strength-bar"
+                  :class="n <= passwordStrength ? strengthBarClass : 'bar-empty'"
+                ></div>
+              </div>
+              <div class="strength-reqs">
+                <div class="req-item" :class="{ 'req-met': form.password.length >= 8 }">
+                  <div class="req-dot"></div><span>8+ characters</span>
+                </div>
+                <div class="req-item" :class="{ 'req-met': /[A-Z]/.test(form.password) }">
+                  <div class="req-dot"></div><span>uppercase letter</span>
+                </div>
+                <div class="req-item" :class="{ 'req-met': /[0-9]/.test(form.password) }">
+                  <div class="req-dot"></div><span>numerical token</span>
+                </div>
+                <div class="req-item" :class="{ 'req-met': /[^A-Za-z0-9]/.test(form.password) }">
+                  <div class="req-dot"></div><span>special symbol</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Confirm password (signup only) -->
+          <div v-if="mode === 'signup'" class="field-group">
+            <label class="field-label">CONFIRM PHRASE</label>
+            <div class="field-box" :class="{ 'field-error': passwordMismatch }">
+              <svg class="field-icon" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" /></svg>
+              <input
+                :type="showPassword ? 'text' : 'password'"
+                v-model="form.confirmPassword"
+                placeholder="••••••••"
+                class="field-input"
+                autocomplete="new-password"
+              />
+            </div>
+            <p v-if="passwordMismatch" class="field-hint-error">Passwords do not match</p>
+          </div>
+
+          <!-- Forgot mode: transmit button + back -->
+          <template v-if="mode === 'forgot'">
+            <button type="submit" class="submit-btn gradient-btn">
+              <span>Transmit Instructions</span>
+              <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
+            </button>
+            <button type="button" class="back-link" @click="setMode('signin')">
+              BACK TO SECURE SIGN IN
+            </button>
+          </template>
+
+          <!-- Normal submit -->
+          <button v-else type="submit" :disabled="loading" class="submit-btn gradient-btn">
+            <span v-if="!loading">{{ mode === 'signin' ? 'Verify Identity' : 'Establish Profile' }}</span>
+            <span v-else class="btn-dots">
+              <span></span><span></span><span></span>
+            </span>
+            <svg v-if="!loading" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
+          </button>
+        </form>
+
+        <!-- Social divider -->
+        <div v-if="mode !== 'forgot'" class="social-section">
+          <div class="divider">
+            <div class="divider-line"></div>
+            <span class="divider-text">Secure Auth Handshakes</span>
+            <div class="divider-line"></div>
+          </div>
+          <div class="social-btns">
+            <button class="social-btn" @click="handleSocialClick('Google')" title="Google">
+              <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+              <span>Google</span>
+            </button>
+            <button class="social-btn" @click="handleSocialClick('GitHub')" title="GitHub">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+              <span>GitHub</span>
+            </button>
+            <button class="social-btn" @click="handleSocialClick('Apple')" title="Apple">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+              <span>Apple</span>
+            </button>
+          </div>
+          <div class="demo-wrap">
+            <button type="button" class="demo-btn" @click="handleDemoLogin">
+              <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z" /></svg>
+              <span>Instant Demo Portal</span>
+            </button>
+          </div>
+        </div>
       </div>
 
-      <!-- 底部装饰线 -->
-      <div class="card-footer">
-        <span>INTELLIGENT HELMET SYSTEM</span>
-        <span>BUILD 2025.03</span>
-      </div>
+      <!-- Footer -->
+      <div class="page-footer">&copy; {{ new Date().getFullYear() }} Intelligent Helmet System. All handshakes secured.</div>
     </div>
   </div>
 </template>
@@ -120,12 +301,16 @@ const router = useRouter()
 const userStore = useUserStore()
 const canvasRef = ref(null)
 
-const isLogin = ref(true)
+// ── State ──
+const mode = ref('signin') // 'signin' | 'signup' | 'forgot'
 const loading = ref(false)
 const errorMessage = ref('')
 const usernameError = ref('')
-const passwordError = ref('')
 const checkingUsername = ref(false)
+const showPassword = ref(false)
+const isVerifying = ref(false)
+const verificationStep = ref(0)
+const loggedInUser = ref(null)
 
 const form = reactive({
   username: '',
@@ -133,50 +318,125 @@ const form = reactive({
   confirmPassword: ''
 })
 
-const isFormValid = computed(() => {
-  return form.username.length >= 3 &&
-    form.password.length >= 6 &&
-    form.password === form.confirmPassword &&
-    !usernameError.value
-})
-
-const toggleMode = () => {
-  isLogin.value = !isLogin.value
+// ── Helpers ──
+function setMode(m) {
+  mode.value = m
   errorMessage.value = ''
   usernameError.value = ''
-  passwordError.value = ''
   form.username = ''
   form.password = ''
   form.confirmPassword = ''
+  showPassword.value = false
 }
 
-watch(() => form.username, async (val) => {
-  if (isLogin.value) return
-  if (val.length < 3) { usernameError.value = ''; return }
-  if (val.length > 20) { usernameError.value = 'Username must be 3-20 characters'; return }
-  checkingUsername.value = true
-  usernameError.value = ''
-  try {
-    const res = await fetch(`http://localhost:8082/api/auth/check-username/${val}`)
-    const data = await res.json()
-    if (data.exists) usernameError.value = 'Username already taken'
-  } catch {
-    usernameError.value = 'Network error'
-  } finally {
-    checkingUsername.value = false
+const passwordMismatch = computed(() =>
+  mode.value === 'signup' && form.confirmPassword.length > 0 && form.password !== form.confirmPassword
+)
+
+// Password strength
+const passwordStrength = computed(() => {
+  const p = form.password
+  if (!p) return 0
+  let s = 0
+  if (p.length >= 8) s++
+  if (/[A-Z]/.test(p)) s++
+  if (/[0-9]/.test(p)) s++
+  if (/[^A-Za-z0-9]/.test(p)) s++
+  return s
+})
+
+const strengthLabel = computed(() => {
+  switch (passwordStrength.value) {
+    case 1: return 'Weak'
+    case 2: return 'Fair'
+    case 3: return 'Good'
+    case 4: return 'Ultra Secure'
+    default: return 'Empty'
   }
 })
 
-watch([() => form.password, () => form.confirmPassword], () => {
-  if (isLogin.value) return
-  passwordError.value = form.password !== form.confirmPassword ? 'Passwords do not match' : ''
+const strengthTextClass = computed(() => {
+  switch (passwordStrength.value) {
+    case 1: return 'text-red'
+    case 2: return 'text-orange'
+    case 3: return 'text-yellow'
+    case 4: return 'text-emerald'
+    default: return 'text-muted'
+  }
 })
 
-const handleSubmit = async () => {
-  errorMessage.value = ''
-  loading.value = true
+const strengthBarClass = computed(() => {
+  switch (passwordStrength.value) {
+    case 1: return 'bar-red'
+    case 2: return 'bar-orange'
+    case 3: return 'bar-yellow'
+    case 4: return 'bar-emerald'
+    default: return 'bar-empty'
+  }
+})
 
-  if (isLogin.value) {
+// ── Username availability check ──
+let usernameCheckTimer = null
+watch(() => form.username, (val) => {
+  if (mode.value !== 'signup') return
+  usernameError.value = ''
+  clearTimeout(usernameCheckTimer)
+  if (val.length < 3) return
+  if (val.length > 20) { usernameError.value = 'Username must be 3-20 characters'; return }
+  checkingUsername.value = true
+  usernameCheckTimer = setTimeout(async () => {
+    try {
+      const res = await fetch(`http://localhost:8082/api/auth/check-username/${val}`)
+      const data = await res.json()
+      if (data.exists) usernameError.value = 'Username already taken'
+    } catch {
+      // silently ignore network errors during check
+    } finally {
+      checkingUsername.value = false
+    }
+  }, 500)
+})
+
+// ── Verification animation ──
+const verificationLogs = [
+  'Deploying secure quantum encapsulation layers...',
+  'Authenticating handshake protocol sequence with primary keys...',
+  'Finalizing validation tokens and allocating session cookies...',
+  'Authorized! Handshake finished.'
+]
+
+let verifyTimers = []
+function runVerification(onComplete) {
+  isVerifying.value = true
+  verificationStep.value = 0
+  verifyTimers.forEach(clearTimeout)
+  verifyTimers = [
+    setTimeout(() => { verificationStep.value = 1 }, 600),
+    setTimeout(() => { verificationStep.value = 2 }, 1200),
+    setTimeout(() => { verificationStep.value = 3 }, 1800),
+    setTimeout(() => {
+      isVerifying.value = false
+      onComplete()
+    }, 2500)
+  ]
+}
+
+// ── Submit ──
+async function handleSubmit() {
+  errorMessage.value = ''
+
+  if (mode.value === 'forgot') {
+    // UI-only: show a brief message
+    errorMessage.value = 'Password reset is not supported in this build.'
+    return
+  }
+
+  if (mode.value === 'signin') {
+    if (!form.username || !form.password) {
+      errorMessage.value = 'Please enter username and password'
+      return
+    }
+    loading.value = true
     try {
       const res = await fetch('http://localhost:8082/api/auth/login', {
         method: 'POST',
@@ -185,13 +445,11 @@ const handleSubmit = async () => {
       })
       const data = await res.json()
       if (data.success) {
-        userStore.login({
-          username: data.username,
-          token: data.token,
-          role: data.role,
-          deviceId: data.deviceId
+        userStore.login({ username: data.username, token: data.token, role: data.role, deviceId: data.deviceId })
+        runVerification(() => {
+          loggedInUser.value = { username: data.username, role: data.role }
+          setTimeout(() => router.push('/app'), 1200)
         })
-        router.push('/app')
       } else {
         errorMessage.value = data.message || 'Invalid username or password'
       }
@@ -201,11 +459,12 @@ const handleSubmit = async () => {
       loading.value = false
     }
   } else {
-    if (!isFormValid.value) {
-      errorMessage.value = 'Please check your input'
-      loading.value = false
-      return
-    }
+    // signup
+    if (form.username.length < 3) { errorMessage.value = 'Username must be at least 3 characters'; return }
+    if (form.password.length < 6) { errorMessage.value = 'Password must be at least 6 characters'; return }
+    if (form.password !== form.confirmPassword) { errorMessage.value = 'Passwords do not match'; return }
+    if (usernameError.value) { errorMessage.value = usernameError.value; return }
+    loading.value = true
     try {
       const res = await fetch('http://localhost:8082/api/auth/register', {
         method: 'POST',
@@ -214,9 +473,12 @@ const handleSubmit = async () => {
       })
       const data = await res.json()
       if (res.ok) {
-        toggleMode()
+        setMode('signin')
+        errorMessage.value = ''
+        // Show a brief success hint via the error block (reuse styling)
+        setTimeout(() => { errorMessage.value = '' }, 100)
       } else {
-        errorMessage.value = data.error || 'Registration failed, please try again'
+        errorMessage.value = data.error || data.message || 'Registration failed'
       }
     } catch {
       errorMessage.value = 'Network error, please try again'
@@ -226,8 +488,31 @@ const handleSubmit = async () => {
   }
 }
 
-// ── Canvas 背景：网格 + 流动节点 ──
-let animFrameId
+function handleDemoLogin() {
+  form.username = 'demo'
+  form.password = 'Demo123!'
+  mode.value = 'signin'
+  errorMessage.value = ''
+  // Trigger login directly
+  handleSubmit()
+}
+
+function handleSocialClick(provider) {
+  if (provider === 'GitHub') {
+    window.location.href = 'http://localhost:8082/api/auth/oauth/github/authorize'
+    return
+  }
+  errorMessage.value = `${provider} 登录暂未开放`
+}
+
+function handleLogout() {
+  loggedInUser.value = null
+  userStore.logout?.()
+  setMode('signin')
+}
+
+// ── Particle canvas ──
+let animFrameId = null
 
 onMounted(() => {
   const canvas = canvasRef.value
@@ -237,457 +522,431 @@ onMounted(() => {
   let W = canvas.width = window.innerWidth
   let H = canvas.height = window.innerHeight
 
-  // 网格节点
-  const nodes = []
-  const cols = Math.ceil(W / 80)
-  const rows = Math.ceil(H / 80)
-  for (let i = 0; i <= cols; i++) {
-    for (let j = 0; j <= rows; j++) {
-      nodes.push({
-        x: i * 80 + (Math.random() - 0.5) * 20,
-        y: j * 80 + (Math.random() - 0.5) * 20,
-        ox: i * 80,
-        oy: j * 80,
-        vx: (Math.random() - 0.5) * 0.3,
-        vy: (Math.random() - 0.5) * 0.3,
-        r: Math.random() * 1.2 + 0.4,
-        pulse: Math.random() * Math.PI * 2
-      })
+  const particleCount = Math.min(60, Math.floor((W * H) / 25000))
+  const connectionDistance = 120
+  const mouse = { x: -1000, y: -1000, radius: 180 }
+
+  const particles = Array.from({ length: particleCount }, () => {
+    const hue = Math.random() > 0.5 ? 190 + Math.random() * 20 : 260 + Math.random() * 20
+    return {
+      x: Math.random() * W,
+      y: Math.random() * H,
+      vx: (Math.random() - 0.5) * 0.4,
+      vy: (Math.random() - 0.5) * 0.4,
+      size: Math.random() * 2 + 1,
+      color: `hsla(${hue}, 80%, 75%, ${Math.random() * 0.4 + 0.2})`
     }
-  }
+  })
 
-  // 流动数据粒子
-  const streams = Array.from({ length: 8 }, () => ({
-    x: Math.random() * W,
-    y: Math.random() * H,
-    speed: Math.random() * 1.5 + 0.5,
-    len: Math.random() * 60 + 30,
-    alpha: Math.random() * 0.4 + 0.1
-  }))
-
-  let t = 0
-
-  const draw = () => {
-    t += 0.008
-    ctx.fillStyle = 'rgba(8, 10, 18, 0.18)'
-    ctx.fillRect(0, 0, W, H)
-
-    // 网格线
-    ctx.strokeStyle = 'rgba(251, 146, 60, 0.04)'
-    ctx.lineWidth = 1
-    for (let i = 0; i <= cols; i++) {
+  function animate() {
+    ctx.clearRect(0, 0, W, H)
+    for (let i = 0; i < particles.length; i++) {
+      const p = particles[i]
+      p.x += p.vx; p.y += p.vy
+      if (p.x < 0 || p.x > W) p.vx *= -1
+      if (p.y < 0 || p.y > H) p.vy *= -1
+      const dx = mouse.x - p.x, dy = mouse.y - p.y
+      const dist = Math.sqrt(dx * dx + dy * dy)
+      if (dist < mouse.radius) {
+        const force = (mouse.radius - dist) / mouse.radius
+        const angle = Math.atan2(dy, dx)
+        p.x -= Math.cos(angle) * force * 0.6
+        p.y -= Math.sin(angle) * force * 0.6
+      }
       ctx.beginPath()
-      ctx.moveTo(i * 80, 0)
-      ctx.lineTo(i * 80, H)
-      ctx.stroke()
-    }
-    for (let j = 0; j <= rows; j++) {
-      ctx.beginPath()
-      ctx.moveTo(0, j * 80)
-      ctx.lineTo(W, j * 80)
-      ctx.stroke()
-    }
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2)
+      ctx.fillStyle = p.color
+      ctx.shadowBlur = 8; ctx.shadowColor = p.color
+      ctx.fill(); ctx.shadowBlur = 0
 
-    // 节点
-    nodes.forEach(n => {
-      n.x += n.vx
-      n.y += n.vy
-      n.pulse += 0.02
-      if (Math.abs(n.x - n.ox) > 15) n.vx *= -1
-      if (Math.abs(n.y - n.oy) > 15) n.vy *= -1
-
-      const alpha = 0.25 + Math.sin(n.pulse) * 0.15
-      ctx.beginPath()
-      ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2)
-      ctx.fillStyle = `rgba(251, 146, 60, ${alpha})`
-      ctx.fill()
-    })
-
-    // 节点连线
-    for (let i = 0; i < nodes.length; i++) {
-      for (let j = i + 1; j < nodes.length; j++) {
-        const dx = nodes[i].x - nodes[j].x
-        const dy = nodes[i].y - nodes[j].y
-        const d = Math.sqrt(dx * dx + dy * dy)
-        if (d < 100) {
+      for (let j = i + 1; j < particles.length; j++) {
+        const q = particles[j]
+        const ddx = p.x - q.x, ddy = p.y - q.y
+        const d = Math.sqrt(ddx * ddx + ddy * ddy)
+        if (d < connectionDistance) {
           ctx.beginPath()
-          ctx.strokeStyle = `rgba(251, 146, 60, ${0.08 * (1 - d / 100)})`
-          ctx.lineWidth = 0.5
-          ctx.moveTo(nodes[i].x, nodes[i].y)
-          ctx.lineTo(nodes[j].x, nodes[j].y)
-          ctx.stroke()
+          ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y)
+          ctx.strokeStyle = `rgba(139,92,246,${(1 - d / connectionDistance) * 0.15})`
+          ctx.lineWidth = 0.8; ctx.stroke()
         }
       }
+      const mdx = p.x - mouse.x, mdy = p.y - mouse.y
+      const md = Math.sqrt(mdx * mdx + mdy * mdy)
+      if (md < mouse.radius) {
+        ctx.beginPath()
+        ctx.moveTo(p.x, p.y); ctx.lineTo(mouse.x, mouse.y)
+        ctx.strokeStyle = `rgba(6,182,212,${(1 - md / mouse.radius) * 0.25})`
+        ctx.lineWidth = 1; ctx.stroke()
+      }
     }
-
-    // 流动数据流
-    streams.forEach(s => {
-      s.y += s.speed
-      if (s.y > H + s.len) { s.y = -s.len; s.x = Math.random() * W }
-      const grad = ctx.createLinearGradient(s.x, s.y - s.len, s.x, s.y)
-      grad.addColorStop(0, 'rgba(251,146,60,0)')
-      grad.addColorStop(1, `rgba(251,146,60,${s.alpha})`)
-      ctx.beginPath()
-      ctx.strokeStyle = grad
-      ctx.lineWidth = 1
-      ctx.moveTo(s.x, s.y - s.len)
-      ctx.lineTo(s.x, s.y)
-      ctx.stroke()
-    })
-
-    animFrameId = requestAnimationFrame(draw)
+    animFrameId = requestAnimationFrame(animate)
   }
+  animate()
 
-  draw()
-
-  const onResize = () => {
-    W = canvas.width = window.innerWidth
-    H = canvas.height = window.innerHeight
-  }
+  const onResize = () => { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight }
+  const onMouseMove = (e) => { const r = canvas.getBoundingClientRect(); mouse.x = e.clientX - r.left; mouse.y = e.clientY - r.top }
+  const onMouseLeave = () => { mouse.x = -1000; mouse.y = -1000 }
   window.addEventListener('resize', onResize)
+  window.addEventListener('mousemove', onMouseMove)
+  window.addEventListener('mouseleave', onMouseLeave)
 
   onBeforeUnmount(() => {
-    window.removeEventListener('resize', onResize)
     cancelAnimationFrame(animFrameId)
+    window.removeEventListener('resize', onResize)
+    window.removeEventListener('mousemove', onMouseMove)
+    window.removeEventListener('mouseleave', onMouseLeave)
+    verifyTimers.forEach(clearTimeout)
   })
 })
 </script>
 
 <style scoped>
-/* ── 根容器 ── */
+/* ── Root ── */
 .auth-root {
   position: relative;
   min-height: 100vh;
-  background: #080a12;
+  background: #030712;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  font-family: 'Courier New', 'Consolas', monospace;
+  font-family: 'Inter', 'Segoe UI', sans-serif;
 }
 
 .auth-canvas {
   position: absolute;
   inset: 0;
   z-index: 0;
+  pointer-events: none;
+  opacity: 0.8;
 }
 
-/* 扫描线 */
+.ambient-sphere {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+}
+.sphere-cyan {
+  top: 25%; left: 25%;
+  width: 384px; height: 384px;
+  background: rgba(6, 182, 212, 0.08);
+  filter: blur(120px);
+}
+.sphere-violet {
+  bottom: 25%; right: 25%;
+  width: 384px; height: 384px;
+  background: rgba(139, 92, 246, 0.08);
+  filter: blur(120px);
+}
+
 .scanline-overlay {
   position: absolute;
   inset: 0;
   z-index: 1;
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 2px,
-    rgba(0, 0, 0, 0.08) 2px,
-    rgba(0, 0, 0, 0.08) 4px
-  );
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.06) 2px, rgba(0,0,0,0.06) 4px);
   pointer-events: none;
 }
 
-/* ── 主卡片 ── */
-.auth-card {
+/* ── Content wrapper ── */
+.auth-content {
   position: relative;
   z-index: 10;
   width: 100%;
-  max-width: 420px;
-  margin: 16px;
-  background: rgba(12, 15, 26, 0.92);
-  border: 1px solid rgba(251, 146, 60, 0.25);
-  box-shadow:
-    0 0 0 1px rgba(251, 146, 60, 0.08),
-    0 0 40px rgba(251, 146, 60, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.04);
-  clip-path: polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 20px 100%, 0 calc(100% - 20px));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px 16px;
 }
 
-/* ── 顶部状态栏 ── */
-.card-topbar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 20px;
-  border-bottom: 1px solid rgba(251, 146, 60, 0.15);
-  background: rgba(251, 146, 60, 0.04);
-}
-.topbar-tag {
-  font-size: 9px;
-  letter-spacing: 0.2em;
-  color: #fb923c;
-  background: rgba(251, 146, 60, 0.15);
-  padding: 2px 6px;
-  border: 1px solid rgba(251, 146, 60, 0.3);
-}
-.topbar-title {
-  flex: 1;
+.brand-label {
   font-size: 10px;
-  letter-spacing: 0.15em;
-  color: #9ca3af;
-}
-.topbar-status {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 9px;
-  letter-spacing: 0.15em;
-  color: #4ade80;
-}
-.status-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #4ade80;
-  box-shadow: 0 0 6px #4ade80;
-  animation: blink 2s ease-in-out infinite;
-}
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
-}
-
-/* ── Logo ── */
-.logo-wrap {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 28px 0 16px;
-  gap: 12px;
-}
-.logo-hex {
-  width: 64px;
-  height: 64px;
-  background: rgba(251, 146, 60, 0.08);
-  border: 1px solid rgba(251, 146, 60, 0.4);
-  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fb923c;
-  box-shadow: 0 0 20px rgba(251, 146, 60, 0.2);
-}
-.logo-lines {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  width: 40px;
-}
-.logo-line-1 {
-  height: 1px;
-  background: linear-gradient(90deg, transparent, #fb923c, transparent);
-  animation: scan 2s ease-in-out infinite;
-}
-.logo-line-2 {
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(251,146,60,0.4), transparent);
-  animation: scan 2s ease-in-out infinite 0.3s;
-}
-@keyframes scan {
-  0%, 100% { opacity: 0.3; transform: scaleX(0.5); }
-  50% { opacity: 1; transform: scaleX(1); }
-}
-
-/* ── 标题 ── */
-.auth-title {
-  text-align: center;
-  padding: 0 32px 24px;
-}
-.auth-title h2 {
-  font-size: 18px;
-  font-weight: 700;
-  letter-spacing: 0.2em;
-  color: #f1f5f9;
-  margin: 0 0 6px;
-}
-.auth-title p {
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  color: #6b7280;
-  margin: 0;
-}
-
-/* ── 错误提示 ── */
-.error-bar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0 24px 16px;
-  padding: 10px 14px;
-  font-size: 11px;
-  letter-spacing: 0.05em;
-  color: #f87171;
-  background: rgba(248, 113, 113, 0.08);
-  border: 1px solid rgba(248, 113, 113, 0.25);
-  border-left: 3px solid #f87171;
-}
-
-/* ── 表单 ── */
-.auth-form {
-  padding: 0 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-
-.field-wrap {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.field-label {
-  font-size: 9px;
-  letter-spacing: 0.2em;
-  color: #fb923c;
   font-weight: 600;
+  letter-spacing: 0.25em;
+  color: #22d3ee;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  margin-bottom: 24px;
+  text-shadow: 0 0 12px rgba(34, 211, 238, 0.5);
 }
-.field-box {
+
+/* ── Card base ── */
+.auth-card {
+  width: 100%;
+  max-width: 460px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 25px 50px rgba(0,0,0,0.5);
+  overflow: hidden;
+}
+
+/* ── Verifying card ── */
+.verify-card { padding: 32px; min-height: 420px; display: flex; flex-direction: column; justify-content: space-between; }
+.verify-body { display: flex; flex-direction: column; align-items: center; text-align: center; flex: 1; padding: 16px 0; }
+.verify-spinner-wrap { position: relative; width: 64px; height: 64px; margin-bottom: 24px; }
+.verify-spinner {
+  width: 64px; height: 64px; border-radius: 50%;
+  border: 2px dashed #22d3ee;
+  animation: spin 3s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.verify-spinner-icon {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: #22d3ee;
+}
+.verify-title { font-size: 18px; font-weight: 700; letter-spacing: 0.1em; color: #22d3ee; text-transform: uppercase; margin-bottom: 4px; text-shadow: 0 0 12px rgba(34,211,238,0.4); }
+.verify-sub { font-size: 11px; font-family: monospace; color: #52525b; margin-bottom: 24px; }
+.verify-log {
+  width: 100%;
+  background: rgba(9,9,11,0.6);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 8px;
+  padding: 16px;
+  font-family: monospace;
+  font-size: 11px;
+  text-align: left;
+  min-height: 140px;
   display: flex;
-  align-items: center;
-  border: 1px solid rgba(251, 146, 60, 0.2);
-  border-left: 3px solid rgba(251, 146, 60, 0.5);
-  background: rgba(251, 146, 60, 0.03);
-  transition: border-color 0.2s, background 0.2s;
+  flex-direction: column;
+  gap: 8px;
+}
+.verify-log-line { color: #52525b; display: flex; gap: 8px; }
+.verify-log-line.active { color: #22d3ee; }
+.log-arrow { color: #8b5cf6; flex-shrink: 0; }
+.verify-footer { font-size: 10px; font-family: monospace; color: #3f3f46; text-align: center; text-transform: uppercase; letter-spacing: 0.1em; }
+
+/* ── Success card ── */
+.success-card { padding: 32px; }
+.success-body { display: flex; flex-direction: column; align-items: center; text-align: center; }
+.success-icon-wrap {
+  width: 64px; height: 64px; border-radius: 50%;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  display: flex; align-items: center; justify-content: center;
+  color: #34d399; margin-bottom: 20px;
+  box-shadow: inset 0 0 20px rgba(16,185,129,0.1);
+}
+.success-badge {
+  font-size: 11px; font-family: monospace; color: #34d399;
+  background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.2);
+  padding: 4px 12px; border-radius: 999px; letter-spacing: 0.1em; margin-bottom: 12px;
+}
+.success-title { font-size: 24px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+.success-sub { font-size: 14px; color: #a1a1aa; margin-bottom: 24px; }
+.success-name { color: #22d3ee; font-weight: 500; }
+.success-board {
+  width: 100%;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+  text-align: left;
+}
+.board-row { display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 16px; }
+.board-key { font-size: 11px; font-family: monospace; color: #52525b; }
+.board-val { font-size: 12px; color: #d4d4d8; font-weight: 500; }
+.board-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.board-cell { background: rgba(9,9,11,0.4); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 12px; }
+.cell-label { display: flex; align-items: center; gap: 6px; font-size: 10px; font-family: monospace; letter-spacing: 0.1em; margin-bottom: 4px; }
+.cell-label.cyan { color: #22d3ee; }
+.cell-label.violet { color: #a78bfa; }
+.cell-val { font-size: 14px; font-weight: 600; color: #fff; }
+.board-session { display: flex; align-items: center; gap: 12px; background: rgba(9,9,11,0.2); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 12px; font-size: 11px; font-family: monospace; color: #71717a; }
+.session-icon { color: #34d399; flex-shrink: 0; }
+.logout-btn {
+  width: 100%; padding: 12px;
+  background: linear-gradient(135deg, rgba(239,68,68,0.2), rgba(249,115,22,0.2));
+  border: 1px solid rgba(239,68,68,0.3);
+  border-radius: 12px;
+  color: #fca5a5; font-size: 12px; font-weight: 600;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  cursor: pointer; transition: all 0.2s;
+}
+.logout-btn:hover { background: linear-gradient(135deg, rgba(239,68,68,0.3), rgba(249,115,22,0.3)); }
+
+/* ── Main card ── */
+.main-card { padding: 32px; position: relative; }
+.card-accent {
+  position: absolute; top: 0; left: 25%; right: 25%; height: 2px;
+  background: linear-gradient(90deg, #06b6d4, #8b5cf6, #7c3aed);
+  filter: blur(2px); opacity: 0.6;
+}
+
+/* Header */
+.card-header { display: flex; flex-direction: column; align-items: center; margin-bottom: 28px; }
+.header-icon {
+  width: 48px; height: 48px; border-radius: 12px;
+  background: linear-gradient(135deg, rgba(6,182,212,0.2), rgba(139,92,246,0.1));
+  border: 1px solid rgba(6,182,212,0.3);
+  display: flex; align-items: center; justify-content: center;
+  color: #22d3ee; margin-bottom: 16px;
+}
+.header-title { font-size: 24px; font-weight: 700; color: #fff; letter-spacing: -0.02em; margin-bottom: 4px; }
+.header-sub { font-size: 12px; color: #71717a; text-align: center; }
+
+/* Tab bar */
+.tab-bar {
+  display: flex; padding: 4px;
+  background: rgba(9,9,11,0.6);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 12px;
+  margin-bottom: 24px;
+}
+.tab-btn {
+  flex: 1; padding: 8px;
+  font-size: 12px; font-weight: 600;
+  border: none; background: transparent;
+  color: #52525b; border-radius: 8px;
+  cursor: pointer; transition: all 0.2s;
+}
+.tab-btn.active {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: #fff;
+}
+.tab-btn:not(.active):hover { color: #d4d4d8; }
+
+/* Error block */
+.error-block {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 14px; border-radius: 12px;
+  border: 1px solid rgba(239,68,68,0.2);
+  background: rgba(239,68,68,0.05);
+  font-size: 12px; font-family: monospace;
+  color: #fca5a5; margin-bottom: 16px;
+}
+.error-dot { width: 8px; height: 8px; border-radius: 50%; background: #ef4444; flex-shrink: 0; margin-top: 2px; }
+
+/* Form */
+.auth-form { display: flex; flex-direction: column; gap: 16px; }
+.field-group { display: flex; flex-direction: column; gap: 6px; }
+.field-label { font-size: 11px; font-family: monospace; color: #52525b; letter-spacing: 0.05em; }
+.field-label-row { display: flex; justify-content: space-between; align-items: center; }
+.forgot-link { font-size: 11px; font-family: monospace; color: #22d3ee; background: none; border: none; cursor: pointer; padding: 0; transition: color 0.2s; }
+.forgot-link:hover { color: #67e8f9; }
+
+.field-box {
+  display: flex; align-items: center;
+  background: rgba(9,9,11,0.4);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 12px;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 .field-box:focus-within {
-  border-color: rgba(251, 146, 60, 0.6);
-  border-left-color: #fb923c;
-  background: rgba(251, 146, 60, 0.06);
-  box-shadow: 0 0 12px rgba(251, 146, 60, 0.08);
+  border-color: rgba(6,182,212,0.5);
+  box-shadow: 0 0 0 3px rgba(6,182,212,0.1);
 }
-.field-box.field-error {
-  border-color: rgba(248, 113, 113, 0.4);
-  border-left-color: #f87171;
-}
-.field-prefix {
-  padding: 0 10px;
-  font-size: 9px;
-  letter-spacing: 0.1em;
-  color: rgba(251, 146, 60, 0.5);
-  border-right: 1px solid rgba(251, 146, 60, 0.15);
-  user-select: none;
-}
+.field-box.field-error { border-color: rgba(239,68,68,0.4); }
+.field-icon { color: #52525b; margin-left: 12px; flex-shrink: 0; transition: color 0.2s; }
+.field-box:focus-within .field-icon { color: #22d3ee; }
 .field-input {
-  flex: 1;
-  background: transparent;
-  border: none;
-  outline: none;
-  padding: 11px 12px;
-  font-size: 13px;
+  flex: 1; background: transparent; border: none; outline: none;
+  padding: 10px 12px; font-size: 14px; color: #fff;
   font-family: inherit;
-  color: #e2e8f0;
-  letter-spacing: 0.05em;
 }
-.field-input::placeholder { color: #374151; }
-.field-checking {
-  padding: 0 10px;
-  font-size: 14px;
-  color: #fb923c;
-  letter-spacing: 0.2em;
-  animation: blink 0.8s ease-in-out infinite;
-}
-.field-hint {
-  font-size: 10px;
-  letter-spacing: 0.05em;
-  margin: 0;
-}
-.field-hint.error { color: #f87171; }
+.field-input::placeholder { color: #3f3f46; }
+.field-checking { padding: 0 12px; font-size: 14px; color: #22d3ee; font-family: monospace; animation: blink 0.8s ease-in-out infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+.eye-btn { background: none; border: none; cursor: pointer; padding: 0 12px; color: #52525b; display: flex; align-items: center; transition: color 0.2s; }
+.eye-btn:hover { color: #d4d4d8; }
+.field-hint-error { font-size: 10px; color: #f87171; font-family: monospace; }
 
-/* ── 提交按钮 ── */
+/* Strength meter */
+.strength-meter {
+  margin-top: 8px; padding: 12px;
+  background: rgba(9,9,11,0.6);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 8px;
+  font-family: monospace;
+}
+.strength-header { display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 8px; }
+.strength-key { color: #52525b; text-transform: uppercase; }
+.strength-val { font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+.text-red { color: #f87171; }
+.text-orange { color: #fb923c; }
+.text-yellow { color: #facc15; }
+.text-emerald { color: #34d399; }
+.text-muted { color: #52525b; }
+.strength-bars { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; height: 4px; margin-bottom: 8px; }
+.strength-bar { border-radius: 2px; transition: background 0.3s; }
+.bar-empty { background: #27272a; }
+.bar-red { background: #ef4444; }
+.bar-orange { background: #f97316; }
+.bar-yellow { background: #eab308; }
+.bar-emerald { background: #10b981; }
+.strength-reqs { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+.req-item { display: flex; align-items: center; gap: 4px; font-size: 9px; color: #52525b; }
+.req-item.req-met { color: #22d3ee; }
+.req-dot { width: 4px; height: 4px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+
+/* Submit button */
 .submit-btn {
-  position: relative;
-  overflow: hidden;
+  width: 100%; padding: 12px 16px;
+  border: none; border-radius: 12px;
+  font-size: 12px; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: #fff; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  transition: filter 0.2s, transform 0.1s;
   margin-top: 8px;
-  padding: 14px;
-  background: rgba(251, 146, 60, 0.1);
-  border: 1px solid rgba(251, 146, 60, 0.4);
-  color: #fb923c;
-  font-family: inherit;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.25em;
-  cursor: pointer;
-  transition: all 0.2s;
-  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
 }
-.submit-btn:hover:not(:disabled) {
-  background: rgba(251, 146, 60, 0.18);
-  border-color: #fb923c;
-  color: #fff;
-  box-shadow: 0 0 20px rgba(251, 146, 60, 0.25);
-}
-.submit-btn:disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
-}
-.btn-text { position: relative; z-index: 1; }
-.btn-loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-}
-.btn-loading span {
-  width: 5px;
-  height: 5px;
-  background: #fb923c;
-  animation: dot-pulse 1s ease-in-out infinite;
-}
-.btn-loading span:nth-child(2) { animation-delay: 0.2s; }
-.btn-loading span:nth-child(3) { animation-delay: 0.4s; }
-@keyframes dot-pulse {
-  0%, 100% { opacity: 0.2; transform: scale(0.8); }
-  50% { opacity: 1; transform: scale(1.2); }
-}
-/* 扫描动画 */
-.btn-scan {
-  position: absolute;
-  top: 0; left: -100%;
-  width: 100%; height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(251,146,60,0.12), transparent);
-  animation: btn-scan 3s ease-in-out infinite;
-}
-@keyframes btn-scan {
-  0% { left: -100%; }
-  50%, 100% { left: 100%; }
-}
+.gradient-btn { background: linear-gradient(135deg, #06b6d4, #8b5cf6); }
+.gradient-btn:hover:not(:disabled) { filter: brightness(1.1); }
+.gradient-btn:active:not(:disabled) { transform: scale(0.99); }
+.submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-dots { display: flex; gap: 4px; align-items: center; }
+.btn-dots span { width: 5px; height: 5px; background: #fff; border-radius: 50%; animation: dot-pulse 1s ease-in-out infinite; }
+.btn-dots span:nth-child(2) { animation-delay: 0.2s; }
+.btn-dots span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes dot-pulse { 0%,100%{opacity:0.2;transform:scale(0.8)} 50%{opacity:1;transform:scale(1.2)} }
 
-/* ── 切换模式 ── */
-.mode-switch {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 20px 24px 0;
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  color: #6b7280;
+.back-link {
+  width: 100%; text-align: center;
+  background: none; border: none;
+  font-size: 12px; font-family: monospace;
+  color: #52525b; cursor: pointer;
+  padding: 8px; transition: color 0.2s;
 }
-.switch-btn {
-  background: none;
-  border: none;
-  font-family: inherit;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.15em;
-  color: #fb923c;
-  cursor: pointer;
-  padding: 0;
-  transition: color 0.2s;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-.switch-btn:hover { color: #fdba74; }
+.back-link:hover { color: #d4d4d8; }
 
-/* ── 底部 ── */
-.card-footer {
-  display: flex;
-  justify-content: space-between;
-  padding: 16px 24px 20px;
-  margin-top: 20px;
-  border-top: 1px solid rgba(251, 146, 60, 0.1);
-  font-size: 9px;
-  letter-spacing: 0.12em;
-  color: #374151;
+/* Social section */
+.social-section { margin-top: 28px; }
+.divider { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+.divider-line { flex: 1; height: 1px; background: rgba(255,255,255,0.05); }
+.divider-text { font-size: 10px; font-family: monospace; color: #52525b; text-transform: uppercase; letter-spacing: 0.1em; white-space: nowrap; }
+.social-btns { display: flex; gap: 12px; }
+.social-btn {
+  flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 10px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  color: #a1a1aa; font-size: 12px; font-weight: 500;
+  cursor: pointer; transition: all 0.2s;
+}
+.social-btn:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.15); color: #fff; }
+.demo-wrap { display: flex; justify-content: center; margin-top: 16px; }
+.demo-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 11px; font-family: monospace;
+  color: #52525b; background: rgba(9,9,11,0.4);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 999px; padding: 6px 14px;
+  cursor: pointer; transition: all 0.2s;
+  text-transform: uppercase; letter-spacing: 0.05em;
+}
+.demo-btn:hover { color: #22d3ee; border-color: rgba(6,182,212,0.2); }
+.demo-btn svg { color: #22d3ee; }
+
+/* Footer */
+.page-footer {
+  margin-top: 24px;
+  font-size: 11px; font-family: monospace;
+  color: #3f3f46; letter-spacing: 0.05em;
+  text-align: center;
 }
 </style>

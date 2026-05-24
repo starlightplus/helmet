@@ -51,6 +51,7 @@ public class SecurityConfig {
             .authorizeRequests()
                 .antMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                 .antMatchers("/api/auth/register", "/api/auth/login", "/api/auth/check-username/**").permitAll()
+                .antMatchers("/api/auth/oauth/**").permitAll()
                 .antMatchers("/api/auth/admin/**").hasRole("ADMIN")
                 .antMatchers("/api/sensor/**", "/api/chat/**", "/ws/**").permitAll()
                 .anyRequest().authenticated()
