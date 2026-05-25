@@ -2,10 +2,13 @@ package com.demo.controller;
 
 import com.demo.config.JwtUtil;
 import com.demo.model.User;
+import com.demo.model.UserProfile;
+import com.demo.repository.UserProfileRepository;
 import com.demo.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -23,6 +26,12 @@ public class AuthController {
 
     @Autowired
     private JwtUtil jwtUtil;
+
+    @Autowired
+    private UserProfileRepository profileRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @PostMapping("/register")
     public ResponseEntity<Map<String, String>> register(@RequestBody Map<String, String> request) {
@@ -69,21 +78,106 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
-    // ── 管理员接口 ──
+    // ── 管理员接口 ──────────────────────────────────────────────────
 
     @GetMapping("/admin/users")
     public ResponseEntity<?> listUsers(Authentication auth) {
         if (!isAdmin(auth)) return ResponseEntity.status(403).body("Forbidden");
         List<Map<String, Object>> users = userService.findAllUsers().stream().map(u -> {
             Map<String, Object> m = new HashMap<>();
-            m.put("id", u.getId());
-            m.put("username", u.getUsername());
-            m.put("role", u.getRole());
-            m.put("deviceId", u.getDeviceId());
+            m.put("id",        u.getId());
+            m.put("username",  u.getUsername());
+            m.put("role",      u.getRole());
+            m.put("deviceId",  u.getDeviceId());
+            m.put("githubId",  u.getGithubId());
             m.put("createdAt", u.getCreatedAt());
             return m;
         }).collect(Collectors.toList());
         return ResponseEntity.ok(users);
+    }
+
+    @GetMapping("/admin/users/{id}/profile")
+    public ResponseEntity<?> getUserProfile(@PathVariable Long id, Authentication auth) {
+        if (!isAdmin(auth)) return ResponseEntity.status(403).body("Forbidden");
+        User user = userService.findById(id);
+        if (user == null) return ResponseEntity.status(404).body("用户不存在");
+
+        UserProfile profile = profileRepository.findByUserId(id).orElse(new UserProfile());
+        Map<String, Object> res = new HashMap<>();
+        res.put("id",        user.getId());
+        res.put("username",  user.getUsername());
+        res.put("role",      user.getRole());
+        res.put("deviceId",  user.getDeviceId());
+        res.put("githubId",  user.getGithubId());
+        res.put("createdAt", user.getCreatedAt());
+        res.put("nickname",  profile.getNickname());
+        res.put("age",       profile.getAge());
+        res.put("height",    profile.getHeight());
+        res.put("weight",    profile.getWeight());
+        res.put("gender",    profile.getGender());
+        res.put("bio",       profile.getBio());
+        res.put("weightUnit",profile.getWeightUnit() != null ? profile.getWeightUnit() : "kg");
+        res.put("bloodType", profile.getBloodType());
+        return ResponseEntity.ok(res);
+    }
+
+    @PutMapping("/admin/users/{id}/profile")
+    public ResponseEntity<?> updateUserProfile(@PathVariable Long id,
+                                               @RequestBody Map<String, Object> body,
+                                               Authentication auth) {
+        if (!isAdmin(auth)) return ResponseEntity.status(403).body("Forbidden");
+        User user = userService.findById(id);
+        if (user == null) return ResponseEntity.status(404).body("用户不存在");
+
+        // 更新 User 字段
+        if (body.containsKey("deviceId")) user.setDeviceId((String) body.get("deviceId"));
+        if (body.containsKey("role"))     user.setRole((String) body.get("role"));
+        userService.save(user);
+
+        // 更新 UserProfile 字段
+        UserProfile profile = profileRepository.findByUserId(id).orElse(new UserProfile());
+        profile.setUser(user);
+        if (body.containsKey("nickname") && body.get("nickname") != null)
+            profile.setNickname(body.get("nickname").toString());
+        if (body.containsKey("age") && body.get("age") != null)
+            profile.setAge(((Number) body.get("age")).intValue());
+        if (body.containsKey("height") && body.get("height") != null)
+            profile.setHeight(((Number) body.get("height")).intValue());
+        if (body.containsKey("weight") && body.get("weight") != null)
+            profile.setWeight(((Number) body.get("weight")).doubleValue());
+        if (body.containsKey("gender"))    profile.setGender((String) body.get("gender"));
+        if (body.containsKey("bio"))       profile.setBio((String) body.get("bio"));
+        if (body.containsKey("weightUnit"))profile.setWeightUnit((String) body.get("weightUnit"));
+        if (body.containsKey("bloodType")) profile.setBloodType((String) body.get("bloodType"));
+        profileRepository.save(profile);
+
+        return ResponseEntity.ok(Map.of("success", true));
+    }
+
+    @PutMapping("/admin/users/{id}/password")
+    public ResponseEntity<?> resetPassword(@PathVariable Long id,
+                                           @RequestBody Map<String, String> body,
+                                           Authentication auth) {
+        if (!isAdmin(auth)) return ResponseEntity.status(403).body("Forbidden");
+        User user = userService.findById(id);
+        if (user == null) return ResponseEntity.status(404).body("用户不存在");
+        String newPassword = body.get("password");
+        if (newPassword == null || newPassword.length() < 6)
+            return ResponseEntity.badRequest().body("密码至少6位");
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userService.save(user);
+        return ResponseEntity.ok(Map.of("success", true));
+    }
+
+    @DeleteMapping("/admin/users/{id}")
+    public ResponseEntity<?> deleteUser(@PathVariable Long id, Authentication auth) {
+        if (!isAdmin(auth)) return ResponseEntity.status(403).body("Forbidden");
+        User user = userService.findById(id);
+        if (user == null) return ResponseEntity.status(404).body("用户不存在");
+        if ("admin".equals(user.getRole()))
+            return ResponseEntity.badRequest().body("不能删除管理员账号");
+        userService.deleteById(id);
+        return ResponseEntity.ok(Map.of("success", true));
     }
 
     @PostMapping("/admin/assign-device")

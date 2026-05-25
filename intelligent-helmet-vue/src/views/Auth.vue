@@ -448,7 +448,8 @@ async function handleSubmit() {
         userStore.login({ username: data.username, token: data.token, role: data.role, deviceId: data.deviceId })
         runVerification(() => {
           loggedInUser.value = { username: data.username, role: data.role }
-          setTimeout(() => router.push('/app'), 1200)
+          const target = data.role === 'admin' ? '/admin' : '/app'
+          setTimeout(() => router.push(target), 1200)
         })
       } else {
         errorMessage.value = data.message || 'Invalid username or password'

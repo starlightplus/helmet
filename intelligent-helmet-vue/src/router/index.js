@@ -50,6 +50,12 @@ const routes = [
     path: '/oauth/callback',
     name: 'OAuthCallback',
     component: () => import('@/views/OAuthCallback.vue')
+  },
+  {
+    path: '/admin',
+    name: 'AdminDashboard',
+    component: () => import('@/views/AdminDashboard.vue'),
+    meta: { requiresAdmin: true }
   }
 ]
 

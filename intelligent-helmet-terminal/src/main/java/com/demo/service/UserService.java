@@ -63,6 +63,18 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    public User findById(Long id) {
+        return userRepository.findById(id).orElse(null);
+    }
+
+    public User save(User user) {
+        return userRepository.save(user);
+    }
+
+    public void deleteById(Long id) {
+        userRepository.deleteById(id);
+    }
+
     /**
      * GitHub OAuth 登录：按 githubId 查找用户，不存在则自动注册
      */
