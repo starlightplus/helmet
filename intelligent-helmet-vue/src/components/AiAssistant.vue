@@ -2,16 +2,15 @@
   <div
     class="ai-assistant"
     :class="{ 'is-dragging': isDragging }"
-    :style="{ right: currentPosition.x + 'px', bottom: currentPosition.y + 'px' }"
-    @mousedown="handleMouseDown"
-    @click="handleClick"
+    :style="{ left: pos.x + 'px', top: pos.y + 'px' }"
+    @mousedown="onMouseDown"
   >
     <!-- 3D 角色容器 -->
-    <div ref="containerRef" class="assistant-canvas"></div>
+    <div ref="containerRef" class="assistant-canvas" @click="onCanvasClick"></div>
 
     <!-- 对话气泡 -->
     <Transition name="bubble">
-      <div v-if="showBubble" class="speech-bubble" @click.stop>
+      <div v-if="showBubble" class="speech-bubble">
         <p class="bubble-text">{{ currentMessage }}</p>
       </div>
     </Transition>
@@ -22,8 +21,6 @@
       <div class="pulse-dot"></div>
     </div>
 
-    <!-- 拖拽提示 -->
-    <div v-if="isDragging" class="drag-hint">拖动中...</div>
   </div>
 </template>
 
@@ -34,359 +31,207 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 
 const props = defineProps({
   sensorData: { type: Object, default: null },
-  position: { type: Object, default: () => ({ x: 20, y: 20 }) }
 })
 
-const emit = defineEmits(['openChat'])
+const emit = defineEmits(['click-model'])
 
 const containerRef = ref(null)
 const showBubble = ref(false)
 const currentMessage = ref('')
 const statusClass = ref('normal')
 
-// 拖拽相关状态
+// 面板内拖拽位置（相对于右侧面板）
+const pos = ref({ x: 50, y: 60 })
 const isDragging = ref(false)
-const dragStartX = ref(0)
-const dragStartY = ref(0)
-const currentPosition = ref({ ...props.position })
+let dragOffsetX = 0, dragOffsetY = 0
+let didDrag = false
+
+function onMouseDown(e) {
+  if (e.target.closest('.speech-bubble')) return
+  isDragging.value = true
+  didDrag = false
+  const rect = e.currentTarget.getBoundingClientRect()
+  dragOffsetX = e.clientX - rect.left
+  dragOffsetY = e.clientY - rect.top
+  document.addEventListener('mousemove', onMouseMove)
+  document.addEventListener('mouseup', onMouseUp)
+  e.preventDefault()
+}
+
+function onMouseMove(e) {
+  if (!isDragging.value) return
+  didDrag = true
+  const panel = document.querySelector('.starfield-panel')
+  if (!panel) return
+  const panelRect = panel.getBoundingClientRect()
+  const x = e.clientX - panelRect.left - dragOffsetX
+  const y = e.clientY - panelRect.top - dragOffsetY
+  pos.value = {
+    x: Math.max(0, Math.min(x, panelRect.width - 200)),
+    y: Math.max(0, Math.min(y, panelRect.height - 200)),
+  }
+}
+
+function onMouseUp() {
+  isDragging.value = false
+  document.removeEventListener('mousemove', onMouseMove)
+  document.removeEventListener('mouseup', onMouseUp)
+}
+
+function onCanvasClick() {
+  if (didDrag) { didDrag = false; return }
+  emit('click-model')
+}
 
 let scene, camera, renderer, model, mixer, clock
 let idleAction, waveAction, alertAction
 
-// 拖拽开始
-function handleMouseDown(e) {
-  // 如果点击的是对话气泡，不触发拖拽
-  if (e.target.closest('.speech-bubble')) {
-    return
-  }
-
-  isDragging.value = true
-  dragStartX.value = e.clientX
-  dragStartY.value = e.clientY
-
-  // 添加全局事件监听
-  document.addEventListener('mousemove', handleMouseMove)
-  document.addEventListener('mouseup', handleMouseUp)
-
-  // 阻止默认行为
-  e.preventDefault()
-}
-
-// 拖拽中
-function handleMouseMove(e) {
-  if (!isDragging.value) return
-
-  const deltaX = dragStartX.value - e.clientX
-  const deltaY = dragStartY.value - e.clientY
-
-  const maxRight  = window.innerWidth  - 200
-  const maxBottom = window.innerHeight - 200
-
-  currentPosition.value = {
-    x: Math.max(0, Math.min(currentPosition.value.x + deltaX, maxRight)),
-    y: Math.max(0, Math.min(currentPosition.value.y + deltaY, maxBottom))
-  }
-
-  dragStartX.value = e.clientX
-  dragStartY.value = e.clientY
-}
-
-// 拖拽结束
-function handleMouseUp() {
-  if (isDragging.value) {
-    isDragging.value = false
-
-    // 保存位置到 localStorage
-    localStorage.setItem('aiAssistantPosition', JSON.stringify(currentPosition.value))
-
-    // 移除全局事件监听
-    document.removeEventListener('mousemove', handleMouseMove)
-    document.removeEventListener('mouseup', handleMouseUp)
-  }
-}
-
-// 点击事件处理（只在非拖拽时触发）
-function handleClick(e) {
-  // 如果刚刚在拖拽，不触发点击
-  if (isDragging.value) return
-
-  // 只播放动画，不打开聊天框
-  playAnimation('wave')
-  showMessage('有什么需要帮忙的吗？')
-}
-
-// 初始化 Three.js 场景
 function initScene() {
   if (!containerRef.value) return
-
-  // 场景
   scene = new THREE.Scene()
-  scene.background = null // 透明背景
+  scene.background = null
 
-  // 相机
   camera = new THREE.PerspectiveCamera(50, 1, 0.1, 1000)
   camera.position.set(0, 1, 4.2)
   camera.lookAt(0, 0.8, 0)
 
-  // 渲染器
-  renderer = new THREE.WebGLRenderer({
-    alpha: true,
-    antialias: true,
-    powerPreference: 'high-performance'
-  })
+  renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: 'low-power' })
   renderer.setSize(200, 200)
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-  renderer.setClearColor(0x000000, 0) // 透明背景
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5))  // 限制最高1.5x，减少GPU压力
+  renderer.setClearColor(0x000000, 0)
   containerRef.value.appendChild(renderer.domElement)
 
-  // 光照 - 增强光照
   const ambientLight = new THREE.AmbientLight(0xffffff, 3.0)
   scene.add(ambientLight)
+  const dir1 = new THREE.DirectionalLight(0xffffff, 2.5)
+  dir1.position.set(2, 3, 2); scene.add(dir1)
+  const dir2 = new THREE.DirectionalLight(0xffffff, 1.5)
+  dir2.position.set(-2, 2, -2); scene.add(dir2)
+  const dir3 = new THREE.DirectionalLight(0xffffff, 1.0)
+  dir3.position.set(0, -2, 3); scene.add(dir3)
 
-  const directionalLight1 = new THREE.DirectionalLight(0xffffff, 2.5)
-  directionalLight1.position.set(2, 3, 2)
-  scene.add(directionalLight1)
-
-  const directionalLight2 = new THREE.DirectionalLight(0xffffff, 1.5)
-  directionalLight2.position.set(-2, 2, -2)
-  scene.add(directionalLight2)
-
-  const directionalLight3 = new THREE.DirectionalLight(0xffffff, 1.0)
-  directionalLight3.position.set(0, -2, 3)
-  scene.add(directionalLight3)
-
-  // 添加辅助网格（调试用）
-  // const gridHelper = new THREE.GridHelper(10, 10, 0x00f2ff, 0x444444)
-  // scene.add(gridHelper)
-
-  // 时钟（用于动画）
   clock = new THREE.Clock()
-
-  // 加载模型
   loadModel()
-
-  // 开始渲染循环
   animate()
 }
 
-// 加载 3D 模型
 function loadModel() {
   const loader = new GLTFLoader()
-
   loader.load(
     '/models/ai_assistant.glb',
     (gltf) => {
       model = gltf.scene
-
-      // 计算模型的边界框
       const box = new THREE.Box3().setFromObject(model)
       const size = box.getSize(new THREE.Vector3())
       const center = box.getCenter(new THREE.Vector3())
-
-      // 自动调整模型大小 - 让模型高度约为 1.8 单位（适中大小）
-      const maxDim = Math.max(size.x, size.y, size.z)
-      const scale = 2.0 / maxDim
+      const scale = 2.0 / Math.max(size.x, size.y, size.z)
       model.scale.set(scale, scale, scale)
-
-      // 居中模型并调整位置 - 让模型底部在 y=0，这样整个模型都在可视范围内
       model.position.x = -center.x * scale
-      model.position.y = -center.y * scale + size.y * scale / 2 + 0.2 // 底部稍微抬高一点
+      model.position.y = -center.y * scale + size.y * scale / 2 + 0.2
       model.position.z = -center.z * scale
-
       scene.add(model)
 
-      // 设置动画
-      if (gltf.animations && gltf.animations.length > 0) {
+      if (gltf.animations?.length > 0) {
         mixer = new THREE.AnimationMixer(model)
-
-        // 根据动画数量设置动作
-        idleAction = mixer.clipAction(gltf.animations[0]) // 第一个动画作为空闲
-        if (gltf.animations.length > 1) {
-          waveAction = mixer.clipAction(gltf.animations[1])
-        }
-        if (gltf.animations.length > 2) {
-          alertAction = mixer.clipAction(gltf.animations[2])
-        }
-
-        // 播放空闲动画
+        idleAction = mixer.clipAction(gltf.animations[0])
+        if (gltf.animations.length > 1) waveAction = mixer.clipAction(gltf.animations[1])
+        if (gltf.animations.length > 2) alertAction = mixer.clipAction(gltf.animations[2])
         idleAction.play()
       } else {
         startIdleAnimation()
       }
 
-      // 遍历模型的所有材质，确保它们可见
       model.traverse((child) => {
-        if (child.isMesh) {
-          if (child.material) {
-            child.material.needsUpdate = true
-            // 确保材质可见
-            if (child.material.transparent) {
-              child.material.opacity = Math.max(child.material.opacity, 0.5)
-            }
-          }
+        if (child.isMesh && child.material?.transparent) {
+          child.material.opacity = Math.max(child.material.opacity, 0.5)
+          child.material.needsUpdate = true
         }
       })
     },
-    (progress) => {
-    },
-    (error) => {
-      console.error('[AiAssistant] 模型加载失败:', error)
-      createPlaceholderModel()
-    }
+    null,
+    () => createPlaceholderModel()
   )
 }
 
-// 创建占位符模型（简单的机器人形状）
 function createPlaceholderModel() {
   const group = new THREE.Group()
-
-  // 身体
-  const bodyGeometry = new THREE.BoxGeometry(0.6, 0.8, 0.4)
-  const bodyMaterial = new THREE.MeshStandardMaterial({
-    color: 0x00f2ff,
-    emissive: 0x00f2ff,
-    emissiveIntensity: 0.2
-  })
-  const body = new THREE.Mesh(bodyGeometry, bodyMaterial)
-  body.position.y = 1
-  group.add(body)
-
-  // 头部
-  const headGeometry = new THREE.SphereGeometry(0.3, 32, 32)
-  const headMaterial = new THREE.MeshStandardMaterial({
-    color: 0x00f2ff,
-    emissive: 0x00f2ff,
-    emissiveIntensity: 0.3
-  })
-  const head = new THREE.Mesh(headGeometry, headMaterial)
-  head.position.y = 1.7
-  group.add(head)
-
-  // 眼睛
-  const eyeGeometry = new THREE.SphereGeometry(0.05, 16, 16)
-  const eyeMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff })
-
-  const leftEye = new THREE.Mesh(eyeGeometry, eyeMaterial)
-  leftEye.position.set(-0.1, 1.75, 0.25)
-  group.add(leftEye)
-
-  const rightEye = new THREE.Mesh(eyeGeometry, eyeMaterial)
-  rightEye.position.set(0.1, 1.75, 0.25)
-  group.add(rightEye)
-
-  model = group
-  scene.add(model)
-
-  // 添加简单的呼吸动画
+  const bodyMat = new THREE.MeshStandardMaterial({ color: 0x00f2ff, emissive: 0x00f2ff, emissiveIntensity: 0.2 })
+  const body = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.8, 0.4), bodyMat)
+  body.position.y = 1; group.add(body)
+  const headMat = new THREE.MeshStandardMaterial({ color: 0x00f2ff, emissive: 0x00f2ff, emissiveIntensity: 0.3 })
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.3, 32, 32), headMat)
+  head.position.y = 1.7; group.add(head)
+  const eyeMat = new THREE.MeshBasicMaterial({ color: 0xffffff })
+  const eyeGeo = new THREE.SphereGeometry(0.05, 16, 16)
+  const lEye = new THREE.Mesh(eyeGeo, eyeMat); lEye.position.set(-0.1, 1.75, 0.25); group.add(lEye)
+  const rEye = new THREE.Mesh(eyeGeo, eyeMat); rEye.position.set(0.1, 1.75, 0.25); group.add(rEye)
+  model = group; scene.add(model)
   startIdleAnimation()
 }
 
-// 空闲动画（呼吸效果）
 function startIdleAnimation() {
   if (!model) return
-
-  const breathe = () => {
-    const time = Date.now() * 0.001
-    // 呼吸效果 - 上下浮动
-    model.position.y = Math.sin(time * 2) * 0.05 + 1
-    // 轻微旋转
-    model.rotation.y = Math.sin(time * 0.5) * 0.1
+  model.userData.breathe = () => {
+    const t = Date.now() * 0.001
+    model.position.y = Math.sin(t * 2) * 0.05 + 1
+    model.rotation.y = Math.sin(t * 0.5) * 0.1
   }
-
-  model.userData.breathe = breathe
 }
 
-// 程序化动画库
 const animations = {
-  // 点头动画
-  nod: (model, progress) => {
-    model.rotation.x = Math.sin(progress * Math.PI * 4) * 0.3
-  },
-
-  // 摇头动画
-  shake: (model, progress) => {
-    model.rotation.y = Math.sin(progress * Math.PI * 6) * 0.5
-  },
-
-  // 跳跃动画
-  jump: (model, progress) => {
-    const jumpHeight = Math.sin(progress * Math.PI) * 0.5
-    model.position.y = 1 + jumpHeight
-  },
-
-  // 旋转动画
-  spin: (model, progress) => {
-    model.rotation.y = progress * Math.PI * 2
-  },
-
-  // 抖动动画（警告）
-  vibrate: (model, progress) => {
-    model.position.x = Math.sin(progress * Math.PI * 20) * 0.1
-    model.rotation.z = Math.sin(progress * Math.PI * 20) * 0.1
-  },
-
-  // 缩放动画（开心）
-  bounce: (model, progress) => {
-    const scale = 1 + Math.sin(progress * Math.PI * 4) * 0.1
-    model.scale.set(scale, scale, scale)
-  }
+  nod:     (m, p) => { m.rotation.x = Math.sin(p * Math.PI * 4) * 0.3 },
+  shake:   (m, p) => { m.rotation.y = Math.sin(p * Math.PI * 6) * 0.5 },
+  jump:    (m, p) => { m.position.y = 1 + Math.sin(p * Math.PI) * 0.5 },
+  spin:    (m, p) => { m.rotation.y = p * Math.PI * 2 },
+  vibrate: (m, p) => { m.position.x = Math.sin(p * Math.PI * 20) * 0.1; m.rotation.z = Math.sin(p * Math.PI * 20) * 0.1 },
+  bounce:  (m, p) => { const s = 1 + Math.sin(p * Math.PI * 4) * 0.1; m.scale.set(s, s, s) },
 }
 
-// 播放程序化动画
-function playProgrammaticAnimation(animationType, duration = 2000) {
-  if (!model || !animations[animationType]) return
-
+function playProgrammaticAnimation(type, duration = 2000) {
+  if (!model || !animations[type]) return
   const startTime = Date.now()
-  const originalPosition = { ...model.position }
-  const originalRotation = { ...model.rotation }
-  const originalScale = { ...model.scale }
-
-  const animate = () => {
-    const elapsed = Date.now() - startTime
-    const progress = Math.min(elapsed / duration, 1)
-
-    // 执行动画
-    animations[animationType](model, progress)
-
-    if (progress < 1) {
-      requestAnimationFrame(animate)
-    } else {
-      // 恢复原始状态
-      model.position.copy(originalPosition)
-      model.rotation.copy(originalRotation)
-      model.scale.copy(originalScale)
-      // 恢复呼吸动画
+  const origPos = { ...model.position }
+  const origRot = { ...model.rotation }
+  const origScale = { ...model.scale }
+  if (model.userData.breathe) delete model.userData.breathe
+  const tick = () => {
+    const progress = Math.min((Date.now() - startTime) / duration, 1)
+    animations[type](model, progress)
+    if (progress < 1) requestAnimationFrame(tick)
+    else {
+      model.position.copy(origPos)
+      model.rotation.copy(origRot)
+      model.scale.copy(origScale)
       startIdleAnimation()
     }
   }
-
-  // 停止呼吸动画
-  if (model.userData.breathe) {
-    delete model.userData.breathe
-  }
-
-  animate()
+  tick()
 }
 
-// 渲染循环
-function animate() {
-  requestAnimationFrame(animate)
+// 限制 30fps，避免 60fps 全速渲染浪费 GPU
+let lastFrameTime = 0
+const TARGET_FPS = 30
+const FRAME_INTERVAL = 1000 / TARGET_FPS
+let animFrameId = null
+let isDestroyed = false
 
-  // 更新动画混合器
-  if (mixer) {
-    const delta = clock.getDelta()
-    mixer.update(delta)
-  }
-
-  // 执行空闲动画
-  if (model && model.userData.breathe) {
-    model.userData.breathe()
-  }
-
+function animate(timestamp = 0) {
+  if (isDestroyed) return
+  animFrameId = requestAnimationFrame(animate)
+  const delta = timestamp - lastFrameTime
+  if (delta < FRAME_INTERVAL) return
+  lastFrameTime = timestamp - (delta % FRAME_INTERVAL)
+  if (mixer) mixer.update(clock.getDelta())
+  if (model?.userData.breathe) model.userData.breathe()
   renderer.render(scene, camera)
 }
 
-// 播放特定动画
+function showMessage(message) {
+  currentMessage.value = message
+  showBubble.value = true
+  setTimeout(() => { showBubble.value = false }, 3500)
+}
+
 function playAnimation(type) {
   if (type === 'wave') {
     showMessage('你好！我是灵盔AI助手 👋')
@@ -395,16 +240,12 @@ function playAnimation(type) {
     showMessage('⚠️ 检测到异常数据！请注意安全')
     statusClass.value = 'alert'
     playProgrammaticAnimation('vibrate', 1000)
-    setTimeout(() => {
-      statusClass.value = 'normal'
-    }, 3000)
+    setTimeout(() => { statusClass.value = 'normal' }, 3000)
   } else if (type === 'happy') {
     showMessage('数据正常，一切运行良好！✨')
     statusClass.value = 'happy'
     playProgrammaticAnimation('bounce', 2000)
-    setTimeout(() => {
-      statusClass.value = 'normal'
-    }, 3000)
+    setTimeout(() => { statusClass.value = 'normal' }, 3000)
   } else if (type === 'nod') {
     showMessage('收到！正在监控中...')
     playProgrammaticAnimation('nod', 1500)
@@ -412,338 +253,167 @@ function playAnimation(type) {
     showMessage('太棒了！数据表现优秀 🎉')
     statusClass.value = 'happy'
     playProgrammaticAnimation('jump', 1500)
-    setTimeout(() => {
-      statusClass.value = 'normal'
-    }, 3000)
+    setTimeout(() => { statusClass.value = 'normal' }, 3000)
   }
 }
 
-// 根据温度触发动画
 function handleTemperature(temp) {
-  if (temp > 40) {
-    playAnimation('alert')
-    showMessage('🔥 温度过高！请注意散热')
-  } else if (temp > 35) {
-    showMessage('⚠️ 温度偏高，建议降温')
-    playProgrammaticAnimation('shake', 1500)
-  } else if (temp < 0) {
-    showMessage('❄️ 温度过低，请注意保暖')
-    playProgrammaticAnimation('vibrate', 1000)
-  } else if (temp >= 20 && temp <= 25) {
-    // 温度舒适，偶尔表扬
-    if (Math.random() < 0.05) {
-      playAnimation('jump')
-    }
-  }
+  if (temp > 40) { playAnimation('alert'); showMessage('🔥 温度过高！请注意散热') }
+  else if (temp > 35) { showMessage('⚠️ 温度偏高，建议降温'); playProgrammaticAnimation('shake', 1500) }
+  else if (temp < 0) { showMessage('❄️ 温度过低，请注意保暖'); playProgrammaticAnimation('vibrate', 1000) }
+  else if (temp >= 20 && temp <= 25 && Math.random() < 0.05) playAnimation('jump')
 }
 
-// 根据湿度触发动画
 function handleHumidity(humidity) {
-  if (humidity > 80) {
-    showMessage('💧 湿度过高，注意防潮')
-    playProgrammaticAnimation('shake', 1500)
-  } else if (humidity < 20) {
-    showMessage('🏜️ 湿度过低，空气干燥')
-    playProgrammaticAnimation('nod', 1500)
-  }
+  if (humidity > 80) { showMessage('💧 湿度过高，注意防潮'); playProgrammaticAnimation('shake', 1500) }
+  else if (humidity < 20) { showMessage('🏜️ 湿度过低，空气干燥'); playProgrammaticAnimation('nod', 1500) }
 }
 
-// 根据跌倒检测触发动画
 function handleFall() {
   playAnimation('alert')
   showMessage('🚨 检测到跌倒！请立即检查安全状况')
-  // 连续抖动
-  setTimeout(() => {
-    playProgrammaticAnimation('vibrate', 500)
-  }, 1500)
+  setTimeout(() => { playProgrammaticAnimation('vibrate', 500) }, 1500)
 }
 
-// 显示对话气泡
-function showMessage(message) {
-  currentMessage.value = message
-  showBubble.value = true
-  setTimeout(() => {
-    showBubble.value = false
-  }, 3000)
-}
-
-// 监听传感器数据变化
 let lastAlertTime = 0
-const ALERT_COOLDOWN = 10000 // 10秒冷却时间，避免频繁触发
+const ALERT_COOLDOWN = 10000
 
 watch(() => props.sensorData, (newData) => {
   if (!newData) return
-
   const now = Date.now()
-
-  // 跌倒检测（最高优先级）
-  if (newData.fallFlag) {
-    handleFall()
-    lastAlertTime = now
-    return
-  }
-
-  // 避免频繁触发警告
-  if (now - lastAlertTime < ALERT_COOLDOWN) {
-    return
-  }
-
-  // 温度检测
-  if (newData.temperature !== undefined) {
-    handleTemperature(Number(newData.temperature))
-  }
-
-  // 湿度检测
-  if (newData.humidity !== undefined) {
-    handleHumidity(Number(newData.humidity))
-  }
-
-  // 随机友好互动（5% 概率）
+  if (newData.fallFlag) { handleFall(); lastAlertTime = now; return }
+  if (now - lastAlertTime < ALERT_COOLDOWN) return
+  if (newData.temperature !== undefined) handleTemperature(Number(newData.temperature))
+  if (newData.humidity !== undefined) handleHumidity(Number(newData.humidity))
   if (Math.random() < 0.05) {
-    const greetings = [
-      { type: 'wave', message: '嗨！一切正常 👋' },
-      { type: 'nod', message: '我在这里守护着你 🛡️' },
-      { type: 'happy', message: '今天也要加油哦！💪' }
-    ]
-    const greeting = greetings[Math.floor(Math.random() * greetings.length)]
-    playAnimation(greeting.type)
-    showMessage(greeting.message)
+    const g = [
+      { type: 'wave', msg: '嗨！一切正常 👋' },
+      { type: 'nod',  msg: '我在这里守护着你 🛡️' },
+      { type: 'happy',msg: '今天也要加油哦！💪' },
+    ][Math.floor(Math.random() * 3)]
+    playAnimation(g.type); showMessage(g.msg)
   }
 }, { deep: true })
 
-// 定时随机互动
 let interactionTimer
 onMounted(() => {
-  // 从 localStorage 恢复位置，并钳制到当前视口范围内
-  const savedPosition = localStorage.getItem('aiAssistantPosition')
-  if (savedPosition) {
-    try {
-      const saved = JSON.parse(savedPosition)
-      const maxRight  = window.innerWidth  - 200   // 200 = canvas 宽度
-      const maxBottom = window.innerHeight - 200   // 200 = canvas 高度
-      currentPosition.value = {
-        x: Math.max(0, Math.min(saved.x, maxRight)),
-        y: Math.max(0, Math.min(saved.y, maxBottom))
-      }
-    } catch (e) {
-      console.error('[AiAssistant] 恢复位置失败:', e)
-    }
-  }
-
   initScene()
-
-  // 初始欢迎消息
-  setTimeout(() => {
-    playAnimation('wave')
-    showMessage('你好！我是灵盔AI助手，随时为你服务 👋')
-  }, 2000)
-
-  // 智能定时互动系统
+  setTimeout(() => { playAnimation('wave'); showMessage('你好！我是灵盔AI助手，点击我开始对话 👋') }, 2000)
   interactionTimer = setInterval(() => {
-    // 根据时间段选择不同的互动
-    const hour = new Date().getHours()
-    const interactions = []
-
-    if (hour >= 6 && hour < 9) {
-      interactions.push(
-        { type: 'wave', message: '早上好！新的一天开始了 🌅' },
-        { type: 'jump', message: '今天也要元气满满哦！💪' }
-      )
-    } else if (hour >= 9 && hour < 12) {
-      interactions.push(
-        { type: 'nod', message: '上午好！工作顺利吗？' },
-        { type: 'happy', message: '保持专注，你做得很棒！✨' }
-      )
-    } else if (hour >= 12 && hour < 14) {
-      interactions.push(
-        { type: 'wave', message: '午餐时间到了，记得休息哦 🍱' },
-        { type: 'nod', message: '适当休息，下午更有精神！' }
-      )
-    } else if (hour >= 14 && hour < 18) {
-      interactions.push(
-        { type: 'happy', message: '下午好！继续加油 💪' },
-        { type: 'nod', message: '数据监控中，一切正常 ✓' }
-      )
-    } else if (hour >= 18 && hour < 22) {
-      interactions.push(
-        { type: 'wave', message: '晚上好！辛苦了一天 🌙' },
-        { type: 'happy', message: '今天的数据表现不错哦！' }
-      )
-    } else {
-      interactions.push(
-        { type: 'nod', message: '夜深了，注意休息 😴' },
-        { type: 'wave', message: '我会继续守护着你 🛡️' }
-      )
+    if (Math.random() < 0.3) {
+      const hour = new Date().getHours()
+      const pool = hour < 9
+        ? [{ type: 'wave', msg: '早上好！新的一天开始了 🌅' }]
+        : hour < 12
+        ? [{ type: 'nod',  msg: '上午好！工作顺利吗？' }]
+        : hour < 14
+        ? [{ type: 'wave', msg: '午餐时间到了，记得休息哦 🍱' }]
+        : hour < 18
+        ? [{ type: 'happy',msg: '下午好！继续加油 💪' }]
+        : hour < 22
+        ? [{ type: 'wave', msg: '晚上好！辛苦了一天 🌙' }]
+        : [{ type: 'nod',  msg: '夜深了，注意休息 😴' }]
+      const item = pool[0]
+      playAnimation(item.type); showMessage(item.msg)
     }
-
-    // 随机选择一个互动（30% 概率）
-    if (Math.random() < 0.3 && interactions.length > 0) {
-      const interaction = interactions[Math.floor(Math.random() * interactions.length)]
-      playAnimation(interaction.type)
-      showMessage(interaction.message)
-    }
-  }, 30000) // 每30秒检查一次
+  }, 30000)
 })
 
 onUnmounted(() => {
+  isDestroyed = true
+  if (animFrameId) cancelAnimationFrame(animFrameId)
   clearInterval(interactionTimer)
-  if (renderer) {
-    renderer.dispose()
-  }
+  document.removeEventListener('mousemove', onMouseMove)
+  document.removeEventListener('mouseup', onMouseUp)
+  renderer?.dispose()
 })
 </script>
 
 <style scoped>
 .ai-assistant {
-  position: fixed;
-  z-index: 1000;
+  position: absolute;
   cursor: grab;
-  transition: transform 0.3s ease;
   user-select: none;
+  transition: filter 0.2s;
 }
-
 .ai-assistant:hover {
-  transform: scale(1.05);
+  filter: drop-shadow(0 0 10px rgba(56,189,248,0.5));
 }
-
 .ai-assistant.is-dragging {
   cursor: grabbing;
-  transform: scale(1.05);
   opacity: 0.9;
-  transition: none;
 }
 
 .assistant-canvas {
   width: 200px;
   height: 200px;
-  pointer-events: none;
-}
-
-/* 拖拽提示 */
-.drag-hint {
-  position: absolute;
-  top: -30px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(0, 242, 255, 0.2);
-  border: 1px solid rgba(0, 242, 255, 0.5);
-  border-radius: 12px;
-  padding: 4px 12px;
-  font-size: 11px;
-  color: #00f2ff;
-  font-family: 'JetBrains Mono', monospace;
-  white-space: nowrap;
-  pointer-events: none;
-  animation: fadeIn 0.2s ease;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateX(-50%) translateY(-5px); }
-  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+  cursor: pointer;
 }
 
 /* 对话气泡 */
 .speech-bubble {
   position: absolute;
-  bottom: 220px;
-  right: 0;
-  background: rgba(0, 242, 255, 0.1);
-  border: 1px solid rgba(0, 242, 255, 0.3);
-  border-radius: 12px;
-  padding: 12px 16px;
-  min-width: 200px;
-  max-width: 300px;
-  backdrop-filter: blur(10px);
-  pointer-events: auto;
-  cursor: default;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(2, 8, 23, 0.75);
+  border: 1px solid rgba(56,189,248,0.35);
+  border-radius: 10px;
+  padding: 10px 14px;
+  min-width: 160px;
+  max-width: 240px;
+  backdrop-filter: blur(8px);
+  pointer-events: none;
+  white-space: pre-wrap;
 }
-
 .speech-bubble::after {
   content: '';
   position: absolute;
-  bottom: -10px;
-  right: 80px;
-  width: 0;
-  height: 0;
-  border-left: 10px solid transparent;
-  border-right: 10px solid transparent;
-  border-top: 10px solid rgba(0, 242, 255, 0.3);
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 7px solid transparent;
+  border-top-color: rgba(56,189,248,0.35);
 }
-
 .bubble-text {
-  color: #fff;
-  font-size: 13px;
-  font-family: 'JetBrains Mono', monospace;
+  color: #e0f2fe;
+  font-size: 0.75rem;
+  font-family: var(--font-mono, monospace);
   margin: 0;
   line-height: 1.5;
 }
 
 /* 气泡动画 */
-.bubble-enter-active, .bubble-leave-active {
-  transition: all 0.3s ease;
-}
-
-.bubble-enter-from {
-  opacity: 0;
-  transform: translateY(10px) scale(0.9);
-}
-
-.bubble-leave-to {
-  opacity: 0;
-  transform: translateY(-10px) scale(0.9);
-}
+.bubble-enter-active, .bubble-leave-active { transition: all 0.3s ease; }
+.bubble-enter-from { opacity: 0; transform: translateX(-50%) translateY(6px); }
+.bubble-leave-to   { opacity: 0; transform: translateX(-50%) translateY(-6px); }
 
 /* 状态指示器 */
 .status-indicator {
   position: absolute;
-  top: 10px;
-  right: 10px;
-  width: 12px;
-  height: 12px;
+  top: 8px; right: 8px;
+  width: 12px; height: 12px;
   pointer-events: none;
 }
-
 .pulse-dot {
-  width: 12px;
-  height: 12px;
+  width: 12px; height: 12px;
   border-radius: 50%;
   background: #00f2ff;
   position: absolute;
 }
-
 .pulse-ring {
-  width: 12px;
-  height: 12px;
+  width: 12px; height: 12px;
   border-radius: 50%;
   border: 2px solid #00f2ff;
   position: absolute;
   animation: pulse-ring 2s ease-out infinite;
 }
-
 @keyframes pulse-ring {
-  0% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  100% {
-    transform: scale(2);
-    opacity: 0;
-  }
+  0%   { transform: scale(1); opacity: 1; }
+  100% { transform: scale(2.2); opacity: 0; }
 }
-
-.status-indicator.alert .pulse-dot {
-  background: #ff0055;
-}
-
-.status-indicator.alert .pulse-ring {
-  border-color: #ff0055;
-}
-
-.status-indicator.happy .pulse-dot {
-  background: #70ff00;
-}
-
-.status-indicator.happy .pulse-ring {
-  border-color: #70ff00;
-}
+.status-indicator.alert .pulse-dot  { background: #ff0055; }
+.status-indicator.alert .pulse-ring { border-color: #ff0055; }
+.status-indicator.happy .pulse-dot  { background: #70ff00; }
+.status-indicator.happy .pulse-ring { border-color: #70ff00; }
 </style>

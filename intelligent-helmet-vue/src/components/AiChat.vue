@@ -7,6 +7,13 @@
         <span class="ai-panel__sub">灵盔AI助手</span>
       </div>
       <div class="ai-panel__actions">
+        <!-- 退出对话（由父组件控制显示） -->
+        <button v-if="showClose" class="ai-panel__exit" @click="$emit('close')" title="退出对话">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+          <span>退出对话</span>
+        </button>
         <button class="ai-panel__clear" @click="clearChat" title="清空对话">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
@@ -82,8 +89,11 @@
 import { ref, computed, nextTick, onMounted } from 'vue'
 
 const props = defineProps({
-  deviceId: { type: String, default: '' }
+  deviceId: { type: String, default: '' },
+  showClose: { type: Boolean, default: false }
 })
+
+const emit = defineEmits(['close'])
 
 const messages = ref([])
 const inputText = ref('')
@@ -242,9 +252,9 @@ onMounted(() => {
 .ai-panel {
   display: flex;
   flex-direction: column;
-  background: #0f172a;
-  border: 1px solid rgba(56, 189, 248, 0.15);
-  backdrop-filter: blur(12px);
+  background: rgba(2, 8, 23, 0.35);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  backdrop-filter: blur(6px);
   overflow: hidden;
   flex: 1;
   min-height: 0;
@@ -269,8 +279,8 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
   padding: 10px 16px;
-  border-bottom: 1px solid rgba(56, 189, 248, 0.08);
-  background: rgba(56, 189, 248, 0.03);
+  border-bottom: 1px solid rgba(56, 189, 248, 0.12);
+  background: rgba(0, 0, 0, 0.25);
   flex-shrink: 0;
 }
 .ai-panel__title {
@@ -303,6 +313,26 @@ onMounted(() => {
   50%       { box-shadow: 0 0 0 4px rgba(56, 189, 248, 0); }
 }
 .ai-panel__actions { display: flex; align-items: center; gap: 4px; }
+.ai-panel__exit {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: 1px solid rgba(239,68,68,0.25);
+  color: rgba(239,68,68,0.7);
+  font-family: var(--font-mono, monospace);
+  font-size: 0.58rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  padding: 3px 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.ai-panel__exit:hover {
+  background: rgba(239,68,68,0.12);
+  color: #EF4444;
+  border-color: rgba(239,68,68,0.5);
+}
 .ai-panel__clear {
   background: transparent;
   border: none;
@@ -476,14 +506,14 @@ onMounted(() => {
   align-items: flex-end;
   gap: 6px;
   padding: 10px 12px;
-  border-top: 1px solid rgba(56, 189, 248, 0.08);
-  background: rgba(56, 189, 248, 0.02);
+  border-top: 1px solid rgba(56, 189, 248, 0.12);
+  background: rgba(0, 0, 0, 0.2);
   flex-shrink: 0;
 }
 .ai-input {
   flex: 1;
-  background: rgba(56, 189, 248, 0.04);
-  border: 1px solid rgba(56, 189, 248, 0.15);
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(56, 189, 248, 0.2);
   padding: 7px 11px;
   color: #E0F2FE;
   font-family: var(--font-mono, monospace);

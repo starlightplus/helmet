@@ -1,7 +1,5 @@
 <template>
   <div class="cyber-bg scanline-overlay">
-    <div class="cyber-grid"></div>
-    <div class="cyber-grid-fine"></div>
     <div class="cyber-glow cyber-glow--1"></div>
     <div class="cyber-glow cyber-glow--2"></div>
   </div>
@@ -14,24 +12,6 @@
   z-index: -1;
   background: #050505;
   overflow: hidden;
-}
-
-.cyber-grid {
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(to right,  rgba(0,243,255,0.04) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(0,243,255,0.04) 1px, transparent 1px);
-  background-size: 40px 40px;
-}
-
-.cyber-grid-fine {
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(to right,  rgba(0,243,255,0.02) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(0,243,255,0.02) 1px, transparent 1px);
-  background-size: 10px 10px;
 }
 
 .cyber-glow {

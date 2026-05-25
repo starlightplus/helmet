@@ -203,16 +203,18 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import { useUserProfileStore } from '@/stores/userProfile.js'
 import { useRideHistoryStore } from '@/stores/rideHistory.js'
+import { useRidePlanStore } from '@/stores/rideplan.js'
 import SportBackground from '@/components/SportBackground.vue'
 
-const router = useRouter()
+const emit = defineEmits(['back'])
+
 const profileStore = useUserProfileStore()
 const historyStore = useRideHistoryStore()
+const ridePlanStore = useRidePlanStore()
 
-function goBack() { router.back() }
+function goBack() { emit('back') }
 
 // 确保个人资料已从服务器加载（性别等字段依赖服务端数据）
 onMounted(async () => {
@@ -434,6 +436,7 @@ async function acceptPlan() {
     })
     accepted.value = true
     acceptMsg.value = '✓ 已设为每日目标'
+    await ridePlanStore.fetchPlan()
     setTimeout(() => { acceptMsg.value = '' }, 3000)
   } catch {
     acceptMsg.value = '保存失败，请重试'
