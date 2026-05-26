@@ -4,6 +4,7 @@ import { defineStore } from 'pinia'
 export const useRidePlanStore = defineStore('ridePlan', () => {
   const plan = ref(null)   // null = 未加载或无规划
   const loaded = ref(false)
+  const dietRestrictions = ref([])  // 饮食限制列表
 
   const hasPlan = computed(() => !!(plan.value?.planSportText))
 
@@ -19,13 +20,22 @@ export const useRidePlanStore = defineStore('ridePlan', () => {
       if (!res.ok) return
       const d = await res.json()
       plan.value = d.planSportText ? d : null
+      // 恢复饮食限制
+      if (d.planDietRestrictions) {
+        dietRestrictions.value = d.planDietRestrictions.split(',').filter(Boolean)
+      }
     } catch {}
     loaded.value = true
   }
 
-  function clear() {
-    plan.value = null
+  function setDietRestrictions(list) {
+    dietRestrictions.value = list || []
   }
 
-  return { plan, loaded, hasPlan, fetchPlan, clear }
+  function clear() {
+    plan.value = null
+    dietRestrictions.value = []
+  }
+
+  return { plan, loaded, hasPlan, dietRestrictions, fetchPlan, setDietRestrictions, clear }
 })

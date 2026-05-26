@@ -7,71 +7,36 @@
     <section class="carousel-section">
       <div class="carousel-track" :style="{ transform: `translateX(-${carouselIndex * 100}%)` }">
 
-        <!-- 海报 0：健身 -->
+        <!-- 海报 0：骑行 -->
         <div class="carousel-slide" @click="openArticle(0)">
           <div class="poster poster--fitness">
-            <div class="poster__bg-shapes">
-              <div class="poster__circle poster__circle--1"></div>
-              <div class="poster__circle poster__circle--2"></div>
-              <div class="poster__line poster__line--1"></div>
-              <div class="poster__line poster__line--2"></div>
-            </div>
-            <div class="poster__icon">
-              <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M6.5 6.5h11M6.5 17.5h11M4 12h16M12 4v16"/>
-                <circle cx="12" cy="12" r="9" stroke-dasharray="4 2"/>
-              </svg>
-            </div>
+            <img src="/picture/骑行.jpg" class="poster-bg-img" alt="骑行" />
+            <div class="poster__overlay"></div>
+            <div class="poster__kw">CYCLING</div>
+            <div class="poster__title">骑行</div>
+            <div class="poster__sub">挑战自我 · 驰骋天地</div>
+          </div>
+        </div>
+
+        <!-- 海报 1：健身 -->
+        <div class="carousel-slide" @click="openArticle(1)">
+          <div class="poster poster--diet">
+            <img src="/picture/健身.jpg" class="poster-bg-img" alt="健身" />
+            <div class="poster__overlay"></div>
             <div class="poster__kw">FITNESS</div>
             <div class="poster__title">健身</div>
             <div class="poster__sub">强健体魄 · 活力生活</div>
-            <div class="poster__tag">点击阅读 →</div>
           </div>
         </div>
 
-        <!-- 海报 1：减肥 -->
-        <div class="carousel-slide" @click="openArticle(1)">
-          <div class="poster poster--diet">
-            <div class="poster__bg-shapes">
-              <div class="poster__circle poster__circle--1"></div>
-              <div class="poster__circle poster__circle--2"></div>
-              <div class="poster__bar" v-for="n in 5" :key="n" :style="{ height: (30 + n*12) + 'px', left: (8 + n*16) + '%' }"></div>
-            </div>
-            <div class="poster__icon">
-              <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/>
-                <path d="M12 6v6l4 2"/>
-                <path d="M8 14s1 2 4 2 4-2 4-2"/>
-              </svg>
-            </div>
-            <div class="poster__kw">WEIGHT LOSS</div>
-            <div class="poster__title">减肥</div>
-            <div class="poster__sub">科学减重 · 健康瘦身</div>
-            <div class="poster__tag">点击阅读 →</div>
-          </div>
-        </div>
-
-        <!-- 海报 2：吃 -->
+        <!-- 海报 2：合理安排 -->
         <div class="carousel-slide" @click="openArticle(2)">
           <div class="poster poster--food">
-            <div class="poster__bg-shapes">
-              <div class="poster__circle poster__circle--1"></div>
-              <div class="poster__circle poster__circle--2"></div>
-              <div class="poster__dot" v-for="n in 8" :key="n"></div>
-            </div>
-            <div class="poster__icon">
-              <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M18 8h1a4 4 0 0 1 0 8h-1"/>
-                <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/>
-                <line x1="6" y1="1" x2="6" y2="4"/>
-                <line x1="10" y1="1" x2="10" y2="4"/>
-                <line x1="14" y1="1" x2="14" y2="4"/>
-              </svg>
-            </div>
-            <div class="poster__kw">NUTRITION</div>
-            <div class="poster__title">吃</div>
-            <div class="poster__sub">均衡营养 · 食补养生</div>
-            <div class="poster__tag">点击阅读 →</div>
+            <img src="/picture/合理安排.jpg" class="poster-bg-img" alt="合理安排" />
+            <div class="poster__overlay"></div>
+            <div class="poster__kw">PLANNING</div>
+            <div class="poster__title">合理安排</div>
+            <div class="poster__sub">均衡营养 · 科学规划</div>
           </div>
         </div>
 
@@ -92,9 +57,66 @@
     </section>
 
     <!-- ═══════════════════════════════════════════════════════════
-         下方两列
+         AI 伴骑
     ═══════════════════════════════════════════════════════════ -->
-    <div class="bottom-grid">
+    <section class="card ai-ride-card">
+      <h2 class="card-title"><span class="title-bar title-bar--cyan"></span>AI伴骑</h2>
+
+      <!-- 功能介绍（始终显示） -->
+      <div class="ai-ride-features">
+        <div class="ai-feature-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><path d="M12 6v6l4 2"/></svg>
+          <span>您可以自主选择心仪运动方式，灵盔系统会结合个人体重与目标，科学制定分阶段每日运动时长、热量消耗计划。</span>
+        </div>
+        <div class="ai-feature-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          <span>实时追踪每日运动完成进度，联动食谱打卡数据，实现健康管理全流程闭环</span>
+        </div>
+        <div class="ai-feature-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+          <span>支持减脂、均衡、增肌三大模式，智能匹配专属每日食谱，每周自动轮换更新</span>
+        </div>
+      </div>
+
+      <!-- 未规划 -->
+      <div v-if="!ridePlanStore.hasPlan" class="ai-ride-empty">
+        <p class="ai-ride-empty__tip">制定骑行规划后即可开启以上所有功能</p>
+        <button class="btn-primary btn-primary--sm" @click="$emit('go-plan')">立即制定骑行规划 →</button>
+      </div>
+
+      <!-- 已规划 -->
+      <div v-else class="ai-ride-planned">
+        <div class="ai-ride-pills">
+          <span class="ai-pill">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><path d="M12 6v6l4 2"/></svg>
+            每日骑行 <strong>{{ ridePlanStore.plan.planDailyRideMin }}</strong> 分钟
+          </span>
+          <span class="ai-pill">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+            每日摄入 <strong>{{ ridePlanStore.plan.planDailyIntake }}</strong> 千卡
+          </span>
+          <span v-if="ridePlanStore.plan.planTargetWeight" class="ai-pill">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+            目标体重 <strong>{{ ridePlanStore.plan.planTargetWeight }}</strong> kg
+          </span>
+          <span v-if="ridePlanStore.plan.planWeeks" class="ai-pill">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+            周期 <strong>{{ ridePlanStore.plan.planWeeks }}</strong> 周
+          </span>
+        </div>
+        <button class="btn-replan" @click="$emit('go-plan')">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+          </svg>
+          查看详细规划
+        </button>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         下方上下布局
+    ═══════════════════════════════════════════════════════════ -->
+    <div class="bottom-stack">
 
       <!-- ── 每日运动达标区 ── -->
       <section class="card exercise-card">
@@ -191,29 +213,89 @@
         <div v-else class="recipe-content">
           <div class="recipe-type-badge">{{ recipeTypeName }}</div>
 
-          <div class="meals-grid">
-            <div v-for="meal in ['breakfast','lunch','dinner']" :key="meal" class="meal-col">
-              <div class="meal-header">{{ mealLabel[meal] }}</div>
-              <div v-for="dish in todayRecipe[meal]" :key="dish.name" class="dish-item">
-                <div class="dish-img-placeholder" aria-hidden="true">
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="1.5">
-                    <circle cx="12" cy="12" r="9"/>
-                    <path d="M8 12h8M12 8v8"/>
+          <div class="meals-list">
+            <div v-for="meal in ['breakfast','lunch','dinner']" :key="meal" class="meal-section">
+              <!-- 餐次标题行 -->
+              <div class="meal-header">
+                <span class="meal-header__name">{{ mealLabel[meal] }}</span>
+                <span class="meal-header__checkcnt">
+                  {{ checkedCount(meal) }}/{{ currentMeals[meal].length }} 已打卡
+                </span>
+                <button class="swap-btn" @click="swapMeal(meal)" title="换一组搭配">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M1 4v6h6M23 20v-6h-6"/>
+                    <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10M23 14l-4.64 4.36A9 9 0 0 1 3.51 15"/>
                   </svg>
+                  换搭配
+                </button>
+              </div>
+              <!-- 横向菜品行 -->
+              <div class="dish-row">
+                <div
+                  v-for="dish in currentMeals[meal]"
+                  :key="dish.name"
+                  class="dish-card"
+                  :class="{ 'dish-card--checked': isChecked(meal, dish.name) }"
+                  @click="toggleCheck(meal, dish.name)"
+                >
+                  <div class="dish-img-wrap">
+                    <img
+                      v-if="dish.img"
+                      :src="dish.img"
+                      :alt="dish.name"
+                      class="dish-img"
+                      @error="e => e.target.style.display='none'"
+                    />
+                    <div class="dish-img-placeholder" :data-name="dish.name.slice(0,1)">
+                      {{ dish.name.slice(0, 1) }}
+                    </div>
+                  </div>
+                  <span class="dish-name">{{ dish.name }}</span>
+                  <span class="dish-kcal">{{ dish.kcal }} kcal</span>
                 </div>
-                <span class="dish-name">{{ dish.name }}</span>
-                <span class="dish-kcal">{{ dish.kcal }} kcal</span>
               </div>
             </div>
           </div>
 
-          <div class="recipe-total">
-            今日总热量：<strong>{{ todayRecipe.totalKcal }}</strong> kcal
-            <span class="recipe-target">/ 目标 {{ ridePlanStore.plan.planDailyIntake }} kcal</span>
+          <div class="recipe-total" :class="{ 'recipe-total--done': allDone }">
+            今日总热量：<strong>{{ currentTotalKcal }}</strong> kcal
+            <span class="recipe-target">/ 目标 {{ ridePlanStore.plan?.planDailyIntake }} kcal</span>
+            <span v-if="allDone" class="recipe-alldone-tag">✓ 今日全勤</span>
+          </div>
+
+          <!-- 打卡统计可视化 -->
+          <div class="checkin-stats">
+            <div class="checkin-stats__header">
+              <span class="checkin-stats__title">打卡统计</span>
+              <span class="checkin-stats__total">
+                累计 <strong>{{ totalCheckinDays }}</strong> 天全勤
+              </span>
+            </div>
+            <!-- 最近30天热力图 -->
+            <div class="checkin-heatmap">
+              <div
+                v-for="d in heatmapDays"
+                :key="d.label"
+                class="heatmap-cell"
+                :class="{
+                  'heatmap-cell--full': d.level === 3,
+                  'heatmap-cell--partial': d.level === 2,
+                  'heatmap-cell--low': d.level === 1,
+                  'heatmap-cell--today': d.isToday
+                }"
+                :title="d.label + (d.level===3?' 全勤':d.level===2?' 部分打卡':d.level===1?' 少量打卡':' 未打卡')"
+              ></div>
+            </div>
+            <div class="checkin-legend">
+              <span class="legend-item"><span class="legend-dot legend-dot--empty"></span>未打卡</span>
+              <span class="legend-item"><span class="legend-dot legend-dot--low"></span>少量</span>
+              <span class="legend-item"><span class="legend-dot legend-dot--partial"></span>部分</span>
+              <span class="legend-item"><span class="legend-dot legend-dot--full"></span>全勤</span>
+            </div>
           </div>
         </div>
       </section>
-    </div>
+    </div><!-- /bottom-stack -->
 
     <!-- ═══════════════════════════════════════════════════════════
          文章弹窗
@@ -232,7 +314,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
+import { ref, reactive, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRidePlanStore } from '@/stores/rideplan.js'
 import { useRideHistoryStore } from '@/stores/rideHistory.js'
 
@@ -247,23 +329,23 @@ const rideHistoryStore = useRideHistoryStore()
 // 海报 & 文章数据
 // ══════════════════════════════════════════════════════════════════════════
 const posters = [
-  { img: '/picture/1.jpg', title: '减肥的重要性' },
-  { img: '/picture/2.jpg', title: '骑行的健康收益' },
-  { img: '/picture/3.jpg', title: '21天养成运动习惯' }
+  { title: '骑行' },
+  { title: '健身' },
+  { title: '合理安排' }
 ]
 
 const articles = [
-  {
-    title: '减肥的重要性',
-    content: `肥胖不仅影响外貌，更是多种慢性疾病的根源。研究表明，超重会显著增加2型糖尿病、心血管疾病、高血压及部分癌症的患病风险。体重每减少5%–10%，血糖、血压和血脂指标均可得到明显改善，关节负担也随之减轻，睡眠质量得以提升。\n\n减肥的核心在于制造热量缺口：摄入少于消耗。骑行作为有氧运动，每小时可消耗300–600千卡，同时提升基础代谢率，让身体在休息时也能燃烧更多热量。坚持规律骑行配合均衡饮食，不仅能帮助安全、稳健地减重，更能塑造肌肉线条、增强心肺功能，让你从内到外焕发活力。`
-  },
   {
     title: '骑行的健康收益',
     content: `骑行是一项全身性的低冲击有氧运动，对膝关节和腰椎的压力远小于跑步，适合各年龄段人群长期坚持。每周骑行150分钟以上，可将心脏病风险降低约50%，同时显著改善肺活量和心肺耐力。\n\n骑行还能促进大脑分泌多巴胺和血清素，有效缓解焦虑与抑郁情绪。户外骑行让人亲近自然，减少屏幕暴露，对精神健康大有裨益。长期骑行者平均寿命比同龄人长4–6年。无论是清晨的公园还是傍晚的滨江大道，骑行都是最简单、最高效的投资健康方式之一。`
   },
   {
-    title: '21天养成运动习惯',
-    content: `心理学研究表明，一个新行为至少需要21天的持续重复才能在大脑中形成稳固的神经通路，从而转化为自动化习惯。运动习惯的养成同样如此——前7天最为关键，意志力消耗最大，需要借助外部提醒和固定时间来支撑。\n\n第8至14天，身体开始适应运动节律，疲劳感减轻，甚至会产生"缺少运动就不舒服"的感觉。第15至21天，习惯逐步稳固，运动变得像刷牙一样自然。建议从每天20–30分钟的低强度骑行起步，设定固定时间，记录每日完成情况，给自己小奖励。智能头盔的骑行记录功能正是你21天打卡最好的伙伴。`
+    title: '健身的重要性',
+    content: `规律健身不仅能塑造体型，更是预防慢性疾病的最有效手段之一。研究表明，每周进行150分钟中等强度运动，可将2型糖尿病风险降低30%，心血管疾病风险降低35%，同时显著改善骨密度和肌肉质量。\n\n健身还能提升基础代谢率，让身体在休息时也能持续燃烧热量。力量训练与有氧运动相结合，是最科学的健身方式。从每天20分钟开始，循序渐进地增加强度，配合充足的蛋白质摄入和充分的睡眠恢复，你会在21天内感受到明显的体能提升。`
+  },
+  {
+    title: '合理安排运动与饮食',
+    content: `科学的运动计划离不开合理的饮食配合。运动前1–2小时摄入适量碳水化合物，为肌肉提供充足糖原；运动后30分钟内补充蛋白质，促进肌肉修复与合成。\n\n每日三餐应保持规律，早餐提供全天30%的热量，午餐40%，晚餐30%。避免运动后立即大量进食，也不要空腹进行高强度训练。充足的水分补充同样关键——骑行每小时至少补水500ml。\n\n将运动时间固定在每天同一时段，配合智能头盔的数据记录，让每一次骑行都有据可查，让健康管理变得简单而高效。`
   }
 ]
 
@@ -343,41 +425,71 @@ const kcalRatio = computed(() => {
 // 食谱数据（7套预设）
 // ══════════════════════════════════════════════════════════════════════════
 
+// 图片路径辅助（有图用图，无图用空字符串）
+const F = (name) => {
+  const map = {
+    '燕麦粥': '/food/燕麦粥.jpg', '牛奶': '/food/牛奶.jpg', '水煮蛋': '/food/水煮蛋.jpg',
+    '鸡胸肉沙拉': '/food/鸡胸肉沙拉.jpg', '糙米饭': '/food/糙米饭.jpg',
+    '清蒸鱼': '/food/清蒸鱼.jpg', '炒西兰花': '/food/炒西兰花.jpg', '紫菜汤': '/food/紫菜汤.jpg',
+    '豆浆': '/food/豆浆.jpg', '全麦吐司': '/food/全麦吐司.jpg',
+    '虾仁豆腐': '/food/虾仁豆腐.jpg', '杂粮饭': '/food/杂粮饭.jpg',
+    '番茄蛋花汤': '/food/番茄蛋花汤.jpg', '蒸红薯': '/food/蒸红薯.png', '凉拌黄瓜': '/food/凉拌黄瓜.jpeg',
+    '蒸蛋羹': '/food/蒸蛋羹.jpeg', '苹果': '/food/苹果.jpg',
+    '牛肉时蔬锅': '/food/牛肉时蔬锅.jpg', '荞麦面': '/food/荞麦面.jpg',
+    '清炒菠菜': '/food/清炒菠菜.jpg', '清蒸鸡腿': '/food/清蒸鸡腿.jpg', '冬瓜汤': '/food/冬瓜汤.jpg',
+    '紫薯粥': '/food/紫薯粥.jpg', '卤蛋': '/food/卤蛋.jpg',
+    '三文鱼饭': '/food/三文鱼饭.jpg', '拌木耳': '/food/拌木耳.jpg',
+    '豆腐白菜汤': '/food/豆腐白菜汤.jpg', '蒸南瓜': '/food/蒸南瓜.jpg', '清炒时蔬': '/food/清炒时蔬.jpg',
+    '全麦面包': '/food/全麦面包.jpg',
+    '芦笋鸡胸套餐': '/food/芦笋鸡胸套餐.jpg', '鲜蘑菇汤': '/food/鲜蘑菇汤.jpg', '清蒸虾': '/food/清蒸虾.jpg',
+    '杂粮粥': '/food/杂粮粥.jpg', '茶叶蛋': '/food/茶叶蛋.jpg',
+    '清蒸大黄鱼': '/food/清蒸大黄鱼.jpg', '炒菜心': '/food/炒菜心.jpg',
+    '番茄炒鸡蛋': '/food/番茄炒鸡蛋.jpg',
+    '土豆炖牛肉': '/food/土豆炖牛肉.jpg',
+    '皮蛋瘦肉粥': '/food/皮蛋瘦肉粥.jpg',
+    '红烧牛腩': '/food/红烧牛腩.jpg', '猪里脊': '/food/猪里脊.jpg',
+    '卤牛肉': '/food/卤牛肉.jpg', '炒时蔬': '/food/炒时蔬.jpg',
+    '豆腐': '/food/豆腐.jpg',
+  }
+  return map[name] || ''
+}
+const D = (name, kcal) => ({ name, kcal, img: F(name) })
+
 // 减脂型（< 1600 kcal）— 5天轮换，第6天复用第1天
 const DIET_FATBURN = [
   // 第1天
   {
-    breakfast: [{ name: '燕麦粥', kcal: 150 }, { name: '牛奶', kcal: 110 }, { name: '水煮蛋', kcal: 80 }],
-    lunch:     [{ name: '鸡胸肉沙拉', kcal: 280 }, { name: '糙米饭', kcal: 180 }],
-    dinner:    [{ name: '清蒸鱼', kcal: 200 }, { name: '炒西兰花', kcal: 80 }, { name: '紫菜汤', kcal: 30 }],
+    breakfast: [D('燕麦粥', 150), D('牛奶', 110), D('水煮蛋', 80)],
+    lunch:     [D('鸡胸肉沙拉', 280), D('糙米饭', 180)],
+    dinner:    [D('清蒸鱼', 200), D('炒西兰花', 80), D('紫菜汤', 30)],
     totalKcal: 1110
   },
   // 第2天
   {
-    breakfast: [{ name: '豆浆', kcal: 80 }, { name: '全麦吐司', kcal: 140 }, { name: '水煮蛋', kcal: 80 }],
-    lunch:     [{ name: '虾仁豆腐', kcal: 260 }, { name: '杂粮饭', kcal: 180 }],
-    dinner:    [{ name: '番茄蛋花汤', kcal: 120 }, { name: '蒸红薯', kcal: 130 }, { name: '凉拌黄瓜', kcal: 40 }],
+    breakfast: [D('豆浆', 80), D('全麦吐司', 140), D('水煮蛋', 80)],
+    lunch:     [D('虾仁豆腐', 260), D('杂粮饭', 180)],
+    dinner:    [D('番茄蛋花汤', 120), D('蒸红薯', 130), D('凉拌黄瓜', 40)],
     totalKcal: 1030
   },
   // 第3天
   {
-    breakfast: [{ name: '牛奶', kcal: 110 }, { name: '蒸蛋羹', kcal: 120 }, { name: '苹果', kcal: 80 }],
-    lunch:     [{ name: '牛肉时蔬锅', kcal: 320 }, { name: '荞麦面', kcal: 170 }],
-    dinner:    [{ name: '清炒菠菜', kcal: 70 }, { name: '清蒸鸡腿', kcal: 200 }, { name: '冬瓜汤', kcal: 40 }],
+    breakfast: [D('牛奶', 110), D('蒸蛋羹', 120), D('苹果', 80)],
+    lunch:     [D('牛肉时蔬锅', 320), D('荞麦面', 170)],
+    dinner:    [D('清炒菠菜', 70), D('清蒸鸡腿', 200), D('冬瓜汤', 40)],
     totalKcal: 1110
   },
   // 第4天
   {
-    breakfast: [{ name: '豆浆', kcal: 80 }, { name: '紫薯粥', kcal: 130 }, { name: '卤蛋', kcal: 80 }],
-    lunch:     [{ name: '三文鱼饭', kcal: 380 }, { name: '拌木耳', kcal: 60 }],
-    dinner:    [{ name: '豆腐白菜汤', kcal: 130 }, { name: '蒸南瓜', kcal: 90 }, { name: '清炒时蔬', kcal: 80 }],
+    breakfast: [D('豆浆', 80), D('紫薯粥', 130), D('卤蛋', 80)],
+    lunch:     [D('三文鱼饭', 380), D('拌木耳', 60)],
+    dinner:    [D('豆腐白菜汤', 130), D('蒸南瓜', 90), D('清炒时蔬', 80)],
     totalKcal: 1030
   },
   // 第5天
   {
-    breakfast: [{ name: '牛奶', kcal: 110 }, { name: '全麦面包', kcal: 130 }, { name: '水煮蛋', kcal: 80 }],
-    lunch:     [{ name: '芦笋鸡胸套餐', kcal: 300 }, { name: '糙米饭', kcal: 180 }],
-    dinner:    [{ name: '鲜蘑菇汤', kcal: 60 }, { name: '清蒸虾', kcal: 150 }, { name: '炒西兰花', kcal: 80 }],
+    breakfast: [D('牛奶', 110), D('全麦面包', 130), D('水煮蛋', 80)],
+    lunch:     [D('芦笋鸡胸套餐', 300), D('糙米饭', 180)],
+    dinner:    [D('鲜蘑菇汤', 60), D('清蒸虾', 150), D('炒西兰花', 80)],
     totalKcal: 1090
   }
 ]
@@ -386,38 +498,38 @@ const DIET_FATBURN = [
 const DIET_BALANCE = [
   // 第1天
   {
-    breakfast: [{ name: '牛奶', kcal: 110 }, { name: '全麦吐司', kcal: 140 }, { name: '水煮蛋', kcal: 80 }],
-    lunch:     [{ name: '糙米饭', kcal: 220 }, { name: '清蒸鸡腿', kcal: 320 }, { name: '炒青菜', kcal: 90 }],
-    dinner:    [{ name: '番茄鸡蛋面', kcal: 320 }, { name: '凉拌海带', kcal: 80 }],
-    totalKcal: 1360
+    breakfast: [D('牛奶', 110), D('全麦吐司', 140), D('水煮蛋', 80)],
+    lunch:     [D('糙米饭', 220), D('清蒸鸡腿', 320), D('炒西兰花', 90)],
+    dinner:    [D('番茄炒鸡蛋', 200), D('杂粮饭', 180), D('紫菜汤', 40)],
+    totalKcal: 1380
   },
   // 第2天
   {
-    breakfast: [{ name: '豆浆', kcal: 80 }, { name: '杂粮粥', kcal: 160 }, { name: '茶叶蛋', kcal: 80 }],
-    lunch:     [{ name: '米饭', kcal: 220 }, { name: '清蒸大黄鱼', kcal: 300 }, { name: '炒菜心', kcal: 80 }],
-    dinner:    [{ name: '番茄炒鸡蛋', kcal: 200 }, { name: '杂粮饭', kcal: 180 }, { name: '紫菜汤', kcal: 40 }],
-    totalKcal: 1340
+    breakfast: [D('豆浆', 80), D('杂粮粥', 160), D('茶叶蛋', 80)],
+    lunch:     [D('糙米饭', 220), D('清蒸大黄鱼', 300), D('炒菜心', 80)],
+    dinner:    [D('番茄蛋花汤', 120), D('蒸红薯', 130), D('清炒菠菜', 70)],
+    totalKcal: 1240
   },
   // 第3天
   {
-    breakfast: [{ name: '牛奶', kcal: 110 }, { name: '燕麦粥', kcal: 150 }, { name: '水煮蛋', kcal: 80 }],
-    lunch:     [{ name: '糙米饭', kcal: 220 }, { name: '土豆炖牛肉', kcal: 380 }, { name: '炒西兰花', kcal: 80 }],
-    dinner:    [{ name: '清蒸鱼', kcal: 220 }, { name: '蒸红薯', kcal: 130 }, { name: '凉拌黄瓜', kcal: 40 }],
+    breakfast: [D('牛奶', 110), D('燕麦粥', 150), D('水煮蛋', 80)],
+    lunch:     [D('糙米饭', 220), D('土豆炖牛肉', 380), D('炒西兰花', 80)],
+    dinner:    [D('清蒸鱼', 220), D('蒸红薯', 130), D('凉拌黄瓜', 40)],
     totalKcal: 1410
   },
   // 第4天
   {
-    breakfast: [{ name: '豆浆', kcal: 80 }, { name: '全麦面包', kcal: 130 }, { name: '卤蛋', kcal: 80 }],
-    lunch:     [{ name: '米饭', kcal: 220 }, { name: '虾仁豆腐', kcal: 260 }, { name: '炒青菜', kcal: 80 }],
-    dinner:    [{ name: '皮蛋瘦肉粥', kcal: 260 }, { name: '凉拌黄瓜', kcal: 40 }, { name: '清炒菠菜', kcal: 70 }],
+    breakfast: [D('豆浆', 80), D('全麦面包', 130), D('卤蛋', 80)],
+    lunch:     [D('糙米饭', 220), D('虾仁豆腐', 260), D('炒菜心', 80)],
+    dinner:    [D('皮蛋瘦肉粥', 260), D('凉拌黄瓜', 40), D('清炒菠菜', 70)],
     totalKcal: 1220
   },
   // 第5天
   {
-    breakfast: [{ name: '牛奶', kcal: 110 }, { name: '蒸蛋羹', kcal: 120 }, { name: '苹果', kcal: 80 }],
-    lunch:     [{ name: '糙米饭', kcal: 220 }, { name: '鸡丝荞麦面', kcal: 350 }, { name: '拌木耳', kcal: 60 }],
-    dinner:    [{ name: '豆腐白菜汤', kcal: 130 }, { name: '清蒸虾', kcal: 150 }, { name: '蒸南瓜', kcal: 90 }],
-    totalKcal: 1310
+    breakfast: [D('牛奶', 110), D('蒸蛋羹', 120), D('苹果', 80)],
+    lunch:     [D('糙米饭', 220), D('清蒸鸡腿', 320), D('拌木耳', 60)],
+    dinner:    [D('豆腐白菜汤', 130), D('清蒸虾', 150), D('蒸南瓜', 90)],
+    totalKcal: 1280
   }
 ]
 
@@ -425,37 +537,37 @@ const DIET_BALANCE = [
 const DIET_MUSCLE = [
   // 第1天
   {
-    breakfast: [{ name: '牛奶', kcal: 220 }, { name: '燕麦粥', kcal: 200 }, { name: '水煮蛋', kcal: 160 }],
-    lunch:     [{ name: '糙米饭', kcal: 400 }, { name: '红烧牛腩', kcal: 480 }, { name: '炒西兰花', kcal: 80 }],
-    dinner:    [{ name: '清蒸鸡腿', kcal: 320 }, { name: '杂粮饭', kcal: 220 }, { name: '番茄蛋花汤', kcal: 120 }],
+    breakfast: [D('牛奶', 220), D('燕麦粥', 200), D('水煮蛋', 160)],
+    lunch:     [D('糙米饭', 400), D('红烧牛腩', 480), D('炒西兰花', 80)],
+    dinner:    [D('清蒸鸡腿', 320), D('杂粮饭', 220), D('番茄蛋花汤', 120)],
     totalKcal: 2200
   },
   // 第2天
   {
-    breakfast: [{ name: '豆浆', kcal: 160 }, { name: '全麦吐司', kcal: 280 }, { name: '水煮蛋', kcal: 160 }],
-    lunch:     [{ name: '米饭', kcal: 400 }, { name: '清蒸大黄鱼', kcal: 360 }, { name: '炒菜心', kcal: 80 }],
-    dinner:    [{ name: '牛肉时蔬锅', kcal: 380 }, { name: '糙米饭', kcal: 300 }, { name: '紫菜汤', kcal: 40 }],
+    breakfast: [D('豆浆', 160), D('全麦吐司', 280), D('水煮蛋', 160)],
+    lunch:     [D('糙米饭', 400), D('清蒸大黄鱼', 360), D('炒菜心', 80)],
+    dinner:    [D('牛肉时蔬锅', 380), D('杂粮饭', 300), D('紫菜汤', 40)],
     totalKcal: 2160
   },
   // 第3天
   {
-    breakfast: [{ name: '牛奶', kcal: 220 }, { name: '杂粮粥', kcal: 200 }, { name: '卤蛋', kcal: 160 }],
-    lunch:     [{ name: '糙米饭', kcal: 400 }, { name: '猪里脊', kcal: 420 }, { name: '炒青菜', kcal: 80 }],
-    dinner:    [{ name: '三文鱼饭', kcal: 420 }, { name: '蒸蛋羹', kcal: 120 }, { name: '炒西兰花', kcal: 80 }],
+    breakfast: [D('牛奶', 220), D('杂粮粥', 200), D('卤蛋', 160)],
+    lunch:     [D('糙米饭', 400), D('猪里脊', 420), D('炒西兰花', 80)],
+    dinner:    [D('三文鱼饭', 420), D('蒸蛋羹', 120), D('清炒时蔬', 80)],
     totalKcal: 2100
   },
   // 第4天
   {
-    breakfast: [{ name: '豆浆', kcal: 160 }, { name: '全麦面包', kcal: 260 }, { name: '水煮蛋', kcal: 160 }],
-    lunch:     [{ name: '米饭', kcal: 400 }, { name: '卤牛肉', kcal: 460 }, { name: '炒时蔬', kcal: 80 }],
-    dinner:    [{ name: '清蒸鸡腿', kcal: 320 }, { name: '糙米饭', kcal: 300 }, { name: '冬瓜汤', kcal: 60 }],
+    breakfast: [D('豆浆', 160), D('全麦面包', 260), D('水煮蛋', 160)],
+    lunch:     [D('糙米饭', 400), D('卤牛肉', 460), D('炒时蔬', 80)],
+    dinner:    [D('清蒸鸡腿', 320), D('杂粮饭', 300), D('冬瓜汤', 60)],
     totalKcal: 2200
   },
   // 第5天
   {
-    breakfast: [{ name: '牛奶', kcal: 220 }, { name: '燕麦粥', kcal: 200 }, { name: '茶叶蛋', kcal: 160 }],
-    lunch:     [{ name: '糙米饭', kcal: 400 }, { name: '清蒸大黄鱼', kcal: 360 }, { name: '豆腐', kcal: 120 }],
-    dinner:    [{ name: '牛肉时蔬锅', kcal: 380 }, { name: '杂粮饭', kcal: 220 }, { name: '番茄炒鸡蛋', kcal: 180 }],
+    breakfast: [D('牛奶', 220), D('燕麦粥', 200), D('茶叶蛋', 160)],
+    lunch:     [D('糙米饭', 400), D('清蒸大黄鱼', 360), D('豆腐', 120)],
+    dinner:    [D('牛肉时蔬锅', 380), D('杂粮饭', 220), D('番茄炒鸡蛋', 180)],
     totalKcal: 2240
   }
 ]
@@ -501,6 +613,132 @@ const todayRecipe = computed(() => {
   return set[idx]
 })
 
+// ── 换搭配：每餐独立维护当前替换套（在同食谱类型的5套里循环） ──────────────
+const mealSwapIdx = reactive({ breakfast: 0, lunch: 0, dinner: 0 })
+
+// 初始化各餐用 todayRecipe 的菜单，换搭配时从其他4套里轮换
+const currentMeals = computed(() => {
+  const set = getRecipeSet()
+  const baseIdx = getWeeklyRecipeIndex()
+  const result = {}
+  for (const meal of ['breakfast', 'lunch', 'dinner']) {
+    const offset = mealSwapIdx[meal]
+    const idx = (baseIdx + offset) % set.length
+    result[meal] = set[idx][meal]
+  }
+  return result
+})
+
+const currentTotalKcal = computed(() => {
+  return ['breakfast', 'lunch', 'dinner'].reduce((sum, meal) => {
+    return sum + currentMeals.value[meal].reduce((s, d) => s + d.kcal, 0)
+  }, 0)
+})
+
+function swapMeal(meal) {
+  mealSwapIdx[meal] = (mealSwapIdx[meal] + 1) % 5
+}
+
+// 食谱类型切换时重置换搭配索引
+watch(recipeTypeName, () => {
+  mealSwapIdx.breakfast = 0
+  mealSwapIdx.lunch = 0
+  mealSwapIdx.dinner = 0
+})
+
+// ══════════════════════════════════════════════════════════════════════════
+// 打卡系统
+// ══════════════════════════════════════════════════════════════════════════
+const CHECKIN_KEY = 'helmet_meal_checkin'
+
+// 存储结构：{ 'YYYY-MM-DD': { breakfast: ['菜名',...], lunch: [...], dinner: [...] } }
+function todayKey() {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+}
+
+function loadCheckin() {
+  try { return JSON.parse(localStorage.getItem(CHECKIN_KEY) || '{}') } catch { return {} }
+}
+function saveCheckin(data) {
+  localStorage.setItem(CHECKIN_KEY, JSON.stringify(data))
+}
+
+const checkinData = ref(loadCheckin())
+
+function isChecked(meal, dishName) {
+  return (checkinData.value[todayKey()]?.[meal] || []).includes(dishName)
+}
+
+function checkedCount(meal) {
+  return (checkinData.value[todayKey()]?.[meal] || []).length
+}
+
+function toggleCheck(meal, dishName) {
+  const key = todayKey()
+  const data = { ...checkinData.value }
+  if (!data[key]) data[key] = { breakfast: [], lunch: [], dinner: [] }
+  const list = [...(data[key][meal] || [])]
+  const idx = list.indexOf(dishName)
+  if (idx >= 0) {
+    list.splice(idx, 1)
+  } else {
+    list.push(dishName)
+  }
+  data[key][meal] = list
+  checkinData.value = data
+  saveCheckin(data)
+}
+
+// 全天全打卡 computed（供模板和热力图使用）
+const allDone = computed(() => {
+  const key = todayKey()
+  const today = checkinData.value[key]
+  if (!today) return false
+  return ['breakfast','lunch','dinner'].every(m => {
+    return (today[m] || []).length >= currentMeals.value[m].length
+  })
+})
+
+// 最近30天热力图数据
+const heatmapDays = computed(() => {
+  const data = checkinData.value
+  const days = []
+  const now = new Date()
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date(now)
+    d.setDate(d.getDate() - i)
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+    const entry = data[key]
+    let checked = 0
+    let total = 0
+    if (entry) {
+      for (const m of ['breakfast','lunch','dinner']) {
+        checked += (entry[m] || []).length
+        // 用当天食谱总菜数估算（简化：固定每餐3道）
+        total += 3
+      }
+    } else {
+      total = 9
+    }
+    const ratio = total > 0 ? checked / total : 0
+    days.push({
+      label: key,
+      level: ratio === 0 ? 0 : ratio < 0.4 ? 1 : ratio < 1 ? 2 : 3,
+      isToday: i === 0
+    })
+  }
+  return days
+})
+
+// 累计全勤天数（三餐都有打卡记录的天）
+const totalCheckinDays = computed(() => {
+  const data = checkinData.value
+  return Object.values(data).filter(day =>
+    ['breakfast','lunch','dinner'].every(m => (day[m] || []).length > 0)
+  ).length
+})
+
 // ══════════════════════════════════════════════════════════════════════════
 // 生命周期
 // ══════════════════════════════════════════════════════════════════════════
@@ -534,7 +772,7 @@ onUnmounted(() => {
 .carousel-section {
   position: relative;
   width: 100%;
-  height: 200px;
+  height: 320px;
   overflow: hidden;
   background: #0a0f1a;
   border-bottom: 1px solid #1e3a4a;
@@ -543,13 +781,13 @@ onUnmounted(() => {
 
 .carousel-track {
   display: flex;
-  width: 300%;
+  width: 100%;
   height: 100%;
   transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .carousel-slide {
-  flex: 0 0 33.333%;
+  flex: 0 0 100%;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -560,30 +798,50 @@ onUnmounted(() => {
   overflow: hidden;
 }
 
-.poster-img {
-  width: 100%;
-  height: 155px;
-  object-fit: cover;
-  display: block;
-  filter: brightness(0.85) saturate(1.2);
-  transition: filter 0.3s;
-}
-.carousel-slide:hover .poster-img {
-  filter: brightness(1) saturate(1.4);
+/* ── CSS 海报 ── */
+.poster {
+  width: 100%; height: 100%;
+  position: relative;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  overflow: hidden;
 }
 
-.poster-title {
-  width: 100%;
-  height: 45px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 15px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  color: #38bdf8;
-  background: linear-gradient(90deg, #051018 0%, #0a1a2a 50%, #051018 100%);
-  text-shadow: 0 0 12px rgba(56, 189, 248, 0.6);
+.poster-bg-img {
+  position: absolute;
+  inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  object-position: center;
+  filter: brightness(0.55) saturate(1.1);
+  transition: filter 0.3s;
+}
+.carousel-slide:hover .poster-bg-img {
+  filter: brightness(0.7) saturate(1.3);
+}
+
+.poster__overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.1) 60%, transparent 100%);
+}
+
+.poster__kw {
+  position: relative; z-index: 1;
+  font-size: 9px; font-weight: 700; letter-spacing: 0.22em; opacity: 0.75;
+  color: #fff;
+}
+
+.poster__title {
+  position: relative; z-index: 1;
+  font-size: 38px; font-weight: 900; line-height: 1; margin: 4px 0 6px;
+  color: #fff;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.6);
+}
+
+.poster__sub {
+  position: relative; z-index: 1;
+  font-size: 12px; color: rgba(255,255,255,0.7); letter-spacing: 0.06em;
 }
 
 .carousel-btn {
@@ -637,20 +895,107 @@ onUnmounted(() => {
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   下方两列
+   AI 伴骑卡片
 ══════════════════════════════════════════════════════════════════ */
-.bottom-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  padding: 20px 24px 0;
-  box-sizing: border-box;
+.ai-ride-card {
+  margin: 20px 24px 20px;
 }
 
-@media (max-width: 768px) {
-  .bottom-grid {
-    grid-template-columns: 1fr;
-  }
+/* 功能介绍列表 */
+.ai-ride-features {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(56,189,248,0.1);
+}
+.ai-feature-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12px;
+  color: white;
+  line-height: 1.5;
+}
+.ai-feature-item svg { flex-shrink: 0; margin-top: 1px; }
+
+/* 未规划底部 */
+.ai-ride-empty {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+.ai-ride-empty__tip {
+  font-size: 12px;
+  color: white;
+  margin: 0;
+}
+
+/* 已规划底部 */
+.ai-ride-planned {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.ai-ride-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  flex: 1;
+}
+.ai-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  background: rgba(56,189,248,0.06);
+  border: 1px solid rgba(56,189,248,0.18);
+  border-radius: 20px;
+  font-size: 11px;
+  color: rgba(56,189,248,0.8);
+}
+.ai-pill strong { color: #38bdf8; }
+.ai-pill svg { stroke: rgba(56,189,248,0.6); flex-shrink: 0; }
+
+.btn-replan {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 14px;
+  background: transparent;
+  border: 1px solid rgba(56,189,248,0.25);
+  color: rgba(56,189,248,0.7);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.btn-replan:hover {
+  background: rgba(56,189,248,0.08);
+  color: #38bdf8;
+  border-color: #38bdf8;
+}
+
+.btn-primary--sm {
+  padding: 5px 14px;
+  font-size: 11px;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   下方上下布局
+══════════════════════════════════════════════════════════════════ */
+.bottom-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 0 24px 20px;
+  box-sizing: border-box;
 }
 
 /* ══════════════════════════════════════════════════════════════════
@@ -678,7 +1023,7 @@ onUnmounted(() => {
   font-size: 14px;
   font-weight: 700;
   letter-spacing: 0.12em;
-  color: #94a3b8;
+  color: white;
   text-transform: uppercase;
   margin: 0 0 16px;
   display: flex;
@@ -869,6 +1214,18 @@ onUnmounted(() => {
   gap: 10px;
 }
 
+/* 三餐纵向列表 */
+.meals-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.meal-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .meal-col { display: flex; flex-direction: column; gap: 8px; }
 
 .meal-header {
@@ -877,8 +1234,35 @@ onUnmounted(() => {
   color: #64748b;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  padding-bottom: 4px;
+  padding-bottom: 6px;
   border-bottom: 1px solid #1e3a4a;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.swap-btn {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 7px;
+  background: transparent;
+  border: 1px solid rgba(56,189,248,0.25);
+  color: rgba(56,189,248,0.6);
+  font-family: inherit;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+  line-height: 1;
+  text-transform: none;
+}
+.swap-btn:hover {
+  background: rgba(56,189,248,0.1);
+  color: #38bdf8;
+  border-color: #38bdf8;
 }
 
 .dish-item {
@@ -892,7 +1276,7 @@ onUnmounted(() => {
   border-radius: 6px;
 }
 
-.dish-img-placeholder {
+.dish-img-wrap {
   width: 64px;
   height: 64px;
   background: #0d1f30;
@@ -901,8 +1285,36 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   border: 1px solid #1e3a4a;
+  overflow: hidden;
+  flex-shrink: 0;
+  position: relative;
+}
+.dish-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 6px;
+  position: relative;
+  z-index: 1;
 }
 
+/* 食物占位卡：图片不存在或加载失败时显示 */
+.dish-img-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: rgba(56,189,248,0.7);
+  background: linear-gradient(135deg, #0d1f30 0%, #0f2a3f 100%);
+  border-radius: 6px;
+  letter-spacing: 0;
+  user-select: none;
+  z-index: 0;
+}
+/* 当图片加载成功时，占位层藏在图片后面（z-index 控制） */
 .dish-name {
   font-size: 11px;
   color: #cbd5e1;
@@ -920,12 +1332,193 @@ onUnmounted(() => {
   font-size: 12px;
   color: #94a3b8;
   padding: 8px 12px;
-  background: rgba(245, 158, 11, 0.05);
+  background: rgba(245,158,11,0.05);
   border-left: 2px solid #f59e0b;
   border-radius: 0 4px 4px 0;
+  margin-top: 4px;
+  transition: background 0.4s, border-color 0.4s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
-.recipe-total strong { color: #f59e0b; }
-.recipe-target { color: #64748b; margin-left: 6px; }
+.recipe-total strong { color: #f59e0b; transition: color 0.4s; }
+.recipe-target { color: #64748b; }
+
+.recipe-total--done {
+  background: rgba(34,197,94,0.08);
+  border-left-color: #22c55e;
+}
+.recipe-total--done strong { color: #22c55e; }
+
+.recipe-alldone-tag {
+  font-size: 10px;
+  font-weight: 700;
+  color: #22c55e;
+  background: rgba(34,197,94,0.12);
+  border: 1px solid rgba(34,197,94,0.35);
+  border-radius: 10px;
+  padding: 1px 8px;
+  letter-spacing: 0.04em;
+}
+
+/* 横向菜品行 — grid 自动填满，不留空档 */
+.dish-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+  gap: 10px;
+}
+
+.dish-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 6px;
+  background: #050d18;
+  border: 1px solid #162030;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+  min-width: 80px;
+  user-select: none;
+}
+.dish-card:hover {
+  border-color: rgba(56,189,248,0.3);
+  transform: translateY(-2px);
+}
+.dish-card--checked .dish-name { color: #22c55e; }
+
+.meal-header__name { flex: 1; }
+.meal-header__checkcnt {
+  font-size: 9px;
+  color: rgba(34,197,94,0.7);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: none;
+}
+
+/* 打卡统计 */
+.checkin-stats {
+  margin-top: 16px;
+  padding: 14px;
+  background: rgba(56,189,248,0.03);
+  border: 1px solid rgba(56,189,248,0.1);
+  border-radius: 8px;
+}
+.checkin-stats__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.checkin-stats__title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #38bdf8;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.checkin-stats__total {
+  font-size: 11px;
+  color: #64748b;
+}
+.checkin-stats__total strong { color: #22c55e; }
+
+.checkin-heatmap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.heatmap-cell {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  background: rgba(255,255,255,0.06);
+  transition: transform 0.15s;
+  cursor: default;
+}
+.heatmap-cell:hover { transform: scale(1.3); }
+.heatmap-cell--low     { background: rgba(34,197,94,0.2); }
+.heatmap-cell--partial { background: rgba(34,197,94,0.5); }
+.heatmap-cell--full    { background: #22c55e; box-shadow: 0 0 5px rgba(34,197,94,0.5); }
+.heatmap-cell--today   { outline: 1.5px solid #38bdf8; outline-offset: 1px; }
+
+.checkin-legend {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+  align-items: center;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 9px;
+  color: #64748b;
+}
+.legend-dot {
+  width: 10px; height: 10px; border-radius: 2px;
+}
+.legend-dot--empty   { background: rgba(255,255,255,0.06); }
+.legend-dot--low     { background: rgba(34,197,94,0.2); }
+.legend-dot--partial { background: rgba(34,197,94,0.5); }
+.legend-dot--full    { background: #22c55e; }
+
+/* 全天全勤庆祝弹窗 */
+.alldone-box {
+  background: linear-gradient(135deg, #0a1628, #001a10);
+  border: 1px solid rgba(34,197,94,0.4);
+  border-radius: 16px;
+  padding: 36px 32px;
+  text-align: center;
+  box-shadow: 0 0 40px rgba(34,197,94,0.2);
+  max-width: 320px;
+  width: 90%;
+  animation: alldone-appear 0.4s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes alldone-appear {
+  from { transform: scale(0.7); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+.alldone-firework {
+  font-size: 52px;
+  margin-bottom: 12px;
+  animation: bounce-firework 0.6s ease infinite alternate;
+}
+@keyframes bounce-firework {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-8px); }
+}
+.alldone-title {
+  font-size: 22px;
+  font-weight: 900;
+  color: #22c55e;
+  text-shadow: 0 0 16px rgba(34,197,94,0.6);
+  margin-bottom: 8px;
+}
+.alldone-sub {
+  font-size: 13px;
+  color: rgba(226,232,240,0.6);
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+.alldone-btn {
+  padding: 8px 28px;
+  background: rgba(34,197,94,0.15);
+  border: 1px solid rgba(34,197,94,0.5);
+  color: #22c55e;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.alldone-btn:hover {
+  background: rgba(34,197,94,0.3);
+  box-shadow: 0 0 14px rgba(34,197,94,0.3);
+}
 
 /* ══════════════════════════════════════════════════════════════════
    文章弹窗

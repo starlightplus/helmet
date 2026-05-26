@@ -10,7 +10,7 @@
 
     <!-- 对话气泡 -->
     <Transition name="bubble">
-      <div v-if="showBubble" class="speech-bubble">
+      <div v-if="showBubble" class="speech-bubble" :class="{ 'speech-bubble--below': bubbleBelow }">
         <p class="bubble-text">{{ currentMessage }}</p>
       </div>
     </Transition>
@@ -25,7 +25,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 
@@ -45,6 +45,13 @@ const pos = ref({ x: 50, y: 60 })
 const isDragging = ref(false)
 let dragOffsetX = 0, dragOffsetY = 0
 let didDrag = false
+
+// 当模型在面板上半部时，气泡显示在下方，避免超出顶部
+const bubbleBelow = computed(() => {
+  const panel = document.querySelector('.starfield-panel')
+  if (!panel) return false
+  return pos.value.y < panel.clientHeight / 2
+})
 
 function onMouseDown(e) {
   if (e.target.closest('.speech-bubble')) return
@@ -350,7 +357,7 @@ onUnmounted(() => {
   cursor: pointer;
 }
 
-/* 对话气泡 */
+/* 对话气泡 — 默认显示在上方 */
 .speech-bubble {
   position: absolute;
   bottom: calc(100% + 8px);
@@ -374,6 +381,17 @@ onUnmounted(() => {
   transform: translateX(-50%);
   border: 7px solid transparent;
   border-top-color: rgba(56,189,248,0.35);
+}
+/* 气泡显示在下方（模型在面板上半部时） */
+.speech-bubble--below {
+  bottom: auto;
+  top: calc(65% + 8px);
+}
+.speech-bubble--below::after {
+  top: auto;
+  bottom: 100%;
+  border-top-color: transparent;
+  border-bottom-color: rgba(56,189,248,0.35);
 }
 .bubble-text {
   color: #e0f2fe;

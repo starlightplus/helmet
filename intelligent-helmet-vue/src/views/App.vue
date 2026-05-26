@@ -61,7 +61,7 @@
         </button>
         <button class="side-tab" :class="{ 'side-tab--active': activePage === 'rideplan' }" @click="activePage = 'rideplan'">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6l9-3 9 3M3 18l9 3 9-3"/></svg>
-          <span>骑行规划</span>
+          <span>AI伴骑</span>
         </button>
       </aside>
 
