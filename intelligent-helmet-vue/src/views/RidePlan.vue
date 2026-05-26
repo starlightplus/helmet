@@ -875,7 +875,7 @@ const formattedDiet  = computed(() => formatMd(dietText.value))
 
 /* ── 上区：AI 规划结果 ────────────────────────────────────────── */
 .rp-main {
-  background: #111518;
+  background: rgba(17, 21, 24, 0.55);
   border: 1px solid rgba(139,92,246,0.12);
   clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%);
   padding: 20px 24px;
@@ -1046,7 +1046,7 @@ const formattedDiet  = computed(() => formatMd(dietText.value))
 
 /* ── 下区：问卷配置 ───────────────────────────────────────────── */
 .rp-form-area {
-  background: #111518;
+  background: rgba(17, 21, 24, 0.55);
   border: 1px solid rgba(139,92,246,0.12);
   clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%);
   padding: 20px 24px;

@@ -759,7 +759,7 @@ onUnmounted(() => {
 ══════════════════════════════════════════════════════════════════ */
 .daily-plan {
   min-height: 100vh;
-  background: #050505;
+  background: transparent;
   color: #e2e8f0;
   font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
   padding: 0 0 40px;
@@ -774,7 +774,7 @@ onUnmounted(() => {
   width: 100%;
   height: 320px;
   overflow: hidden;
-  background: #0a0f1a;
+  background: transparent;
   border-bottom: 1px solid #1e3a4a;
   flex-shrink: 0;
 }
@@ -1002,7 +1002,7 @@ onUnmounted(() => {
    卡片通用
 ══════════════════════════════════════════════════════════════════ */
 .card {
-  background: #0a0f1a;
+  background: rgba(10, 15, 26, 0.55);
   border: 1px solid #1e3a4a;
   border-radius: 10px;
   padding: 18px 20px 20px;

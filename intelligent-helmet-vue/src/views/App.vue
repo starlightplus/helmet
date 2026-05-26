@@ -497,6 +497,22 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  position: relative;
+}
+.app-content::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url('/sky.jpg');
+  background-size: cover;
+  background-position: center;
+  filter: brightness(1.3) saturate(1.2);
+  z-index: 0;
+  pointer-events: none;
+}
+.app-content > * {
+  position: relative;
+  z-index: 1;
 }
 
 .page-wrapper {
