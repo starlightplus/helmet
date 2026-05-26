@@ -428,17 +428,32 @@ onUnmounted(() => {
   overflow: hidden;
 }
 
-/* ── 左侧选项卡（仅三个） ── */
+/* ── 左侧选项卡 ── */
 .side-nav {
   width: 130px;
   flex-shrink: 0;
-  background: #000;
+  background: none;
+  position: relative;
   border-right: 1px solid rgba(56,189,248,0.12);
   display: flex;
   flex-direction: column;
   padding: 16px 8px;
   gap: 4px;
   z-index: 200;
+}
+.side-nav::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url('/sky.jpg');
+  background-size: cover;
+  background-position: center;
+  filter: brightness(0.6) saturate(1.2);
+  z-index: 0;
+}
+.side-nav > * {
+  position: relative;
+  z-index: 1;
 }
 
 .side-tab {
@@ -461,6 +476,7 @@ onUnmounted(() => {
   width: 100%;
   border-radius: 0 4px 4px 0;
 }
+
 .side-tab:hover {
   color: rgba(56,189,248,0.7);
   background: rgba(56,189,248,0.05);
