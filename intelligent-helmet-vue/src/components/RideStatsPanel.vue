@@ -36,8 +36,9 @@
       <!-- 分隔线 -->
       <div class="ride-card__divider"></div>
 
-      <!-- 右：统计数据 2×2 + 1 -->
+      <!-- 右：统计数据 3×2 -->
       <div class="ride-card__stats">
+        <!-- 第一排：距离、均速、卡路里 -->
         <div class="ride-card__stat">
           <span class="ride-card__stat-val">{{ isRiding ? formattedDistance : '--' }}</span>
           <span class="ride-card__stat-key">距离 km</span>
@@ -46,6 +47,12 @@
           <span class="ride-card__stat-val">{{ isRiding ? avgSpeed.toFixed(1) : '--' }}</span>
           <span class="ride-card__stat-key">均速 km/h</span>
         </div>
+        <div class="ride-card__stat ride-card__stat--cal">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M12 6v6l4 2"/></svg>
+          <span class="ride-card__stat-val ride-card__stat-val--cal">{{ isRiding ? Math.round(calories) : '--' }}</span>
+          <span class="ride-card__stat-key">卡路里 kcal</span>
+        </div>
+        <!-- 第二排：最高、配速、骑行记录 -->
         <div class="ride-card__stat">
           <span class="ride-card__stat-val">{{ isRiding ? maxSpeed.toFixed(1) : '--' }}</span>
           <span class="ride-card__stat-key">最高 km/h</span>
@@ -54,14 +61,7 @@
           <span class="ride-card__stat-val">{{ isRiding ? formattedPace : '--' }}</span>
           <span class="ride-card__stat-key">配速 /km</span>
         </div>
-        <div class="ride-card__stat ride-card__stat--cal">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M12 6v6l4 2"/></svg>
-          <span class="ride-card__stat-val ride-card__stat-val--cal">{{ isRiding ? Math.round(calories) : '--' }}</span>
-          <span class="ride-card__stat-key">消耗卡路里 kcal</span>
-          <button class="ride-history-btn ride-plan-btn" @click="goToRidePlan">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-            骑行规划
-          </button>
+        <div class="ride-card__stat ride-card__stat--btn">
           <button class="ride-history-btn" @click="goToRideHistory">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="5.5" cy="17.5" r="3.5"/><path d="M15 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2z" fill="currentColor"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></svg>
             骑行记录
@@ -92,7 +92,6 @@ const props = defineProps({
 
 const router = useRouter()
 function goToRideHistory() { router.push('/ride-history') }
-function goToRidePlan()    { router.push('/ride-plan') }
 
 const formattedDuration = computed(() => formatDuration(props.rideDuration))
 const formattedDistance = computed(() => props.rideDistance.toFixed(2))
@@ -174,9 +173,8 @@ onUnmounted(() => {
 .ride-history-btn {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-left: auto;
-  padding: 10px 10px;
+  gap: 6px;
+  padding: 8px 10px;
   background: rgba(56, 189, 248, 0.05);
   border: 1px solid rgba(56, 189, 248, 0.18);
   color: rgba(56, 189, 248, 0.70);
@@ -189,17 +187,6 @@ onUnmounted(() => {
   clip-path: polygon(5px 0%,100% 0%,100% calc(100% - 5px),calc(100% - 5px) 100%,0% 100%,0% 5px);
   flex-shrink: 0;
 }
-.ride-plan-btn {
-  border-color: rgba(139, 92, 246, 0.25);
-  color: rgba(167, 139, 250, 0.80);
-  background: rgba(139, 92, 246, 0.05);
-}
-.ride-plan-btn:hover {
-  background: rgba(139, 92, 246, 0.12);
-  border-color: rgba(139, 92, 246, 0.50);
-  color: #a78bfa;
-  box-shadow: 0 0 10px rgba(139, 92, 246, 0.20);
-}
 .ride-history-btn:hover {
   background: rgba(56, 189, 248, 0.12);
   border-color: rgba(56, 189, 248, 0.45);
@@ -210,24 +197,23 @@ onUnmounted(() => {
 /* ── Card Container ─────────────────────────────────────────────── */
 .ride-card {
   position: relative;
-  background: #0f172a;
-  border: 1px solid rgba(56, 189, 248, 0.10);
+  background: rgba(10, 15, 26, 0.55);
+  border: 1px solid #1e3a4a;
+  border-radius: 10px;
   overflow: hidden;
-  backdrop-filter: blur(12px);
   transition: border-color 0.3s, box-shadow 0.3s;
-  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%);
   display: flex;
   flex-direction: column;
   height: 100%;
 }
-/* cyber anchor top-left */
+/* top gradient line */
 .ride-card::before {
   content: "";
   position: absolute;
-  top: -1px; left: -1px;
-  width: 12px; height: 12px;
-  border-top: 2px solid #38bdf8;
-  border-left: 2px solid #38bdf8;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #38bdf8, transparent);
+  opacity: 0.5;
   pointer-events: none;
   z-index: 10;
 }
@@ -440,8 +426,8 @@ onUnmounted(() => {
 /* Right: stats grid */
 .ride-card__stats {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px 14px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px 10px;
   flex: 1;
   align-content: space-between;
   padding-top: 24px;
@@ -454,12 +440,13 @@ onUnmounted(() => {
   justify-content: center;
 }
 .ride-card__stat--cal {
-  grid-column: 1 / -1;
   flex-direction: row;
   align-items: center;
-  gap: 5px;
-  padding-top: 7px;
-  border-top: 1px solid rgba(56, 189, 248, 0.06);
+  gap: 4px;
+}
+.ride-card__stat--btn {
+  align-items: center;
+  justify-content: center;
 }
 .ride-card__stat-val {
   font-family: var(--font-mono, monospace);
@@ -482,6 +469,6 @@ onUnmounted(() => {
 
 @media (max-width: 640px) {
   .ride-card__speed-num { font-size: 2.1rem; }
-  .ride-card__stats { gap: 6px 10px; }
+  .ride-card__stats { gap: 6px 6px; }
 }
 </style>

@@ -8,7 +8,7 @@
       <!-- Header -->
       <div class="card-header">
         <div class="card-label-group">
-          <span class="card-tag">SENSOR_NODE_01</span>
+          <span class="card-tag">传感器1</span>
           <span class="card-title">环境温度</span>
         </div>
       </div>
@@ -36,7 +36,7 @@
       <!-- Header -->
       <div class="card-header">
         <div class="card-label-group">
-          <span class="card-tag">SENSOR_NODE_02</span>
+          <span class="card-tag">传感器2</span>
           <span class="card-title">相对湿度</span>
         </div>
       </div>
@@ -143,15 +143,22 @@ const humStatusColor = computed(() => {
 
 .sensor-card {
   position: relative;
-  background: #0f172a;
-  border: 1px solid rgba(56, 189, 248, 0.10);
+  background: rgba(10, 15, 26, 0.55);
+  border: 1px solid #1e3a4a;
+  border-radius: 10px;
   padding: 18px 18px 16px;
   overflow: hidden;
-  backdrop-filter: blur(12px);
   display: flex;
   flex-direction: column;
   gap: 14px;
-  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%);
+}
+.sensor-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #38bdf8, transparent);
+  opacity: 0.5;
 }
 .sensor-card--temp {
   box-shadow: 0 0 24px -6px rgba(56, 189, 248, 0.08), inset 0 1px 0 rgba(56, 189, 248, 0.06);
@@ -160,20 +167,9 @@ const humStatusColor = computed(() => {
   box-shadow: 0 0 24px -6px rgba(255, 0, 85, 0.08), inset 0 1px 0 rgba(255, 0, 85, 0.06);
 }
 
-/* Cyber corner */
-.card-cyber-corner {
-  position: absolute;
-  top: -1px; right: -1px;
-  width: 12px; height: 12px;
-  border-top: 2px solid #38bdf8;
-  border-right: 2px solid #38bdf8;
-  pointer-events: none;
-  z-index: 5;
-}
-.card-cyber-corner--hum {
-  border-top-color: #ff0055;
-  border-right-color: #ff0055;
-}
+/* Cyber corner — removed (using border-radius now) */
+.card-cyber-corner { display: none; }
+.card-cyber-corner--hum { display: none; }
 
 /* Left accent bar */
 .card-accent {
@@ -198,9 +194,9 @@ const humStatusColor = computed(() => {
 }
 .card-tag {
   font-family: var(--font-mono, 'JetBrains Mono', monospace);
-  font-size: 9px;
+  font-size: 8px;
   letter-spacing: 0.15em;
-  color: rgba(56, 189, 248, 0.30);
+  color: white;
   text-transform: uppercase;
 }
 .card-title {

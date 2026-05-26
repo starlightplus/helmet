@@ -99,11 +99,11 @@
               <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
             </svg>
           </div>
-          <h2 class="header-title">Workspace Hub</h2>
+          <h2 class="header-title">用户登录</h2>
           <p class="header-sub">
-            <template v-if="mode === 'signin'">Access the secure visual computing interface</template>
-            <template v-else-if="mode === 'signup'">Deploy your credentials to establish a profile</template>
-            <template v-else>Send security instructions to your credential terminal</template>
+            <template v-if="mode === 'signin'">访问安全可视化计算界面</template>
+            <template v-else-if="mode === 'signup'">部署您的凭据以创建配置文件</template>
+            <template v-else>下发安全指令至凭证终端</template>
           </p>
         </div>
 
@@ -113,12 +113,12 @@
             class="tab-btn"
             :class="{ active: mode === 'signin' }"
             @click="setMode('signin')"
-          >Sign In</button>
+          >登录</button>
           <button
             class="tab-btn"
             :class="{ active: mode === 'signup' }"
             @click="setMode('signup')"
-          >Sign Up</button>
+          >注册</button>
         </div>
 
         <!-- Error block -->
@@ -132,7 +132,7 @@
 
           <!-- Full name (signup only) -->
           <div v-if="mode === 'signup'" class="field-group">
-            <label class="field-label">USERNAME</label>
+            <label class="field-label">用户名</label>
             <div class="field-box" :class="{ 'field-error': usernameError }">
               <svg class="field-icon" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>
               <input
@@ -149,7 +149,7 @@
 
           <!-- Username / email (signin) -->
           <div v-if="mode === 'signin' || mode === 'forgot'" class="field-group">
-            <label class="field-label">USERNAME</label>
+            <label class="field-label">用户名</label>
             <div class="field-box">
               <svg class="field-icon" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>
               <input
@@ -165,13 +165,13 @@
           <!-- Password -->
           <div v-if="mode !== 'forgot'" class="field-group">
             <div class="field-label-row">
-              <label class="field-label">SECURITY PHRASE</label>
+              <label class="field-label">密码</label>
               <button
                 v-if="mode === 'signin'"
                 type="button"
                 class="forgot-link"
                 @click="setMode('forgot')"
-              >FORGOT KEY?</button>
+              >忘记密码?</button>
             </div>
             <div class="field-box">
               <svg class="field-icon" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" /></svg>
@@ -221,7 +221,7 @@
 
           <!-- Confirm password (signup only) -->
           <div v-if="mode === 'signup'" class="field-group">
-            <label class="field-label">CONFIRM PHRASE</label>
+            <label class="field-label">再次输入密码</label>
             <div class="field-box" :class="{ 'field-error': passwordMismatch }">
               <svg class="field-icon" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" /></svg>
               <input
@@ -260,7 +260,7 @@
         <div v-if="mode !== 'forgot'" class="social-section">
           <div class="divider">
             <div class="divider-line"></div>
-            <span class="divider-text">Secure Auth Handshakes</span>
+            <span class="divider-text">安全鉴权握手</span>
             <div class="divider-line"></div>
           </div>
           <div class="social-btns">
@@ -606,7 +606,7 @@ onMounted(() => {
 .auth-root {
   position: relative;
   min-height: 100vh;
-  background: #030712;
+  background: url('/sky_login.jpg') center/cover no-repeat;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -850,6 +850,15 @@ onMounted(() => {
   font-family: inherit;
 }
 .field-input::placeholder { color: #3f3f46; }
+/* 修复浏览器自动填充白色背景 */
+.field-input:-webkit-autofill,
+.field-input:-webkit-autofill:hover,
+.field-input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px rgba(9,9,11,0.4) inset;
+  -webkit-text-fill-color: #fff;
+  caret-color: #fff;
+  transition: background-color 5000s ease-in-out 0s;
+}
 .field-checking { padding: 0 12px; font-size: 14px; color: #22d3ee; font-family: monospace; animation: blink 0.8s ease-in-out infinite; }
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
 .eye-btn { background: none; border: none; cursor: pointer; padding: 0 12px; color: #52525b; display: flex; align-items: center; transition: color 0.2s; }

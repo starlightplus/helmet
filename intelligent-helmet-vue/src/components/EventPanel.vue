@@ -162,26 +162,17 @@ defineExpose({ processDeviceEvents, clearAllEvents, addEvent })
 /* ── Panel Container ───────────────────────────────────────────── */
 .event-panel {
   position: relative;
-  background: #0f172a;
-  border: 1px solid rgba(56, 189, 248, 0.10);
+  background: rgba(10, 15, 26, 0.55);
+  border: 1px solid #1e3a4a;
+  border-radius: 10px;
   width: 100%;
   box-sizing: border-box;
   overflow: hidden;
-  backdrop-filter: blur(12px);
   transition: border-color 0.4s ease, box-shadow 0.4s ease;
-  /* Cut-corner top-right */
-  clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 0 100%);
 }
-/* Cyber anchor: top-left */
+/* top gradient line */
 .event-panel::before {
-  content: "";
-  position: absolute;
-  top: -1px; left: -1px;
-  width: 12px; height: 12px;
-  border-top: 2px solid #38bdf8;
-  border-left: 2px solid #38bdf8;
-  pointer-events: none;
-  z-index: 10;
+  display: none;
 }
 
 .event-panel--active {
