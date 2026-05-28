@@ -492,10 +492,10 @@ const rideChartOption = computed(() => {
     tooltip: { trigger: 'axis', backgroundColor: '#0f172a', borderColor: '#334155', textStyle: { color: '#e2e8f0' } },
     legend: { data: ['距离(km)', '卡路里(kcal)'], textStyle: { color: '#94a3b8' }, top: 4 },
     grid: { left: 48, right: 48, top: 36, bottom: 40 },
-    xAxis: { type: 'category', data: data.map(r => formatRideDate(r.startTime)), axisLabel: { color: '#64748b', fontSize: 10 }, axisLine: { lineStyle: { color: '#1e293b' } } },
+    xAxis: { type: 'category', data: data.map(r => formatRideDate(r.startTime)), axisLabel: { color: 'white', fontSize: 10 }, axisLine: { lineStyle: { color: '#1e293b' } } },
     yAxis: [
-      { type: 'value', name: 'km',   nameTextStyle: { color: '#64748b' }, axisLabel: { color: '#64748b' }, splitLine: { lineStyle: { color: '#1e293b' } } },
-      { type: 'value', name: 'kcal', nameTextStyle: { color: '#64748b' }, axisLabel: { color: '#64748b' }, splitLine: { show: false } },
+      { type: 'value', name: 'km',   nameTextStyle: { color: 'white' }, axisLabel: { color: 'white' }, splitLine: { lineStyle: { color: '#1e293b' } } },
+      { type: 'value', name: 'kcal', nameTextStyle: { color: 'white' }, axisLabel: { color: 'white' }, splitLine: { show: false } },
     ],
     series: [
       { name: '距离(km)',   type: 'bar', data: data.map(r => r.distance?.toFixed(1)), itemStyle: { color: '#34d399' }, barMaxWidth: 24 },
@@ -566,10 +566,10 @@ const batteryChartOption = computed(() => {
     tooltip: { trigger: 'axis', backgroundColor: '#0f172a', borderColor: '#334155', textStyle: { color: '#e2e8f0' } },
     legend: { data: ['电量%', '电压V'], textStyle: { color: '#94a3b8' }, top: 4 },
     grid: { left: 44, right: 44, top: 36, bottom: 40 },
-    xAxis: { type: 'category', data: data.map(r => r.timestamp?.slice(11, 16) || ''), axisLabel: { color: '#64748b', fontSize: 10 }, axisLine: { lineStyle: { color: '#1e293b' } } },
+    xAxis: { type: 'category', data: data.map(r => r.timestamp?.slice(11, 16) || ''), axisLabel: { color: 'white', fontSize: 10 }, axisLine: { lineStyle: { color: '#1e293b' } } },
     yAxis: [
-      { type: 'value', min: 0, max: 100, name: '%', nameTextStyle: { color: '#64748b' }, axisLabel: { color: '#64748b' }, splitLine: { lineStyle: { color: '#1e293b' } } },
-      { type: 'value', min: 2.8, max: 4.4, name: 'V', nameTextStyle: { color: '#64748b' }, axisLabel: { color: '#64748b', formatter: v => v.toFixed(1) }, splitLine: { show: false } },
+      { type: 'value', min: 0, max: 100, name: '%', nameTextStyle: { color: 'white' }, axisLabel: { color: 'white' }, splitLine: { lineStyle: { color: '#1e293b' } } },
+      { type: 'value', min: 2.8, max: 4.4, name: 'V', nameTextStyle: { color: 'white' }, axisLabel: { color: 'white', formatter: v => v.toFixed(1) }, splitLine: { show: false } },
     ],
     series: [
       { name: '电量%', type: 'line', data: data.map(r => r.percentage), lineStyle: { color: '#4ade80' }, itemStyle: { color: '#4ade80' }, areaStyle: { color: 'rgba(74,222,128,0.08)' }, smooth: true },
@@ -580,7 +580,7 @@ const batteryChartOption = computed(() => {
 
 // ── Heart Rate ─────────────────────────────────────────────────────
 const HR_ZONES = [
-  { name: '静息',  range: '< 60 BPM',    color: '#64748b', min: 0,   max: 59  },
+  { name: '静息',  range: '< 60 BPM',    color: 'white', min: 0,   max: 59  },
   { name: '热身',  range: '60–99 BPM',   color: '#22d3ee', min: 60,  max: 99  },
   { name: '燃脂',  range: '100–139 BPM', color: '#4ade80', min: 100, max: 139 },
   { name: '有氧',  range: '140–169 BPM', color: '#f59e0b', min: 140, max: 169 },
@@ -678,10 +678,10 @@ const hrAreaOption = computed(() => {
     tooltip: { trigger: 'axis', backgroundColor: '#0f172a', borderColor: '#334155', textStyle: { color: '#e2e8f0' } },
     legend: { data: ['心率 BPM', '速度 km/h'], textStyle: { color: '#94a3b8' }, top: 4 },
     grid: { left: 44, right: 44, top: 36, bottom: 40 },
-    xAxis: { type: 'category', data: hours, axisLabel: { color: '#64748b', fontSize: 10 }, axisLine: { lineStyle: { color: '#1e293b' } } },
+    xAxis: { type: 'category', data: hours, axisLabel: { color: 'white', fontSize: 10 }, axisLine: { lineStyle: { color: '#1e293b' } } },
     yAxis: [
-      { type: 'value', name: 'BPM', nameTextStyle: { color: '#64748b' }, axisLabel: { color: '#64748b' }, splitLine: { lineStyle: { color: '#1e293b' } } },
-      { type: 'value', name: 'km/h', nameTextStyle: { color: '#64748b' }, axisLabel: { color: '#64748b' }, splitLine: { show: false } },
+      { type: 'value', name: 'BPM', nameTextStyle: { color: 'white' }, axisLabel: { color: 'white' }, splitLine: { lineStyle: { color: '#1e293b' } } },
+      { type: 'value', name: 'km/h', nameTextStyle: { color: 'white' }, axisLabel: { color: 'white' }, splitLine: { show: false } },
     ],
     series: [
       {
@@ -765,7 +765,7 @@ watch(() => userStore.username, (newUser, oldUser) => {
   display: flex; align-items: center; gap: 6px;
   padding: 8px 16px;
   font-size: 12px; font-family: inherit;
-  color: #64748b;
+  color: white;
   background: transparent;
   border: none; border-bottom: 2px solid transparent;
   cursor: pointer;
@@ -797,7 +797,7 @@ watch(() => userStore.username, (newUser, oldUser) => {
 .dv-hero__tag-dot { width: 6px; height: 6px; border-radius: 50%; background: #38bdf8; animation: pulse 2s infinite; }
 .dv-hero__title { font-size: 26px; font-weight: 800; color: #f1f5f9; margin: 0 0 8px; }
 .dv-hero__title-num { color: #38bdf8; }
-.dv-hero__desc { font-size: 12px; color: #64748b; max-width: 560px; line-height: 1.6; margin: 0; }
+.dv-hero__desc { font-size: 12px; color: white; max-width: 560px; line-height: 1.6; margin: 0; }
 .dv-hero__back-btn {
   position: absolute; top: 20px; right: 20px;
   display: flex; align-items: center; gap: 6px;
@@ -843,7 +843,7 @@ watch(() => userStore.username, (newUser, oldUser) => {
 .dv-entry-card__sub { font-size: 9px; color: #475569; letter-spacing: 0.05em; }
 .dv-entry-card__label { font-size: 11px; color: #94a3b8; margin-bottom: 4px; }
 .dv-entry-card__val { font-size: 24px; font-weight: 700; color: #f1f5f9; }
-.dv-entry-card__val-unit { font-size: 13px; color: #64748b; }
+.dv-entry-card__val-unit { font-size: 13px; color: white; }
 .dv-entry-card__meta { display: flex; gap: 6px; font-size: 10px; color: #475569; }
 .dv-entry-card__footer { display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: #38bdf8; margin-top: auto; }
 .dv-entry-card__link { }
@@ -866,7 +866,7 @@ watch(() => userStore.username, (newUser, oldUser) => {
 .dv-range-switch { display: flex; gap: 4px; }
 .dv-range-btn {
   padding: 4px 12px; font-size: 11px; font-family: inherit;
-  background: rgba(30,41,59,0.8); color: #64748b;
+  background: rgba(30,41,59,0.8); color: white;
   border: 1px solid #1e293b; border-radius: 4px; cursor: pointer; transition: all 0.2s;
 }
 .dv-range-btn.active, .dv-range-btn:hover { background: rgba(14,165,233,0.15); color: #38bdf8; border-color: rgba(14,165,233,0.3); }
@@ -904,10 +904,10 @@ watch(() => userStore.username, (newUser, oldUser) => {
 /* ── Ride layout ──────────────────────────────────────────────── */
 .dv-ride-layout { display: grid; grid-template-columns: 1fr 320px; gap: 16px; }
 .dv-ride-list { background: rgba(15,23,42,0.6); border: 1px solid #1e293b; border-radius: 10px; padding: 16px; overflow-y: auto; max-height: 320px; }
-.dv-ride-list__title { font-size: 12px; color: #64748b; margin-bottom: 10px; }
+.dv-ride-list__title { font-size: 12px; color: white; margin-bottom: 10px; }
 .dv-ride-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #0f172a; }
 .dv-ride-row:last-child { border-bottom: none; }
-.dv-ride-row__date { font-size: 11px; color: #64748b; }
+.dv-ride-row__date { font-size: 11px; color: white; }
 .dv-ride-row__dist { font-size: 14px; font-weight: 600; color: #34d399; }
 .dv-ride-row__right { display: flex; gap: 8px; }
 .dv-ride-row__cal   { font-size: 11px; color: #f59e0b; }
@@ -924,7 +924,7 @@ watch(() => userStore.username, (newUser, oldUser) => {
 .dv-bat-bar--green { background: linear-gradient(90deg, #22c55e, #4ade80); }
 .dv-bat-bar--amber { background: linear-gradient(90deg, #d97706, #f59e0b); }
 .dv-bat-bar--red   { background: linear-gradient(90deg, #dc2626, #ef4444); }
-.dv-bat-status__meta { display: flex; gap: 12px; font-size: 11px; color: #64748b; }
+.dv-bat-status__meta { display: flex; gap: 12px; font-size: 11px; color: white; }
 
 /* ── HR layout ────────────────────────────────────────────────── */
 .dv-hr-layout { display: grid; grid-template-columns: 1fr 280px; gap: 16px; }
@@ -937,16 +937,16 @@ watch(() => userStore.username, (newUser, oldUser) => {
 .dv-zone-name { font-size: 11px; color: #94a3b8; width: 36px; flex-shrink: 0; }
 .dv-zone-bar-wrap { flex: 1; height: 6px; background: #1e293b; border-radius: 3px; overflow: hidden; }
 .dv-zone-bar { height: 100%; border-radius: 3px; transition: width 0.4s; }
-.dv-zone-pct { font-size: 10px; color: #64748b; width: 60px; text-align: right; flex-shrink: 0; }
+.dv-zone-pct { font-size: 10px; color: white; width: 60px; text-align: right; flex-shrink: 0; }
 .dv-hr-day-switch { display: flex; gap: 4px; }
 .dv-zone-tag { display: inline-block; padding: 4px 12px; font-size: 11px; border-radius: 20px; border: 1px solid; font-weight: 600; }
 .dv-zone-legend { }
-.dv-zone-legend-row { display: flex; align-items: center; gap: 8px; font-size: 11px; color: #64748b; margin-bottom: 5px; }
+.dv-zone-legend-row { display: flex; align-items: center; gap: 8px; font-size: 11px; color: white; margin-bottom: 5px; }
 
 /* ── Form ─────────────────────────────────────────────────────── */
-.dv-form-title { font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
+.dv-form-title { font-size: 11px; font-weight: 600; color: white; text-transform: uppercase; letter-spacing: 0.05em; }
 .dv-form-row { display: flex; align-items: center; gap: 8px; }
-.dv-form-label { font-size: 11px; color: #64748b; width: 60px; flex-shrink: 0; }
+.dv-form-label { font-size: 11px; color: white; width: 60px; flex-shrink: 0; }
 .dv-form-num { font-size: 12px; font-weight: 600; color: #f1f5f9; width: 44px; text-align: right; flex-shrink: 0; }
 .dv-slider { flex: 1; accent-color: #38bdf8; cursor: pointer; }
 .dv-select {
@@ -956,7 +956,7 @@ watch(() => userStore.username, (newUser, oldUser) => {
 .dv-form-toggle { display: flex; gap: 4px; }
 .dv-toggle-btn {
   padding: 4px 12px; font-size: 11px; font-family: inherit;
-  background: rgba(30,41,59,0.8); color: #64748b;
+  background: rgba(30,41,59,0.8); color: white;
   border: 1px solid #1e293b; border-radius: 4px; cursor: pointer; transition: all 0.2s;
 }
 .dv-toggle-btn.active { background: rgba(14,165,233,0.15); color: #38bdf8; border-color: rgba(14,165,233,0.3); }
@@ -979,7 +979,7 @@ watch(() => userStore.username, (newUser, oldUser) => {
 
 /* ── Mini list ────────────────────────────────────────────────── */
 .dv-mini-list { margin-top: 4px; }
-.dv-mini-list__title { font-size: 11px; color: #64748b; margin-bottom: 6px; }
+.dv-mini-list__title { font-size: 11px; color: white; margin-bottom: 6px; }
 .dv-mini-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid #0f172a; font-size: 11px; }
 .dv-mini-row:last-child { border-bottom: none; }
 .dv-mini-row__time { color: #475569; width: 36px; flex-shrink: 0; }

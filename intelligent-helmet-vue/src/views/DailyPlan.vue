@@ -124,82 +124,109 @@
 
         <div v-if="!ridePlanStore.hasPlan" class="empty-state">
           <div class="empty-icon">🚴</div>
-          <p class="empty-text">还没有设定骑行规划</p>
-          <button class="btn-primary" @click="$emit('go-plan')">去定制您的骑行规划</button>
+          <p class="empty-text">还没有设定运动规划</p>
+          <button class="btn-primary" @click="$emit('go-plan')">去定制您的运动规划</button>
         </div>
 
         <div v-else class="exercise-content">
-          <div class="target-row">
-            <div class="target-item">
-              <span class="target-label">今日目标</span>
-              <span class="target-val">{{ ridePlanStore.plan.planDailyRideMin }}<em>分钟</em></span>
+          <!-- 总热量进度 -->
+          <div class="kcal-summary">
+            <div class="kcal-summary__info">
+              <span class="kcal-summary__label">今日总消耗</span>
+              <span class="kcal-summary__val">{{ totalKcalToday.toFixed(0) }}<em> / {{ ridePlanStore.plan.planDailyIntake }} kcal</em></span>
             </div>
-            <div class="target-item">
-              <span class="target-label">热量目标</span>
-              <span class="target-val">{{ ridePlanStore.plan.planDailyIntake }}<em>千卡</em></span>
+            <div class="kcal-bar-track">
+              <div class="kcal-bar-fill" :style="{ width: Math.min(totalKcalRatio * 100, 100) + '%' }" :class="{ 'kcal-bar-fill--done': totalKcalRatio >= 1 }"></div>
             </div>
           </div>
 
-          <div class="rings-row">
-            <!-- 时长进度环 -->
-            <div class="ring-wrap">
-              <svg class="ring-svg" viewBox="0 0 80 80">
-                <circle class="ring-bg" cx="40" cy="40" r="36" />
-                <circle
-                  class="ring-fg ring-time"
-                  cx="40" cy="40" r="36"
-                  :stroke-dasharray="`${Math.min(timeRatio,1) * 226.2} 226.2`"
-                />
-              </svg>
-              <div class="ring-label">
-                <span class="ring-pct">{{ Math.round(Math.min(timeRatio,1) * 100) }}%</span>
-                <span class="ring-sub">时长</span>
+          <!-- 各运动项目卡片 -->
+          <div class="sport-items">
+            <div
+              v-for="item in sportGoalItems"
+              :key="item.key"
+              class="sport-item"
+              :class="{ 'sport-item--done': item.ratio >= 1 }"
+            >
+              <!-- 左：图标 + 名称 -->
+              <div class="sport-item__left">
+                <span class="sport-item__icon">{{ item.icon }}</span>
+                <div class="sport-item__info">
+                  <span class="sport-item__name">{{ item.label }}</span>
+                  <span class="sport-item__goal">目标 {{ item.goalText }}</span>
+                </div>
               </div>
-            </div>
 
-            <!-- 热量进度环 -->
-            <div class="ring-wrap">
-              <svg class="ring-svg" viewBox="0 0 80 80">
-                <circle class="ring-bg" cx="40" cy="40" r="36" />
-                <circle
-                  class="ring-fg ring-kcal"
-                  cx="40" cy="40" r="36"
-                  :stroke-dasharray="`${Math.min(kcalRatio,1) * 226.2} 226.2`"
-                />
-              </svg>
-              <div class="ring-label">
-                <span class="ring-pct">{{ Math.round(Math.min(kcalRatio,1) * 100) }}%</span>
-                <span class="ring-sub">热量</span>
+              <!-- 中：进度条 -->
+              <div class="sport-item__progress">
+                <div class="sport-item__bar-track">
+                  <div
+                    class="sport-item__bar-fill"
+                    :style="{ width: Math.min(item.ratio * 100, 100) + '%' }"
+                  ></div>
+                </div>
+                <span class="sport-item__pct">{{ Math.round(Math.min(item.ratio, 1) * 100) }}%</span>
               </div>
-            </div>
 
-            <!-- 今日完成数据 -->
-            <div class="today-stats">
-              <div class="stat-row">
-                <span class="stat-k">距离</span>
-                <span class="stat-v">{{ todayStats.distanceKm.toFixed(2) }}<em> km</em></span>
-              </div>
-              <div class="stat-row">
-                <span class="stat-k">时长</span>
-                <span class="stat-v">{{ todayStats.durationMin.toFixed(0) }}<em> min</em></span>
-              </div>
-              <div class="stat-row">
-                <span class="stat-k">热量</span>
-                <span class="stat-v">{{ todayStats.kcal.toFixed(0) }}<em> kcal</em></span>
+              <!-- 右：完成值 / 打卡按钮 -->
+              <div class="sport-item__right">
+                <span class="sport-item__done-val">{{ item.doneText }}</span>
+                <!-- 骑行自动同步，其他运动手动打卡 -->
+                <button
+                  v-if="item.key !== 'cycling'"
+                  class="sport-checkin-btn"
+                  :class="{ 'sport-checkin-btn--done': item.ratio >= 1 }"
+                  @click="openCheckinModal(item)"
+                >
+                  {{ item.ratio >= 1 ? '✓ 已达标' : '打卡' }}
+                </button>
+                <span v-else class="sport-item__auto-tag">自动同步</span>
               </div>
             </div>
           </div>
 
-          <p class="exercise-comment" :class="{ achieved: timeRatio >= 1 && kcalRatio >= 1 }">
-            <template v-if="timeRatio >= 1 && kcalRatio >= 1">
-              今日目标已达成！🎉
-            </template>
-            <template v-else>
-              今日已完成 {{ todayStats.durationMin.toFixed(0) }} 分钟骑行，目标 {{ ridePlanStore.plan.planDailyRideMin }} 分钟，加油！
-            </template>
+          <!-- 全部达标提示 -->
+          <p class="exercise-comment" :class="{ achieved: allSportsDone }">
+            <template v-if="allSportsDone">今日所有运动目标已达成！🎉</template>
+            <template v-else>已完成 {{ sportGoalItems.filter(i => i.ratio >= 1).length }} / {{ sportGoalItems.length }} 项运动目标，继续加油！</template>
           </p>
         </div>
       </section>
+
+      <!-- ── 运动打卡弹窗 ── -->
+      <Transition name="modal-fade">
+        <div v-if="checkinModal.visible" class="modal-overlay" @click.self="closeCheckinModal">
+          <div class="modal-box checkin-modal-box" role="dialog">
+            <button class="modal-close" @click="closeCheckinModal">✕</button>
+            <h3 class="modal-title">{{ checkinModal.icon }} {{ checkinModal.label }} 打卡</h3>
+            <p class="checkin-modal-goal">今日目标：{{ checkinModal.goalText }}</p>
+
+            <div class="checkin-modal-form">
+              <template v-if="checkinModal.inputType === 'duration'">
+                <label class="checkin-form-label">完成时长（分钟）</label>
+                <input class="checkin-form-input" type="number" min="0" v-model.number="checkinModal.inputVal" placeholder="输入分钟数" />
+              </template>
+              <template v-else-if="checkinModal.inputType === 'distance'">
+                <label class="checkin-form-label">完成距离（km）</label>
+                <input class="checkin-form-input" type="number" min="0" step="0.01" v-model.number="checkinModal.inputVal" placeholder="输入公里数" />
+              </template>
+              <template v-else-if="checkinModal.inputType === 'steps'">
+                <label class="checkin-form-label">完成步数</label>
+                <input class="checkin-form-input" type="number" min="0" v-model.number="checkinModal.inputVal" placeholder="输入步数" />
+              </template>
+              <template v-else-if="checkinModal.inputType === 'jumprope'">
+                <label class="checkin-form-label">完成个数</label>
+                <input class="checkin-form-input" type="number" min="0" v-model.number="checkinModal.inputVal" placeholder="输入跳绳个数" />
+              </template>
+            </div>
+
+            <div class="checkin-modal-actions">
+              <button class="checkin-modal-cancel" @click="closeCheckinModal">取消</button>
+              <button class="checkin-modal-confirm" @click="confirmCheckin">确认打卡</button>
+            </div>
+          </div>
+        </div>
+      </Transition>
 
       <!-- ── 今日食谱区 ── -->
       <section class="card recipe-card">
@@ -211,7 +238,14 @@
         </div>
 
         <div v-else class="recipe-content">
-          <div class="recipe-type-badge">{{ recipeTypeName }}</div>
+          <div class="recipe-header-row">
+            <div class="recipe-type-badge">{{ recipeTypeName }}</div>
+            <div v-if="ridePlanStore.dietRestrictions?.length" class="recipe-diet-tags">
+              <span v-for="tag in ridePlanStore.dietRestrictions" :key="tag" class="recipe-diet-tag">
+                🚫 {{ tag }}
+              </span>
+            </div>
+          </div>
 
           <div class="meals-list">
             <div v-for="meal in ['breakfast','lunch','dinner']" :key="meal" class="meal-section">
@@ -267,6 +301,15 @@
           <div class="checkin-stats">
             <div class="checkin-stats__header">
               <span class="checkin-stats__title">打卡统计</span>
+              <div class="heatmap-month-nav">
+                <button class="heatmap-nav-btn" @click="prevHeatmapMonth" title="上个月">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                </button>
+                <span class="heatmap-month-label">{{ heatmapMonthLabel }}</span>
+                <button class="heatmap-nav-btn" @click="nextHeatmapMonth" :disabled="heatmapMonthOffset >= 0" title="下个月">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                </button>
+              </div>
               <span class="checkin-stats__total">
                 累计 <strong>{{ totalCheckinDays }}</strong> 天全勤
               </span>
@@ -387,7 +430,19 @@ function closeArticle() {
 }
 
 // ══════════════════════════════════════════════════════════════════════════
-// 今日骑行汇总
+// 运动配置（与 RidePlan.vue 保持一致）
+// ══════════════════════════════════════════════════════════════════════════
+const SPORT_OPTIONS = [
+  { key: 'cycling',    label: '骑行',    icon: '🚴', inputType: 'duration', kcalPerMin: 8 },
+  { key: 'running',    label: '跑步',    icon: '🏃', inputType: 'distance', kcalPerKm: 60 },
+  { key: 'walking',    label: '走路',    icon: '🚶', inputType: 'steps',    kcalPer1k: 40 },
+  { key: 'jumprope',   label: '跳绳',    icon: '🪢', inputType: 'jumprope', kcalPerRep: 0.1 },
+  { key: 'basketball', label: '打篮球',  icon: '🏀', inputType: 'duration', kcalPerMin: 7 },
+  { key: 'strength',   label: '力量训练', icon: '🏋️', inputType: 'duration', kcalPerMin: 5 },
+]
+
+// ══════════════════════════════════════════════════════════════════════════
+// 今日骑行汇总（自动）
 // ══════════════════════════════════════════════════════════════════════════
 const todayStats = computed(() => {
   const today = new Date()
@@ -409,17 +464,192 @@ const todayStats = computed(() => {
   return { distanceKm, durationMin, kcal }
 })
 
-const timeRatio = computed(() => {
-  if (!ridePlanStore.hasPlan) return 0
-  const goal = Number(ridePlanStore.plan.planDailyRideMin) || 1
-  return todayStats.value.durationMin / goal
+// ══════════════════════════════════════════════════════════════════════════
+// 运动打卡数据（localStorage，非骑行运动手动打卡）
+// ══════════════════════════════════════════════════════════════════════════
+const SPORT_CHECKIN_KEY = 'helmet_sport_checkin'
+
+function loadSportCheckin() {
+  try { return JSON.parse(localStorage.getItem(SPORT_CHECKIN_KEY) || '{}') } catch { return {} }
+}
+function saveSportCheckinLocal(data) {
+  localStorage.setItem(SPORT_CHECKIN_KEY, JSON.stringify(data))
+}
+
+const sportCheckinData = ref(loadSportCheckin())
+
+function getToken() { return sessionStorage.getItem('token') || '' }
+
+// 从后端拉取今日打卡数据，合并到本地
+async function fetchTodaySportCheckin() {
+  const token = getToken()
+  if (!token) return
+  try {
+    const res = await fetch(`/api/user/sport-checkin?date=${todayKey()}`, {
+      headers: { Authorization: 'Bearer ' + token }
+    })
+    if (!res.ok) return
+    const serverData = await res.json() // { running: 3.2, jumprope: 200, ... }
+    const local = loadSportCheckin()
+    if (!local[todayKey()]) local[todayKey()] = {}
+    Object.assign(local[todayKey()], serverData)
+    saveSportCheckinLocal(local)
+    sportCheckinData.value = { ...local }
+  } catch {}
+}
+
+// 获取今日某运动的打卡累计值
+function getTodayCheckinVal(key) {
+  return Number(sportCheckinData.value[todayKey()]?.[key] || 0)
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// 各运动目标 + 进度计算
+// ══════════════════════════════════════════════════════════════════════════
+const sportGoalItems = computed(() => {
+  if (!ridePlanStore.hasPlan) return []
+
+  let planSportsCfg = []
+  try {
+    planSportsCfg = JSON.parse(ridePlanStore.plan.planSportsCfg || '[]')
+  } catch {
+    try { planSportsCfg = JSON.parse(ridePlanStore.plan.planSports || '[]') } catch {}
+  }
+
+  return planSportsCfg.map(cfg => {
+    const opt = SPORT_OPTIONS.find(o => o.key === cfg.key)
+    if (!opt) return null
+
+    let goalVal = 0
+    let goalText = ''
+    let doneVal = 0
+    let doneText = ''
+    let ratio = 0
+
+    if (cfg.key === 'cycling') {
+      // 骑行：自动从 rideHistory 读取
+      goalVal = Number(cfg.duration || ridePlanStore.plan.planDailyRideMin || 30)
+      goalText = `${goalVal} 分钟`
+      doneVal = todayStats.value.durationMin
+      doneText = `${doneVal.toFixed(0)} min`
+      ratio = goalVal > 0 ? doneVal / goalVal : 0
+    } else if (opt.inputType === 'duration') {
+      goalVal = Number(cfg.duration || 30)
+      goalText = `${goalVal} 分钟`
+      doneVal = getTodayCheckinVal(cfg.key)
+      doneText = `${doneVal} min`
+      ratio = goalVal > 0 ? doneVal / goalVal : 0
+    } else if (opt.inputType === 'distance') {
+      goalVal = Number(cfg.distance || 3)
+      goalText = `${goalVal} km`
+      doneVal = getTodayCheckinVal(cfg.key)
+      doneText = `${doneVal.toFixed ? doneVal.toFixed(2) : doneVal} km`
+      ratio = goalVal > 0 ? doneVal / goalVal : 0
+    } else if (opt.inputType === 'steps') {
+      goalVal = Number(cfg.steps || 8000)
+      goalText = `${goalVal} 步`
+      doneVal = getTodayCheckinVal(cfg.key)
+      doneText = `${doneVal} 步`
+      ratio = goalVal > 0 ? doneVal / goalVal : 0
+    } else if (opt.inputType === 'jumprope') {
+      const sets = Number(cfg.sets || 3)
+      const reps = Number(cfg.reps || 100)
+      goalVal = sets * reps
+      goalText = `${sets}组×${reps}个`
+      doneVal = getTodayCheckinVal(cfg.key)
+      doneText = `${doneVal} 个`
+      ratio = goalVal > 0 ? doneVal / goalVal : 0
+    }
+
+    return {
+      key: cfg.key,
+      label: opt.label,
+      icon: opt.icon,
+      inputType: opt.inputType,
+      goalVal,
+      goalText,
+      doneVal,
+      doneText,
+      ratio,
+      cfg,
+    }
+  }).filter(Boolean)
 })
 
-const kcalRatio = computed(() => {
-  if (!ridePlanStore.hasPlan) return 0
-  const goal = Number(ridePlanStore.plan.planDailyIntake) || 1
-  return todayStats.value.kcal / goal
+// 今日总消耗热量（骑行自动 + 其他打卡估算）
+const totalKcalToday = computed(() => {
+  let total = todayStats.value.kcal  // 骑行热量
+  for (const item of sportGoalItems.value) {
+    if (item.key === 'cycling') continue
+    const opt = SPORT_OPTIONS.find(o => o.key === item.key)
+    if (!opt) continue
+    const done = item.doneVal
+    if (opt.inputType === 'duration')   total += done * (opt.kcalPerMin || 6)
+    else if (opt.inputType === 'distance') total += done * (opt.kcalPerKm || 60)
+    else if (opt.inputType === 'steps')    total += (done / 1000) * (opt.kcalPer1k || 40)
+    else if (opt.inputType === 'jumprope') total += done * (opt.kcalPerRep || 0.1)
+  }
+  return total
 })
+
+const totalKcalRatio = computed(() => {
+  const goal = Number(ridePlanStore.plan?.planDailyIntake) || 1
+  return totalKcalToday.value / goal
+})
+
+const allSportsDone = computed(() => sportGoalItems.value.length > 0 && sportGoalItems.value.every(i => i.ratio >= 1))
+
+// ══════════════════════════════════════════════════════════════════════════
+// 打卡弹窗
+// ══════════════════════════════════════════════════════════════════════════
+const checkinModal = reactive({
+  visible: false,
+  key: '',
+  label: '',
+  icon: '',
+  inputType: '',
+  goalText: '',
+  inputVal: 0,
+})
+
+function openCheckinModal(item) {
+  checkinModal.visible = true
+  checkinModal.key = item.key
+  checkinModal.label = item.label
+  checkinModal.icon = item.icon
+  checkinModal.inputType = item.inputType
+  checkinModal.goalText = item.goalText
+  checkinModal.inputVal = item.doneVal || 0
+}
+
+function closeCheckinModal() {
+  checkinModal.visible = false
+}
+
+async function confirmCheckin() {
+  const val = Number(checkinModal.inputVal) || 0
+  if (val < 0) return
+
+  // 本地立即更新
+  const data = loadSportCheckin()
+  const key = todayKey()
+  if (!data[key]) data[key] = {}
+  data[key][checkinModal.key] = val
+  saveSportCheckinLocal(data)
+  sportCheckinData.value = { ...data }
+
+  // 后端异步同步
+  const token = getToken()
+  if (token) {
+    fetch('/api/user/sport-checkin', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify({ date: key, sportKey: checkinModal.key, value: val })
+    }).catch(() => {})
+  }
+
+  closeCheckinModal()
+}
 
 // ══════════════════════════════════════════════════════════════════════════
 // 食谱数据（7套预设）
@@ -454,6 +684,63 @@ const F = (name) => {
   return map[name] || ''
 }
 const D = (name, kcal) => ({ name, kcal, img: F(name) })
+
+// 饮食限制标签映射：菜名 → 触发的限制标签（与 dietTagOptions 对应）
+const DISH_RESTRICT_MAP = {
+  // 猪肉类
+  '猪里脊': ['不吃猪肉'], '红烧肉': ['不吃猪肉'], '皮蛋瘦肉粥': ['不吃猪肉'],
+  // 牛羊肉类
+  '牛肉时蔬锅': ['不吃牛羊肉'], '土豆炖牛肉': ['不吃牛羊肉'],
+  '红烧牛腩': ['不吃牛羊肉'], '卤牛肉': ['不吃牛羊肉'],
+  // 海鲜类
+  '清蒸鱼': ['不吃海鲜'], '清蒸大黄鱼': ['不吃海鲜'], '清蒸虾': ['不吃海鲜'],
+  '虾仁豆腐': ['不吃海鲜'], '三文鱼饭': ['不吃海鲜'], '紫菜汤': ['不吃海鲜'],
+  // 牛奶类
+  '牛奶': ['不喝牛奶'], '酸奶': ['不喝牛奶'],
+  // 素食（含肉/蛋/奶的都排除）
+  '水煮蛋': ['素食'], '茶叶蛋': ['素食'], '卤蛋': ['素食'],
+  '鸡胸肉沙拉': ['素食'], '清蒸鸡腿': ['素食'], '芦笋鸡胸套餐': ['素食'],
+  '牛肉时蔬锅': ['素食', '不吃牛羊肉'], '土豆炖牛肉': ['素食', '不吃牛羊肉'],
+  '红烧牛腩': ['素食', '不吃牛羊肉'], '卤牛肉': ['素食', '不吃牛羊肉'],
+  '猪里脊': ['素食', '不吃猪肉'], '皮蛋瘦肉粥': ['素食', '不吃猪肉'],
+  '清蒸鱼': ['素食', '不吃海鲜'], '清蒸大黄鱼': ['素食', '不吃海鲜'],
+  '清蒸虾': ['素食', '不吃海鲜'], '虾仁豆腐': ['素食', '不吃海鲜'],
+  '三文鱼饭': ['素食', '不吃海鲜'],
+  '牛奶': ['素食', '不喝牛奶'],
+  // 高碳水（低碳水限制）
+  '糙米饭': ['低碳水'], '杂粮饭': ['低碳水'], '荞麦面': ['低碳水'],
+  '全麦吐司': ['低碳水'], '全麦面包': ['低碳水'], '蒸红薯': ['低碳水'],
+  '蒸南瓜': ['低碳水'], '紫薯粥': ['低碳水'], '燕麦粥': ['低碳水'],
+  '杂粮粥': ['低碳水'],
+}
+
+// 安全替换菜（不含任何限制成分）
+const SAFE_DISHES = [
+  D('炒西兰花', 80), D('凉拌黄瓜', 40), D('清炒菠菜', 70),
+  D('炒菜心', 80), D('拌木耳', 60), D('清炒时蔬', 80),
+  D('豆腐', 120), D('冬瓜汤', 40), D('番茄蛋花汤', 120),
+]
+
+// 判断一道菜是否与当前饮食限制冲突
+function isDishAllowed(dishName, restrictions) {
+  if (!restrictions || restrictions.length === 0) return true
+  const tags = DISH_RESTRICT_MAP[dishName] || []
+  return !tags.some(t => restrictions.includes(t))
+}
+
+// 过滤一餐的菜单，冲突的菜用安全菜替换
+function filterMeal(dishes, restrictions) {
+  if (!restrictions || restrictions.length === 0) return dishes
+  return dishes.map(dish => {
+    if (isDishAllowed(dish.name, restrictions)) return dish
+    // 找一个安全替换菜（不在当前餐里已有的）
+    const existing = dishes.map(d => d.name)
+    const replacement = SAFE_DISHES.find(s =>
+      !existing.includes(s.name) && isDishAllowed(s.name, restrictions)
+    )
+    return replacement || dish  // 找不到就保留原菜
+  })
+}
 
 // 减脂型（< 1600 kcal）— 5天轮换，第6天复用第1天
 const DIET_FATBURN = [
@@ -620,11 +907,12 @@ const mealSwapIdx = reactive({ breakfast: 0, lunch: 0, dinner: 0 })
 const currentMeals = computed(() => {
   const set = getRecipeSet()
   const baseIdx = getWeeklyRecipeIndex()
+  const restrictions = ridePlanStore.dietRestrictions || []
   const result = {}
   for (const meal of ['breakfast', 'lunch', 'dinner']) {
     const offset = mealSwapIdx[meal]
     const idx = (baseIdx + offset) % set.length
-    result[meal] = set[idx][meal]
+    result[meal] = filterMeal(set[idx][meal], restrictions)
   }
   return result
 })
@@ -700,22 +988,37 @@ const allDone = computed(() => {
   })
 })
 
-// 最近30天热力图数据
+// 最近30天热力图数据 — 支持月份切换
+const heatmapMonthOffset = ref(0)  // 0=本月, -1=上月, ...
+
+const heatmapMonthLabel = computed(() => {
+  const d = new Date()
+  d.setDate(1)
+  d.setMonth(d.getMonth() + heatmapMonthOffset.value)
+  return `${d.getFullYear()}年${d.getMonth()+1}月`
+})
+
+function prevHeatmapMonth() { heatmapMonthOffset.value-- }
+function nextHeatmapMonth() { if (heatmapMonthOffset.value < 0) heatmapMonthOffset.value++ }
+
 const heatmapDays = computed(() => {
   const data = checkinData.value
   const days = []
   const now = new Date()
-  for (let i = 29; i >= 0; i--) {
-    const d = new Date(now)
-    d.setDate(d.getDate() - i)
-    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+  const base = new Date(now.getFullYear(), now.getMonth() + heatmapMonthOffset.value, 1)
+  const year = base.getFullYear()
+  const month = base.getMonth()
+  const daysInMonth = new Date(year, month + 1, 0).getDate()
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const key = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`
     const entry = data[key]
     let checked = 0
     let total = 0
     if (entry) {
       for (const m of ['breakfast','lunch','dinner']) {
         checked += (entry[m] || []).length
-        // 用当天食谱总菜数估算（简化：固定每餐3道）
         total += 3
       }
     } else {
@@ -725,7 +1028,7 @@ const heatmapDays = computed(() => {
     days.push({
       label: key,
       level: ratio === 0 ? 0 : ratio < 0.4 ? 1 : ratio < 1 ? 2 : 3,
-      isToday: i === 0
+      isToday: key === todayStr
     })
   }
   return days
@@ -745,6 +1048,7 @@ const totalCheckinDays = computed(() => {
 onMounted(() => {
   ridePlanStore.fetchPlan()
   rideHistoryStore.loadFromStorage()
+  fetchTodaySportCheckin()
   resetTimer()
 })
 
@@ -1053,7 +1357,7 @@ onUnmounted(() => {
 .empty-icon { font-size: 40px; }
 .empty-text {
   font-size: 13px;
-  color: #64748b;
+  color: white;
   margin: 0;
   letter-spacing: 0.04em;
 }
@@ -1080,100 +1384,127 @@ onUnmounted(() => {
 ══════════════════════════════════════════════════════════════════ */
 .exercise-content { display: flex; flex-direction: column; gap: 14px; }
 
-.target-row {
-  display: flex;
-  gap: 24px;
-}
-.target-item {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.target-label {
-  font-size: 11px;
-  color: #64748b;
-  letter-spacing: 0.06em;
-}
-.target-val {
-  font-size: 20px;
-  font-weight: 700;
-  color: #38bdf8;
-  line-height: 1.2;
-}
-.target-val em {
-  font-size: 11px;
-  font-style: normal;
-  color: #94a3b8;
-  margin-left: 3px;
-}
-
-.rings-row {
-  display: flex;
-  align-items: center;
-  gap: 18px;
-}
-
-.ring-wrap {
-  position: relative;
-  width: 80px;
-  height: 80px;
-  flex-shrink: 0;
-}
-.ring-svg {
-  width: 80px;
-  height: 80px;
-  transform: rotate(-90deg);
-}
-.ring-bg {
-  fill: none;
-  stroke: #1e3a4a;
-  stroke-width: 5;
-}
-.ring-fg {
-  fill: none;
-  stroke-width: 5;
-  stroke-linecap: round;
-  transition: stroke-dasharray 0.6s ease;
-}
-.ring-time { stroke: #38bdf8; filter: drop-shadow(0 0 4px rgba(56,189,248,0.5)); }
-.ring-kcal { stroke: #f59e0b; filter: drop-shadow(0 0 4px rgba(245,158,11,0.5)); }
-
-.ring-label {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-}
-.ring-pct {
-  font-size: 14px;
-  font-weight: 700;
-  color: #e2e8f0;
-  line-height: 1;
-}
-.ring-sub {
-  font-size: 10px;
-  color: #64748b;
-  margin-top: 2px;
-}
-
-.today-stats {
+/* 总热量进度条 */
+.kcal-summary {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  flex: 1;
 }
-.stat-row {
+.kcal-summary__info {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
   font-size: 12px;
 }
-.stat-k { color: #64748b; }
-.stat-v { color: #e2e8f0; font-weight: 600; }
-.stat-v em { font-style: normal; color: #64748b; font-size: 10px; }
+.kcal-summary__label { color: rgba(255,255,255,0.6); }
+.kcal-summary__val { color: #e2e8f0; font-weight: 600; }
+.kcal-summary__val em { font-style: normal; color: rgba(255,255,255,0.45); font-size: 11px; }
+.kcal-bar-track {
+  height: 6px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.kcal-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #38bdf8, #818cf8);
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+.kcal-bar-fill--done { background: linear-gradient(90deg, #22c55e, #4ade80); }
+
+/* 运动项目列表 */
+.sport-items {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sport-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 8px;
+  transition: border-color 0.2s;
+}
+.sport-item--done {
+  border-color: rgba(34,197,94,0.25);
+  background: rgba(34,197,94,0.04);
+}
+
+.sport-item__left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 90px;
+  flex-shrink: 0;
+}
+.sport-item__icon { font-size: 20px; line-height: 1; }
+.sport-item__info { display: flex; flex-direction: column; gap: 2px; }
+.sport-item__name { font-size: 12px; font-weight: 600; color: #e2e8f0; }
+.sport-item__goal { font-size: 10px; color: rgba(255,255,255,0.4); }
+
+.sport-item__progress {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.sport-item__bar-track {
+  flex: 1;
+  height: 5px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.sport-item__bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #38bdf8, #818cf8);
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+.sport-item--done .sport-item__bar-fill { background: linear-gradient(90deg, #22c55e, #4ade80); }
+.sport-item__pct { font-size: 11px; color: rgba(255,255,255,0.5); min-width: 32px; text-align: right; }
+
+.sport-item__right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+  min-width: 72px;
+}
+.sport-item__done-val { font-size: 11px; color: #e2e8f0; font-weight: 600; }
+.sport-item__auto-tag {
+  font-size: 9px;
+  color: rgba(56,189,248,0.5);
+  border: 1px solid rgba(56,189,248,0.2);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+.sport-checkin-btn {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 4px;
+  border: 1px solid rgba(56,189,248,0.35);
+  background: rgba(56,189,248,0.08);
+  color: #38bdf8;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+.sport-checkin-btn:hover { background: rgba(56,189,248,0.15); }
+.sport-checkin-btn--done {
+  border-color: rgba(34,197,94,0.35);
+  background: rgba(34,197,94,0.08);
+  color: #22c55e;
+}
 
 .exercise-comment {
   font-size: 12px;
@@ -1191,10 +1522,77 @@ onUnmounted(() => {
   color: #22c55e;
 }
 
+/* 打卡弹窗 */
+.checkin-modal-box { max-width: 340px; }
+.checkin-modal-goal {
+  font-size: 12px;
+  color: rgba(255,255,255,0.5);
+  margin: -8px 0 16px;
+}
+.checkin-modal-form { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+.checkin-form-label { font-size: 12px; color: rgba(255,255,255,0.6); }
+.checkin-form-input {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: #e2e8f0;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.checkin-form-input:focus { border-color: rgba(56,189,248,0.5); }
+.checkin-modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+.checkin-modal-cancel {
+  padding: 7px 16px;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: transparent;
+  color: rgba(255,255,255,0.5);
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.checkin-modal-confirm {
+  padding: 7px 16px;
+  border-radius: 6px;
+  border: none;
+  background: linear-gradient(135deg, #38bdf8, #818cf8);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: filter 0.15s;
+}
+.checkin-modal-confirm:hover { filter: brightness(1.1); }
+
 /* ══════════════════════════════════════════════════════════════════
    食谱卡片内容
 ══════════════════════════════════════════════════════════════════ */
 .recipe-content { display: flex; flex-direction: column; gap: 14px; }
+
+.recipe-header-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.recipe-diet-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.recipe-diet-tag {
+  font-size: 10px;
+  color: rgba(239,68,68,0.75);
+  border: 1px solid rgba(239,68,68,0.2);
+  background: rgba(239,68,68,0.05);
+  padding: 2px 7px;
+  border-radius: 10px;
+  letter-spacing: 0.04em;
+}
 
 .recipe-type-badge {
   display: inline-block;
@@ -1231,7 +1629,7 @@ onUnmounted(() => {
 .meal-header {
   font-size: 11px;
   font-weight: 700;
-  color: #64748b;
+  color: white;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   padding-bottom: 6px;
@@ -1343,7 +1741,7 @@ onUnmounted(() => {
   flex-wrap: wrap;
 }
 .recipe-total strong { color: #f59e0b; transition: color 0.4s; }
-.recipe-target { color: #64748b; }
+.recipe-target { color: white; }
 
 .recipe-total--done {
   background: rgba(34,197,94,0.08);
@@ -1410,7 +1808,38 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px;
   margin-bottom: 12px;
+}
+.heatmap-month-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.heatmap-nav-btn {
+  background: transparent;
+  border: 1px solid rgba(56,189,248,0.15);
+  color: rgba(56,189,248,0.6);
+  cursor: pointer;
+  padding: 2px 5px;
+  display: flex;
+  align-items: center;
+  transition: all 0.15s;
+  border-radius: 2px;
+}
+.heatmap-nav-btn:hover:not(:disabled) {
+  background: rgba(56,189,248,0.08);
+  color: #38bdf8;
+}
+.heatmap-nav-btn:disabled { opacity: 0.25; cursor: not-allowed; }
+.heatmap-month-label {
+  font-family: var(--font-mono, monospace);
+  font-size: 10px;
+  color: rgba(56,189,248,0.7);
+  letter-spacing: 0.06em;
+  min-width: 60px;
+  text-align: center;
 }
 .checkin-stats__title {
   font-size: 11px;
@@ -1421,7 +1850,7 @@ onUnmounted(() => {
 }
 .checkin-stats__total {
   font-size: 11px;
-  color: #64748b;
+  color: white;
 }
 .checkin-stats__total strong { color: #22c55e; }
 
@@ -1455,7 +1884,7 @@ onUnmounted(() => {
   align-items: center;
   gap: 4px;
   font-size: 9px;
-  color: #64748b;
+  color: white;
 }
 .legend-dot {
   width: 10px; height: 10px; border-radius: 2px;
@@ -1563,7 +1992,7 @@ onUnmounted(() => {
   right: 16px;
   background: none;
   border: none;
-  color: #64748b;
+  color: white;
   font-size: 18px;
   cursor: pointer;
   line-height: 1;

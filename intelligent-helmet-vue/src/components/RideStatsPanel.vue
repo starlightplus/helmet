@@ -391,7 +391,7 @@ onUnmounted(() => {
 .ride-card__speed-hint {
   font-family: var(--font-mono, monospace);
   font-size: 0.6rem;
-  color: rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.75);
   letter-spacing: 0.06em;
   margin-top: 4px;
 }
@@ -460,7 +460,7 @@ onUnmounted(() => {
 .ride-card__stat-key {
   font-family: var(--font-mono, monospace);
   font-size: 0.58rem;
-  color: rgba(56, 189, 248, 0.30);
+  color: rgba(255, 255, 255, 0.75);
   font-weight: 500;
   letter-spacing: 0.06em;
   text-transform: uppercase;

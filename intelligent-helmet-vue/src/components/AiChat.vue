@@ -89,8 +89,9 @@
 import { ref, computed, nextTick, onMounted } from 'vue'
 
 const props = defineProps({
-  deviceId: { type: String, default: '' },
-  showClose: { type: Boolean, default: false }
+  deviceId:   { type: String, default: '' },
+  showClose:  { type: Boolean, default: false },
+  sensorData: { type: Object, default: null }
 })
 
 const emit = defineEmits(['close'])
@@ -185,6 +186,20 @@ function sendHint(hint) {
   sendMessage()
 }
 
+// 构建实时传感器上下文，注入到每次对话的 system 消息
+function buildSensorContext() {
+  const d = props.sensorData
+  if (!d || Object.keys(d).length === 0) return ''
+  const parts = []
+  if (d.temperature != null) parts.push(`温度 ${Number(d.temperature).toFixed(1)}°C`)
+  if (d.humidity    != null) parts.push(`湿度 ${Number(d.humidity).toFixed(1)}%`)
+  if (d.longitude && d.latitude) parts.push(`位置 (${Number(d.latitude).toFixed(5)}, ${Number(d.longitude).toFixed(5)})`)
+  if (d.fallFlag)  parts.push('⚠️ 检测到跌倒')
+  if (d.slowFlag)  parts.push('⚠️ 速度过慢')
+  if (parts.length === 0) return ''
+  return `[当前头盔传感器数据：${parts.join('，')}]`
+}
+
 async function sendMessage() {
   const text = inputText.value.trim()
   if (!text || loading.value) return
@@ -194,23 +209,31 @@ async function sendMessage() {
   loading.value = true
   scrollToBottom()
 
+  const ctx = buildSensorContext()
+  const msgList = messages.value.map(m => ({ role: m.role, content: m.content }))
+  // 在最后一条用户消息前插入传感器上下文（不显示在界面上）
+  if (ctx) {
+    const lastUserIdx = [...msgList].reverse().findIndex(m => m.role === 'user')
+    if (lastUserIdx !== -1) {
+      const idx = msgList.length - 1 - lastUserIdx
+      msgList[idx] = { role: 'user', content: ctx + '\n' + msgList[idx].content }
+    }
+  }
+
   try {
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: authHeaders(),
-      body: JSON.stringify({
-        messages: messages.value.map(m => ({ role: m.role, content: m.content })),
-        deviceId: props.deviceId || ''
-      })
+      body: JSON.stringify({ messages: msgList, deviceId: props.deviceId || '' })
     })
     const data = await res.json()
     if (data.error) {
-      messages.value.push({ role: 'assistant', content: '⚠️ ' + data.error, timeStr: nowTimeStr(), dateKey: nowDateKey() })
+      messages.value.push({ role: 'assistant', content: '⚠️ ' + data.error, timeStr: nowTimeStr(), dateKey: nowDateKey(), failed: false })
     } else {
       messages.value.push({ role: 'assistant', content: data.content, timeStr: nowTimeStr(), dateKey: nowDateKey() })
     }
   } catch (e) {
-    messages.value.push({ role: 'assistant', content: '⚠️ 网络错误，请检查后端服务是否运行。', timeStr: nowTimeStr(), dateKey: nowDateKey() })
+    messages.value.push({ role: 'assistant', content: '⚠️ 网络错误，请检查后端服务是否运行。', timeStr: nowTimeStr(), dateKey: nowDateKey(), failed: true, retryText: text })
   } finally {
     loading.value = false
     await nextTick()

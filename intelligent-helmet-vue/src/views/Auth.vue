@@ -1,14 +1,14 @@
 <template>
   <div class="auth-root">
-    <!-- Video background -->
-    <video class="auth-video" autoplay loop muted playsinline>
+    <!-- Video background: video 隐藏用于解码，canvas 渲染，避免浏览器媒体控件 -->
+    <video ref="loginVideoRef" class="auth-video-hidden" autoplay loop muted playsinline
+      disablePictureInPicture @loadeddata="startLoginDraw">
       <source src="/login.mp4" type="video/mp4">
     </video>
+    <canvas ref="loginCanvasRef" class="auth-video"></canvas>
 
     <!-- Main content -->
     <div class="auth-content">
-      <!-- Brand label -->
-      <div class="brand-label">HELMET MONITOR PLATFORM</div>
 
       <!-- ── Verifying state ── -->
       <div v-if="isVerifying" class="auth-card verify-card">
@@ -21,8 +21,8 @@
               </svg>
             </div>
           </div>
-          <h3 class="verify-title">Secure Channel Autologin</h3>
-          <p class="verify-sub">SESSION_ESTABLISHMENT_SEQUENCE</p>
+          <h3 class="verify-title">安全通道自动登录</h3>
+          <p class="verify-sub">安全会话建立序列</p>
           <div class="verify-log">
             <div
               v-for="(log, i) in verificationLogs.slice(0, verificationStep + 1)"
@@ -35,7 +35,7 @@
             </div>
           </div>
         </div>
-        <div class="verify-footer">Secured with SHA-512 End-to-End Enclosure</div>
+        <div class="verify-footer">安全通道保护</div>
       </div>
 
       <!-- ── Success state ── -->
@@ -46,39 +46,39 @@
               <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
             </svg>
           </div>
-          <span class="success-badge">CONNECTION_STABLE</span>
-          <h2 class="success-title">Access Granted</h2>
+          <span class="success-badge">连接已建立</span>
+          <h2 class="success-title">权限已通过</h2>
           <p class="success-sub">
-            Welcome to the system,
+            欢迎进入系统,
             <span class="success-name">{{ loggedInUser.username }}</span>
           </p>
           <div class="success-board">
             <div class="board-row">
-              <span class="board-key">AUTHORIZED IDENTIFIER</span>
+              <span class="board-key">已认证身份码</span>
               <span class="board-val">{{ loggedInUser.username }}</span>
             </div>
             <div class="board-grid">
               <div class="board-cell">
                 <div class="cell-label cyan">
                   <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" /></svg>
-                  <span>SEC_LEVEL</span>
+                  <span>安全级别</span>
                 </div>
-                <div class="cell-val">JWT Auth</div>
+                <div class="cell-val">JWT 认证</div>
               </div>
               <div class="board-cell">
                 <div class="cell-label violet">
                   <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" /></svg>
-                  <span>ROLE</span>
+                  <span>权限等级</span>
                 </div>
                 <div class="cell-val">{{ loggedInUser.role || 'USER' }}</div>
               </div>
             </div>
             <div class="board-session">
               <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" class="session-icon"><rect x="2" y="3" width="20" height="14" rx="2" /><path d="M8 21h8M12 17v4" /></svg>
-              <span>Session loaded — redirecting to dashboard...</span>
+              <span>会话已加载 — 正在重定向到仪表板...</span>
             </div>
           </div>
-          <button class="logout-btn" @click="handleLogout">Terminate Session</button>
+          <button class="logout-btn" @click="handleLogout">终止会话</button>
         </div>
       </div>
 
@@ -186,7 +186,7 @@
             <!-- Password strength meter (signup only) -->
             <div v-if="mode === 'signup' && form.password.length > 0" class="strength-meter">
               <div class="strength-header">
-                <span class="strength-key">Phrase integrity:</span>
+                <span class="strength-key">报文完整性校验：</span>
                 <span class="strength-val" :class="strengthTextClass">{{ strengthLabel }}</span>
               </div>
               <div class="strength-bars">
@@ -199,16 +199,16 @@
               </div>
               <div class="strength-reqs">
                 <div class="req-item" :class="{ 'req-met': form.password.length >= 8 }">
-                  <div class="req-dot"></div><span>8+ characters</span>
+                  <div class="req-dot"></div><span>字符长度：8位及以上</span>
                 </div>
                 <div class="req-item" :class="{ 'req-met': /[A-Z]/.test(form.password) }">
-                  <div class="req-dot"></div><span>uppercase letter</span>
+                  <div class="req-dot"></div><span>包含大写字母</span>
                 </div>
                 <div class="req-item" :class="{ 'req-met': /[0-9]/.test(form.password) }">
-                  <div class="req-dot"></div><span>numerical token</span>
+                  <div class="req-dot"></div><span>包含数字</span>
                 </div>
                 <div class="req-item" :class="{ 'req-met': /[^A-Za-z0-9]/.test(form.password) }">
-                  <div class="req-dot"></div><span>special symbol</span>
+                  <div class="req-dot"></div><span>特殊符号</span>
                 </div>
               </div>
             </div>
@@ -227,7 +227,7 @@
                 autocomplete="new-password"
               />
             </div>
-            <p v-if="passwordMismatch" class="field-hint-error">Passwords do not match</p>
+            <p v-if="passwordMismatch" class="field-hint-error">密码不匹配</p>
           </div>
 
           <!-- Forgot mode: transmit button + back -->
@@ -275,14 +275,14 @@
           <div class="demo-wrap">
             <button type="button" class="demo-btn" @click="handleDemoLogin">
               <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z" /></svg>
-              <span>Instant Demo Portal</span>
+              <span>临时用户快速登录</span>
             </button>
           </div>
         </div>
       </div>
 
       <!-- Footer -->
-      <div class="page-footer">&copy; {{ new Date().getFullYear() }} Intelligent Helmet System. All handshakes secured.</div>
+      <div class="page-footer">&copy; {{ new Date().getFullYear() }} 智能头盔系统，所有握手连接已安全建立</div>
     </div>
   </div>
 </template>
@@ -294,6 +294,33 @@ import { useUserStore } from '@/stores/user'
 
 const router = useRouter()
 const userStore = useUserStore()
+
+// ── 登录页视频背景（canvas 渲染）──
+const loginVideoRef = ref(null)
+const loginCanvasRef = ref(null)
+let loginRafId = null
+
+function startLoginDraw() {
+  const video = loginVideoRef.value
+  const canvas = loginCanvasRef.value
+  if (!video || !canvas) return
+  const ctx = canvas.getContext('2d')
+
+  function resize() {
+    canvas.width = window.innerWidth
+    canvas.height = window.innerHeight
+  }
+  resize()
+  window.addEventListener('resize', resize)
+
+  function draw() {
+    if (video.readyState >= 2) {
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+    }
+    loginRafId = requestAnimationFrame(draw)
+  }
+  draw()
+}
 
 // ── State ──
 const mode = ref('signin') // 'signin' | 'signup' | 'forgot'
@@ -508,6 +535,8 @@ function handleLogout() {
 
 onBeforeUnmount(() => {
   verifyTimers.forEach(clearTimeout)
+  cancelAnimationFrame(loginRafId)
+  window.removeEventListener('resize', () => {})
 })
 </script>
 
@@ -522,6 +551,14 @@ onBeforeUnmount(() => {
   justify-content: center;
   overflow: hidden;
   font-family: 'Inter', 'Segoe UI', sans-serif;
+}
+
+.auth-video-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .auth-video {
@@ -584,7 +621,7 @@ onBeforeUnmount(() => {
   color: #22d3ee;
 }
 .verify-title { font-size: 18px; font-weight: 700; letter-spacing: 0.1em; color: #22d3ee; text-transform: uppercase; margin-bottom: 4px; text-shadow: 0 0 12px rgba(34,211,238,0.4); }
-.verify-sub { font-size: 11px; font-family: monospace; color: #52525b; margin-bottom: 24px; }
+.verify-sub { font-size: 11px; font-family: monospace; color: white; margin-bottom: 24px; }
 .verify-log {
   width: 100%;
   background: rgba(9,9,11,0.6);
@@ -599,7 +636,7 @@ onBeforeUnmount(() => {
   flex-direction: column;
   gap: 8px;
 }
-.verify-log-line { color: #52525b; display: flex; gap: 8px; }
+.verify-log-line { color: white; display: flex; gap: 8px; }
 .verify-log-line.active { color: #22d3ee; }
 .log-arrow { color: #8b5cf6; flex-shrink: 0; }
 .verify-footer { font-size: 10px; font-family: monospace; color: #3f3f46; text-align: center; text-transform: uppercase; letter-spacing: 0.1em; }
@@ -633,7 +670,7 @@ onBeforeUnmount(() => {
   text-align: left;
 }
 .board-row { display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 16px; }
-.board-key { font-size: 11px; font-family: monospace; color: #52525b; }
+.board-key { font-size: 11px; font-family: monospace; color: white; }
 .board-val { font-size: 12px; color: #d4d4d8; font-weight: 500; }
 .board-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
 .board-cell { background: rgba(9,9,11,0.4); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 12px; }
@@ -686,7 +723,7 @@ onBeforeUnmount(() => {
   flex: 1; padding: 8px;
   font-size: 12px; font-weight: 600;
   border: none; background: transparent;
-  color: #52525b; border-radius: 8px;
+  color: white; border-radius: 8px;
   cursor: pointer; transition: all 0.2s;
 }
 .tab-btn.active {
@@ -710,7 +747,7 @@ onBeforeUnmount(() => {
 /* Form */
 .auth-form { display: flex; flex-direction: column; gap: 16px; }
 .field-group { display: flex; flex-direction: column; gap: 6px; }
-.field-label { font-size: 11px; font-family: monospace; color: #52525b; letter-spacing: 0.05em; }
+.field-label { font-size: 11px; font-family: monospace; color: white; letter-spacing: 0.05em; }
 .field-label-row { display: flex; justify-content: space-between; align-items: center; }
 .forgot-link { font-size: 11px; font-family: monospace; color: #22d3ee; background: none; border: none; cursor: pointer; padding: 0; transition: color 0.2s; }
 .forgot-link:hover { color: #67e8f9; }
@@ -727,7 +764,7 @@ onBeforeUnmount(() => {
   box-shadow: 0 0 0 3px rgba(6,182,212,0.1);
 }
 .field-box.field-error { border-color: rgba(239,68,68,0.4); }
-.field-icon { color: #52525b; margin-left: 12px; flex-shrink: 0; transition: color 0.2s; }
+.field-icon { color: white; margin-left: 12px; flex-shrink: 0; transition: color 0.2s; }
 .field-box:focus-within .field-icon { color: #22d3ee; }
 .field-input {
   flex: 1; background: transparent; border: none; outline: none;
@@ -746,7 +783,7 @@ onBeforeUnmount(() => {
 }
 .field-checking { padding: 0 12px; font-size: 14px; color: #22d3ee; font-family: monospace; animation: blink 0.8s ease-in-out infinite; }
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
-.eye-btn { background: none; border: none; cursor: pointer; padding: 0 12px; color: #52525b; display: flex; align-items: center; transition: color 0.2s; }
+.eye-btn { background: none; border: none; cursor: pointer; padding: 0 12px; color: white; display: flex; align-items: center; transition: color 0.2s; }
 .eye-btn:hover { color: #d4d4d8; }
 .field-hint-error { font-size: 10px; color: #f87171; font-family: monospace; }
 
@@ -759,13 +796,13 @@ onBeforeUnmount(() => {
   font-family: monospace;
 }
 .strength-header { display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 8px; }
-.strength-key { color: #52525b; text-transform: uppercase; }
+.strength-key { color: white; text-transform: uppercase; }
 .strength-val { font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
 .text-red { color: #f87171; }
 .text-orange { color: #fb923c; }
 .text-yellow { color: #facc15; }
 .text-emerald { color: #34d399; }
-.text-muted { color: #52525b; }
+.text-muted { color: white; }
 .strength-bars { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; height: 4px; margin-bottom: 8px; }
 .strength-bar { border-radius: 2px; transition: background 0.3s; }
 .bar-empty { background: #27272a; }
@@ -774,7 +811,7 @@ onBeforeUnmount(() => {
 .bar-yellow { background: #eab308; }
 .bar-emerald { background: #10b981; }
 .strength-reqs { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
-.req-item { display: flex; align-items: center; gap: 4px; font-size: 9px; color: #52525b; }
+.req-item { display: flex; align-items: center; gap: 4px; font-size: 9px; color: white; }
 .req-item.req-met { color: #22d3ee; }
 .req-dot { width: 4px; height: 4px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
 
@@ -803,7 +840,7 @@ onBeforeUnmount(() => {
   width: 100%; text-align: center;
   background: none; border: none;
   font-size: 12px; font-family: monospace;
-  color: #52525b; cursor: pointer;
+  color: white; cursor: pointer;
   padding: 8px; transition: color 0.2s;
 }
 .back-link:hover { color: #d4d4d8; }
@@ -812,7 +849,7 @@ onBeforeUnmount(() => {
 .social-section { margin-top: 28px; }
 .divider { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
 .divider-line { flex: 1; height: 1px; background: rgba(255,255,255,0.05); }
-.divider-text { font-size: 10px; font-family: monospace; color: #52525b; text-transform: uppercase; letter-spacing: 0.1em; white-space: nowrap; }
+.divider-text { font-size: 10px; font-family: monospace; color: white; text-transform: uppercase; letter-spacing: 0.1em; white-space: nowrap; }
 .social-btns { display: flex; gap: 12px; }
 .social-btn {
   flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px;
@@ -828,7 +865,7 @@ onBeforeUnmount(() => {
 .demo-btn {
   display: inline-flex; align-items: center; gap: 6px;
   font-size: 11px; font-family: monospace;
-  color: #52525b; background: rgba(9,9,11,0.4);
+  color: white; background: rgba(9,9,11,0.4);
   border: 1px solid rgba(255,255,255,0.05);
   border-radius: 999px; padding: 6px 14px;
   cursor: pointer; transition: all 0.2s;

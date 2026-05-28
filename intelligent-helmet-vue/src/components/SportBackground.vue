@@ -1,62 +1,87 @@
 <template>
-  <div class="cyber-bg scanline-overlay">
-    <div class="cyber-glow cyber-glow--1"></div>
-    <div class="cyber-glow cyber-glow--2"></div>
+  <div class="cyber-bg">
+    <!-- 隐藏的 video 用于解码，canvas 负责渲染，浏览器不会对 canvas 显示媒体控件 -->
+    <video ref="videoRef" class="bg-video-hidden" autoplay loop muted playsinline
+      disablePictureInPicture
+      @loadeddata="startDraw">
+      <source src="/background.mp4" type="video/mp4">
+    </video>
+    <canvas ref="canvasRef" class="bg-canvas"></canvas>
+    <!-- 统一遮光层 -->
+    <div class="bg-overlay"></div>
   </div>
 </template>
+
+<script setup>
+import { ref, onMounted, onBeforeUnmount } from 'vue'
+
+const videoRef = ref(null)
+const canvasRef = ref(null)
+let rafId = null
+
+function startDraw() {
+  const video = videoRef.value
+  const canvas = canvasRef.value
+  if (!video || !canvas) return
+
+  const ctx = canvas.getContext('2d')
+
+  function resize() {
+    canvas.width = window.innerWidth
+    canvas.height = window.innerHeight
+  }
+  resize()
+  window.addEventListener('resize', resize)
+
+  function draw() {
+    if (video.readyState >= 2) {
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+    }
+    rafId = requestAnimationFrame(draw)
+  }
+  draw()
+
+  onBeforeUnmount(() => {
+    cancelAnimationFrame(rafId)
+    window.removeEventListener('resize', resize)
+  })
+}
+</script>
 
 <style scoped>
 .cyber-bg {
   position: fixed;
   inset: 0;
   z-index: -1;
-  background: #050505;
   overflow: hidden;
 }
 
-.cyber-glow {
+/* video 完全隐藏，只用于解码 */
+.bg-video-hidden {
   position: absolute;
-  border-radius: 50%;
-  filter: blur(100px);
+  width: 1px;
+  height: 1px;
+  opacity: 0;
   pointer-events: none;
-  animation: float 12s ease-in-out infinite;
 }
 
-.cyber-glow--1 {
-  top: 0; right: 10%;
-  width: 500px; height: 400px;
-  background: radial-gradient(circle, rgba(0,243,255,0.07) 0%, transparent 70%);
+.bg-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
 }
 
-.cyber-glow--2 {
-  bottom: 5%; left: 5%;
-  width: 400px; height: 350px;
-  background: radial-gradient(circle, rgba(0,255,102,0.05) 0%, transparent 70%);
-  animation-delay: 5s;
-}
-
-@keyframes float {
-  0%,100% { transform: translate(0,0); }
-  50%      { transform: translate(15px,-20px); }
+.bg-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  pointer-events: none;
 }
 </style>
 
 <style>
-/* CRT 扫描线 — 全局覆盖层 */
-.scanline-overlay::before {
-  content: " ";
-  display: block;
-  position: fixed;
-  inset: 0;
-  background:
-    linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,0.22) 50%),
-    linear-gradient(90deg, rgba(255,0,0,0.025), rgba(0,255,0,0.008), rgba(0,0,255,0.025));
-  background-size: 100% 2px, 3px 100%;
-  z-index: 9998;
-  pointer-events: none;
-}
-
-/* 全局 cyber 变量 */
 :root {
   --cyber-cyan:  #00F3FF;
   --cyber-green: #00FF66;

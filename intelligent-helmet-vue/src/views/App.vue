@@ -126,7 +126,7 @@
         <!-- 模式二：AI 对话框全屏占满右侧（打开对话后） -->
         <Transition name="chat-expand">
           <div v-if="showAiChat" class="ai-fullscreen-chat">
-            <AiChat :deviceId="latestSensorData.deviceId || ''" :show-close="true" @close="toggleAiChat" />
+            <AiChat :deviceId="latestSensorData.deviceId || ''" :sensor-data="latestSensorData" :show-close="true" @close="toggleAiChat" />
           </div>
         </Transition>
       </aside>
@@ -247,6 +247,7 @@ function goToProfile() { router.push('/profile') }
 
 onMounted(async () => {
   rideHistoryStore.loadFromStorage()
+  rideHistoryStore.syncFromBackend()
   connect('ws://localhost:8082/ws/sensor-data')
   try {
     const res = await request.get('/api/sensor/history', { params: { limit: 1 } })
@@ -272,6 +273,7 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  background: transparent;
 }
 
 /* ── 顶部横向导航 ── */
@@ -282,7 +284,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: space-between;
   padding: 0 20px;
-  background: rgba(0, 0, 0, 0.92);
+  background: rgba(0, 0, 0, 0.5);
   border-bottom: 1px solid rgba(56,189,248,0.15);
   backdrop-filter: blur(12px);
   z-index: 300;
@@ -432,7 +434,7 @@ onUnmounted(() => {
 .side-nav {
   width: 130px;
   flex-shrink: 0;
-  background: none;
+  background: transparent;
   position: relative;
   border-right: 1px solid rgba(56,189,248,0.12);
   display: flex;
@@ -440,16 +442,6 @@ onUnmounted(() => {
   padding: 16px 8px;
   gap: 4px;
   z-index: 200;
-}
-.side-nav::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image: url('/sky.jpg');
-  background-size: cover;
-  background-position: center;
-  filter: brightness(0.6) saturate(1.2);
-  z-index: 0;
 }
 .side-nav > * {
   position: relative;
@@ -464,7 +456,7 @@ onUnmounted(() => {
   background: transparent;
   border: none;
   border-left: 2px solid transparent;
-  color: rgba(255,255,255,0.35);
+  color: rgba(255, 255, 255, 0.75);
   font-family: var(--font-mono, monospace);
   font-size: 0.63rem;
   font-weight: 600;
@@ -498,17 +490,6 @@ onUnmounted(() => {
   flex-direction: column;
   overflow: hidden;
   position: relative;
-}
-.app-content::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image: url('/sky.jpg');
-  background-size: cover;
-  background-position: center;
-  filter: brightness(1.3) saturate(1.2);
-  z-index: 0;
-  pointer-events: none;
 }
 .app-content > * {
   position: relative;
@@ -571,13 +552,7 @@ onUnmounted(() => {
 }
 
 .starfield-bg {
-  position: absolute;
-  inset: 0;
-  background-image: url('sky.jpg');
-  background-size: cover;
-  background-position: center;
-  filter: brightness(0.6) saturate(1.2);
-  z-index: 0;
+  display: none;
 }
 
 /* 3D 模型悬浮区域 */

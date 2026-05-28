@@ -771,7 +771,7 @@ function confirmAction() {
   border-radius: 7px;
   border: 1px solid transparent;
   background: none;
-  color: #64748b;
+  color: white;
   cursor: pointer;
   font-weight: 500;
   transition: all 0.15s;
@@ -806,7 +806,7 @@ function confirmAction() {
   padding: 6px 14px;
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.08);
-  color: #64748b;
+  color: white;
   border-radius: 10px;
   font-size: 12px;
   cursor: pointer;
@@ -895,7 +895,7 @@ function confirmAction() {
   align-items: center;
   gap: 8px;
   font-size: 11px;
-  color: #64748b;
+  color: white;
   font-family: monospace;
 }
 
@@ -923,7 +923,7 @@ function confirmAction() {
   background: rgba(255,255,255,0.05);
   border-radius: 8px;
   padding: 5px;
-  color: #64748b;
+  color: white;
   transition: color 0.2s;
 }
 .rh-card__header:hover .rh-card__chevron-wrap { color: #fff; }
@@ -1010,7 +1010,7 @@ function confirmAction() {
 
 .rh-bento-cell__sub {
   font-size: 10px;
-  color: #64748b;
+  color: white;
   font-family: monospace;
 }
 .rh-bento-cell__sub--cyan  strong { color: #22d3ee; }
@@ -1205,7 +1205,7 @@ function confirmAction() {
 
 .rh-confirm__msg {
   font-size: 0.83rem;
-  color: #64748b;
+  color: white;
   line-height: 1.5;
   margin-bottom: 24px;
 }
@@ -1228,7 +1228,7 @@ function confirmAction() {
 
 .rh-confirm__btn--cancel {
   background: rgba(255,255,255,0.05);
-  color: #64748b;
+  color: white;
   border: 1px solid rgba(255,255,255,0.08);
 }
 .rh-confirm__btn--cancel:hover { background: rgba(255,255,255,0.09); }

@@ -426,7 +426,7 @@ onMounted(() => { connect() })
 .stat-item { display: flex; flex-direction: column; align-items: center; gap: 4rpx; }
 .stat-val { font-size: 32rpx; font-weight: 700; color: #E0F2FE; font-family: monospace; }
 .stat-val.cal { color: #00D9FF; }
-.stat-lbl { font-size: 20rpx; color: #8892A0; }
+.stat-lbl { font-size: 20rpx; color: white; }
 
 /* 温湿度行 */
 .env-row {

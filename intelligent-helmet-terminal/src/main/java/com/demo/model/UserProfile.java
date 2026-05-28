@@ -49,6 +49,12 @@ public class UserProfile {
     @Column(columnDefinition = "TEXT")
     private String planDietText;
 
+    @Column(columnDefinition = "TEXT")
+    private String planSports;
+
+    @Column(columnDefinition = "TEXT")
+    private String planSportsCfg;
+
     private LocalDateTime planAcceptedAt;
 
     public UserProfile() {}
@@ -103,6 +109,12 @@ public class UserProfile {
 
     public String getPlanDietText() { return planDietText; }
     public void setPlanDietText(String v) { this.planDietText = v; }
+
+    public String getPlanSports() { return planSports; }
+    public void setPlanSports(String v) { this.planSports = v; }
+
+    public String getPlanSportsCfg() { return planSportsCfg; }
+    public void setPlanSportsCfg(String v) { this.planSportsCfg = v; }
 
     public LocalDateTime getPlanAcceptedAt() { return planAcceptedAt; }
     public void setPlanAcceptedAt(LocalDateTime v) { this.planAcceptedAt = v; }

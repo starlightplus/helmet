@@ -120,6 +120,10 @@
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
                   删除规划
                 </button>
+                <button class="rp-action-btn rp-action-btn--history" @click="openHistoryDrawer">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  历史版本
+                </button>
                 <button class="rp-action-btn rp-action-btn--regen" @click="generatePlan">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.1"/></svg>
                   重新生成
@@ -338,6 +342,63 @@
       </div><!-- /rp-body -->
     </div>
   </div>
+
+  <!-- ── 历史版本抽屉 ── -->
+  <Teleport to="body">
+    <Transition name="drawer-fade">
+      <div v-if="showHistoryDrawer" class="ph-overlay" @click.self="closeHistoryDrawer">
+        <div class="ph-drawer">
+          <div class="ph-drawer__header">
+            <span class="ph-drawer__title">历史规划版本</span>
+            <button class="ph-drawer__close" @click="closeHistoryDrawer">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+          <div class="ph-drawer__body">
+            <div v-if="planHistoryStore.versions.length === 0" class="ph-empty">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(139,92,246,0.3)" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <p>暂无历史版本</p>
+              <p class="ph-empty__sub">重新生成并采纳规划后，旧版本将自动保存</p>
+            </div>
+            <div v-else class="ph-list">
+              <div v-for="(v, i) in planHistoryStore.versions" :key="i" class="ph-item">
+                <div class="ph-item__header" @click="viewHistoryVersion(i)">
+                  <div class="ph-item__meta">
+                    <span class="ph-item__num">V{{ planHistoryStore.versions.length - i }}</span>
+                    <span class="ph-item__date">{{ formatHistoryDate(v.savedAt) }}</span>
+                    <span v-if="v.planTargetWeight" class="ph-item__tag">目标 {{ v.planTargetWeight }}kg</span>
+                    <span v-if="v.planWeeks" class="ph-item__tag">{{ v.planWeeks }}周</span>
+                    <span v-for="s in parseSports(v.planSports).slice(0,3)" :key="s.key" class="ph-item__sport">{{ s.icon }}</span>
+                  </div>
+                  <div class="ph-item__actions">
+                    <button class="ph-item__del" @click.stop="deleteHistoryVersion(i)" title="删除此版本">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                    <svg class="ph-item__chevron" :class="{ 'ph-item__chevron--open': historyViewIdx === i }"
+                      width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="6 9 12 15 18 9"/>
+                    </svg>
+                  </div>
+                </div>
+                <Transition name="ph-expand">
+                  <div v-if="historyViewIdx === i" class="ph-item__content">
+                    <div class="ph-tabs">
+                      <span class="ph-tab ph-tab--active">运动计划</span>
+                    </div>
+                    <div class="ph-text" v-html="formatMd(v.planSportText)"></div>
+                    <div v-if="v.planDietText" class="ph-diet-hint">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/></svg>
+                      该版本含饮食食谱（重新生成后可在饮食标签查看）
+                    </div>
+                  </div>
+                </Transition>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
 </template>
 
 <script setup>
@@ -345,11 +406,43 @@ import { ref, computed, reactive, onMounted } from 'vue'
 import { useUserProfileStore } from '@/stores/userProfile.js'
 import { useRideHistoryStore } from '@/stores/rideHistory.js'
 import { useRidePlanStore } from '@/stores/rideplan.js'
+import { usePlanHistoryStore } from '@/stores/planHistory.js'
 import SportBackground from '@/components/SportBackground.vue'
 
 const emit = defineEmits(['back'])
 const profileStore = useUserProfileStore()
 const historyStore = useRideHistoryStore()
+const planHistoryStore = usePlanHistoryStore()
+
+// ── 历史版本抽屉 ──────────────────────────────────────────────────
+const showHistoryDrawer = ref(false)
+const historyViewIdx = ref(null)  // 当前预览的版本索引
+
+function openHistoryDrawer() {
+  planHistoryStore.load()
+  historyViewIdx.value = null
+  showHistoryDrawer.value = true
+}
+function closeHistoryDrawer() {
+  showHistoryDrawer.value = false
+  historyViewIdx.value = null
+}
+function viewHistoryVersion(idx) {
+  historyViewIdx.value = historyViewIdx.value === idx ? null : idx
+}
+function deleteHistoryVersion(idx) {
+  planHistoryStore.remove(idx)
+  if (historyViewIdx.value === idx) historyViewIdx.value = null
+}
+function formatHistoryDate(iso) {
+  if (!iso) return ''
+  const d = new Date(iso)
+  return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`
+}
+function parseSports(planSports) {
+  if (!planSports) return []
+  try { return JSON.parse(planSports) } catch { return [] }
+}
 const ridePlanStore = useRidePlanStore()
 
 function goBack() { emit('back') }
@@ -638,6 +731,14 @@ async function acceptPlan() {
   saving.value = true
   const token = getToken()
   try {
+    // 先快照当前已采纳的规划（如果有）
+    if (accepted.value) {
+      const current = await fetchSavedPlan()
+      if (current && current.planSportText) {
+        planHistoryStore.load()
+        planHistoryStore.snapshot(current)
+      }
+    }
     await fetch('/api/user/profile', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
@@ -1406,4 +1507,186 @@ const formattedDiet  = computed(() => formatMd(dietText.value))
   .rp-summary-grid { grid-template-columns: repeat(2, 1fr); }
   .rp-container { padding: 14px; }
 }
+
+/* ── 历史版本按钮 ─────────────────────────────────────────────── */
+.rp-action-btn--history {
+  background: rgba(139,92,246,0.06);
+  border-color: rgba(139,92,246,0.25);
+  color: rgba(167,139,250,0.8);
+}
+.rp-action-btn--history:hover {
+  background: rgba(139,92,246,0.12);
+  color: #a78bfa;
+  box-shadow: 0 0 10px rgba(139,92,246,0.2);
+}
+
+/* ── 历史版本抽屉 ─────────────────────────────────────────────── */
+.ph-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  background: rgba(0,0,0,0.55);
+  display: flex;
+  justify-content: flex-end;
+}
+.ph-drawer {
+  width: 420px;
+  max-width: 95vw;
+  height: 100%;
+  background: rgba(10,15,30,0.97);
+  border-left: 1px solid rgba(139,92,246,0.2);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.ph-drawer__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(139,92,246,0.12);
+  flex-shrink: 0;
+}
+.ph-drawer__title {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #a78bfa;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.ph-drawer__close {
+  background: transparent;
+  border: none;
+  color: rgba(255,255,255,0.35);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  transition: color 0.15s;
+}
+.ph-drawer__close:hover { color: #fff; }
+.ph-drawer__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(139,92,246,0.3) transparent;
+}
+.ph-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: rgba(255,255,255,0.3);
+  font-size: 0.78rem;
+  line-height: 1.8;
+}
+.ph-empty__sub { font-size: 0.68rem; color: rgba(255,255,255,0.2); }
+.ph-list { display: flex; flex-direction: column; gap: 8px; }
+.ph-item {
+  border: 1px solid rgba(139,92,246,0.15);
+  background: rgba(139,92,246,0.04);
+  overflow: hidden;
+}
+.ph-item__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.ph-item__header:hover { background: rgba(139,92,246,0.08); }
+.ph-item__meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.ph-item__num {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #a78bfa;
+  background: rgba(139,92,246,0.12);
+  padding: 1px 6px;
+}
+.ph-item__date {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.62rem;
+  color: rgba(255,255,255,0.4);
+}
+.ph-item__tag {
+  font-size: 0.60rem;
+  color: rgba(139,92,246,0.7);
+  border: 1px solid rgba(139,92,246,0.2);
+  padding: 1px 5px;
+}
+.ph-item__sport { font-size: 0.85rem; }
+.ph-item__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.ph-item__del {
+  background: transparent;
+  border: none;
+  color: rgba(239,68,68,0.4);
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  transition: color 0.15s;
+}
+.ph-item__del:hover { color: #EF4444; }
+.ph-item__chevron {
+  stroke: rgba(255,255,255,0.3);
+  transition: transform 0.2s;
+}
+.ph-item__chevron--open { transform: rotate(180deg); }
+.ph-item__content {
+  padding: 12px 14px;
+  border-top: 1px solid rgba(139,92,246,0.1);
+  background: rgba(0,0,0,0.2);
+}
+.ph-tabs { margin-bottom: 8px; }
+.ph-tab {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.60rem;
+  color: #a78bfa;
+  border-bottom: 1px solid rgba(139,92,246,0.4);
+  padding-bottom: 2px;
+  letter-spacing: 0.06em;
+}
+.ph-text {
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.65);
+  line-height: 1.6;
+  max-height: 300px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+.ph-diet-hint {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 8px;
+  font-size: 0.62rem;
+  color: rgba(255,255,255,0.25);
+  font-style: italic;
+}
+/* 抽屉动画 */
+.drawer-fade-enter-active,
+.drawer-fade-leave-active { transition: opacity 0.25s ease; }
+.drawer-fade-enter-from,
+.drawer-fade-leave-to     { opacity: 0; }
+.drawer-fade-enter-active .ph-drawer,
+.drawer-fade-leave-active .ph-drawer { transition: transform 0.25s ease; }
+.drawer-fade-enter-from .ph-drawer   { transform: translateX(100%); }
+.drawer-fade-leave-to .ph-drawer     { transform: translateX(100%); }
+/* 展开动画 */
+.ph-expand-enter-active,
+.ph-expand-leave-active { transition: all 0.2s ease; overflow: hidden; }
+.ph-expand-enter-from,
+.ph-expand-leave-to     { max-height: 0; opacity: 0; padding-top: 0; padding-bottom: 0; }
 </style>
