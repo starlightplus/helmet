@@ -1,14 +1,9 @@
 <template>
   <div class="auth-root">
-    <!-- Particle canvas background -->
-    <canvas ref="canvasRef" class="auth-canvas"></canvas>
-
-    <!-- Ambient blur spheres -->
-    <div class="ambient-sphere sphere-cyan"></div>
-    <div class="ambient-sphere sphere-violet"></div>
-
-    <!-- Scanline overlay -->
-    <div class="scanline-overlay"></div>
+    <!-- Video background -->
+    <video class="auth-video" autoplay loop muted playsinline>
+      <source src="/login.mp4" type="video/mp4">
+    </video>
 
     <!-- Main content -->
     <div class="auth-content">
@@ -293,13 +288,12 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, onMounted, onBeforeUnmount } from 'vue'
+import { ref, reactive, computed, watch, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 
 const router = useRouter()
 const userStore = useUserStore()
-const canvasRef = ref(null)
 
 // ── State ──
 const mode = ref('signin') // 'signin' | 'signup' | 'forgot'
@@ -512,92 +506,8 @@ function handleLogout() {
   setMode('signin')
 }
 
-// ── Particle canvas ──
-let animFrameId = null
-
-onMounted(() => {
-  const canvas = canvasRef.value
-  if (!canvas) return
-  const ctx = canvas.getContext('2d')
-
-  let W = canvas.width = window.innerWidth
-  let H = canvas.height = window.innerHeight
-
-  const particleCount = Math.min(60, Math.floor((W * H) / 25000))
-  const connectionDistance = 120
-  const mouse = { x: -1000, y: -1000, radius: 180 }
-
-  const particles = Array.from({ length: particleCount }, () => {
-    const hue = Math.random() > 0.5 ? 190 + Math.random() * 20 : 260 + Math.random() * 20
-    return {
-      x: Math.random() * W,
-      y: Math.random() * H,
-      vx: (Math.random() - 0.5) * 0.4,
-      vy: (Math.random() - 0.5) * 0.4,
-      size: Math.random() * 2 + 1,
-      color: `hsla(${hue}, 80%, 75%, ${Math.random() * 0.4 + 0.2})`
-    }
-  })
-
-  function animate() {
-    ctx.clearRect(0, 0, W, H)
-    for (let i = 0; i < particles.length; i++) {
-      const p = particles[i]
-      p.x += p.vx; p.y += p.vy
-      if (p.x < 0 || p.x > W) p.vx *= -1
-      if (p.y < 0 || p.y > H) p.vy *= -1
-      const dx = mouse.x - p.x, dy = mouse.y - p.y
-      const dist = Math.sqrt(dx * dx + dy * dy)
-      if (dist < mouse.radius) {
-        const force = (mouse.radius - dist) / mouse.radius
-        const angle = Math.atan2(dy, dx)
-        p.x -= Math.cos(angle) * force * 0.6
-        p.y -= Math.sin(angle) * force * 0.6
-      }
-      ctx.beginPath()
-      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2)
-      ctx.fillStyle = p.color
-      ctx.shadowBlur = 8; ctx.shadowColor = p.color
-      ctx.fill(); ctx.shadowBlur = 0
-
-      for (let j = i + 1; j < particles.length; j++) {
-        const q = particles[j]
-        const ddx = p.x - q.x, ddy = p.y - q.y
-        const d = Math.sqrt(ddx * ddx + ddy * ddy)
-        if (d < connectionDistance) {
-          ctx.beginPath()
-          ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y)
-          ctx.strokeStyle = `rgba(139,92,246,${(1 - d / connectionDistance) * 0.15})`
-          ctx.lineWidth = 0.8; ctx.stroke()
-        }
-      }
-      const mdx = p.x - mouse.x, mdy = p.y - mouse.y
-      const md = Math.sqrt(mdx * mdx + mdy * mdy)
-      if (md < mouse.radius) {
-        ctx.beginPath()
-        ctx.moveTo(p.x, p.y); ctx.lineTo(mouse.x, mouse.y)
-        ctx.strokeStyle = `rgba(6,182,212,${(1 - md / mouse.radius) * 0.25})`
-        ctx.lineWidth = 1; ctx.stroke()
-      }
-    }
-    animFrameId = requestAnimationFrame(animate)
-  }
-  animate()
-
-  const onResize = () => { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight }
-  const onMouseMove = (e) => { const r = canvas.getBoundingClientRect(); mouse.x = e.clientX - r.left; mouse.y = e.clientY - r.top }
-  const onMouseLeave = () => { mouse.x = -1000; mouse.y = -1000 }
-  window.addEventListener('resize', onResize)
-  window.addEventListener('mousemove', onMouseMove)
-  window.addEventListener('mouseleave', onMouseLeave)
-
-  onBeforeUnmount(() => {
-    cancelAnimationFrame(animFrameId)
-    window.removeEventListener('resize', onResize)
-    window.removeEventListener('mousemove', onMouseMove)
-    window.removeEventListener('mouseleave', onMouseLeave)
-    verifyTimers.forEach(clearTimeout)
-  })
+onBeforeUnmount(() => {
+  verifyTimers.forEach(clearTimeout)
 })
 </script>
 
@@ -606,7 +516,7 @@ onMounted(() => {
 .auth-root {
   position: relative;
   min-height: 100vh;
-  background: url('/sky_login.jpg') center/cover no-repeat;
+  background: #000;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -614,38 +524,13 @@ onMounted(() => {
   font-family: 'Inter', 'Segoe UI', sans-serif;
 }
 
-.auth-canvas {
+.auth-video {
   position: absolute;
   inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
   z-index: 0;
-  pointer-events: none;
-  opacity: 0.8;
-}
-
-.ambient-sphere {
-  position: absolute;
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 0;
-}
-.sphere-cyan {
-  top: 25%; left: 25%;
-  width: 384px; height: 384px;
-  background: rgba(6, 182, 212, 0.08);
-  filter: blur(120px);
-}
-.sphere-violet {
-  bottom: 25%; right: 25%;
-  width: 384px; height: 384px;
-  background: rgba(139, 92, 246, 0.08);
-  filter: blur(120px);
-}
-
-.scanline-overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.06) 2px, rgba(0,0,0,0.06) 4px);
   pointer-events: none;
 }
 
