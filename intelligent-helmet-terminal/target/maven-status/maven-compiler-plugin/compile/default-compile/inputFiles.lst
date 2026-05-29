@@ -7,9 +7,12 @@ D:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\src\main\java\com\demo\Appl
 D:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\src\main\java\com\demo\config\SecurityConfig.java
 D:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\src\main\java\com\demo\service\SensorDataPersistService.java
 D:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\src\main\java\com\demo\controller\SensorDataController.java
+D:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\src\main\java\com\demo\model\SportCheckin.java
 D:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\src\main\java\com\demo\repository\SensorDataRepository.java
 D:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\src\main\java\com\demo\config\JwtUtil.java
 D:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\src\main\java\com\demo\config\WebSocketConfig.java
+D:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\src\main\java\com\demo\repository\RideSessionRepository.java
+D:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\src\main\java\com\demo\model\RideSession.java
 D:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\src\main\java\com\demo\service\ClaudeService.java
 D:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\src\main\java\com\demo\repository\UserProfileRepository.java
 D:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\src\main\java\com\demo\model\ChatMessage.java
@@ -21,6 +24,7 @@ D:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\src\main\java\com\demo\repo
 D:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\src\main\java\com\demo\service\UserService.java
 D:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\src\main\java\com\demo\repository\ChatMessageRepository.java
 D:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\src\main\java\com\demo\model\User.java
+D:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\src\main\java\com\demo\repository\SportCheckinRepository.java
 D:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\src\main\java\com\demo\controller\UserDataController.java
 D:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\src\main\java\com\demo\repository\HelmetEventRepository.java
 D:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\src\main\java\com\demo\controller\ChatController.java

@@ -3,7 +3,7 @@
     <!-- Video background: video 隐藏用于解码，canvas 渲染，避免浏览器媒体控件 -->
     <video ref="loginVideoRef" class="auth-video-hidden" autoplay loop muted playsinline
       disablePictureInPicture @loadeddata="startLoginDraw">
-      <source src="/login.mp4" type="video/mp4">
+      <source src="/background.mp4" type="video/mp4">
     </video>
     <canvas ref="loginCanvasRef" class="auth-video"></canvas>
 

@@ -111,6 +111,118 @@
           查看详细规划
         </button>
       </div>
+
+      <!-- ── 历史运动月历（仅有规划时显示） ── -->
+      <div v-if="ridePlanStore.hasPlan" class="cal-section">
+        <!-- 月份导航 -->
+        <div class="cal-header">
+          <button class="cal-nav-btn" @click="prevCalMonth">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <span class="cal-month-label">{{ calMonthLabel }}</span>
+          <button class="cal-nav-btn" @click="nextCalMonth" :disabled="calMonthOffset >= 0">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+          <span v-if="calLoading" class="cal-loading">加载中…</span>
+        </div>
+        <!-- 星期标题 -->
+        <div class="cal-weekdays">
+          <span v-for="w in ['日','一','二','三','四','五','六']" :key="w">{{ w }}</span>
+        </div>
+        <!-- 日期格子 -->
+        <div class="cal-grid">
+          <div
+            v-for="(cell, i) in calDays"
+            :key="i"
+            class="cal-cell"
+            :class="{
+              'cal-cell--empty':      !cell,
+              'cal-cell--future':     cell && cell.isFuture,
+              'cal-cell--today':      cell && cell.isToday,
+              'cal-cell--selected':   cell && calSelectedDate === cell.key,
+              'cal-cell--lv1':        cell && cell.level === 1,
+              'cal-cell--lv2':        cell && cell.level === 2,
+              'cal-cell--lv3':        cell && cell.level === 3,
+              'cal-cell--clickable':  cell && !cell.isFuture && cell.hasAny,
+              'cal-cell--past-empty': cell && !cell.isFuture && !cell.hasAny && !cell.isToday,
+            }"
+            @click="onCalDayClick(cell)"
+          >
+            <span v-if="cell" class="cal-day-num">{{ cell.day }}</span>
+          </div>
+        </div>
+        <!-- 图例 -->
+        <div class="cal-legend">
+          <span class="cal-legend-item"><span class="cal-legend-dot cal-legend-dot--0"></span>无记录</span>
+          <span class="cal-legend-item"><span class="cal-legend-dot cal-legend-dot--1"></span>少量</span>
+          <span class="cal-legend-item"><span class="cal-legend-dot cal-legend-dot--2"></span>中等</span>
+          <span class="cal-legend-item"><span class="cal-legend-dot cal-legend-dot--3"></span>高强度</span>
+        </div>
+
+        <!-- 展开面板 -->
+        <Transition name="cal-panel-slide">
+          <div v-if="calDetailData" class="cal-detail-panel">
+            <div class="cal-detail-header">
+              <span class="cal-detail-date">{{ calDetailData.date }}</span>
+              <button class="cal-detail-close" @click="calSelectedDate = ''">✕</button>
+            </div>
+
+            <!-- 净消耗热量（顶部大数字） -->
+            <div class="cal-detail-net-kcal">
+              <div class="cal-detail-net-kcal__main">
+                <span class="cal-detail-net-kcal__val" :class="{ 'cal-detail-net-kcal__val--neg': calDetailData.netKcal < 0 }">
+                  {{ calDetailData.netKcal >= 0 ? '+' : '' }}{{ calDetailData.netKcal.toFixed(0) }}
+                </span>
+                <span class="cal-detail-net-kcal__unit">kcal 净消耗</span>
+              </div>
+              <div class="cal-detail-net-kcal__breakdown">
+                <span>消耗 {{ calDetailData.totalKcal.toFixed(0) }}</span>
+                <span class="cal-detail-net-kcal__minus">−</span>
+                <span>摄入 {{ calDetailData.intakeKcal.toFixed(0) }}</span>
+              </div>
+            </div>
+
+            <!-- 无运动记录提示 -->
+            <div v-if="calDetailData.isEmpty" class="cal-detail-empty">
+              当日无运动记录
+            </div>
+
+            <template v-else>
+              <!-- 运动打卡（骑行 + 其他运动统一展示） -->
+              <div class="cal-detail-block">
+                <div class="cal-detail-block-title">运动打卡</div>
+                <div class="cal-detail-sport-list">
+                  <div v-for="item in calDetailData.sportItems" :key="item.key" class="cal-detail-sport-item">
+                    <span class="cal-detail-sport-icon">{{ item.icon }}</span>
+                    <span class="cal-detail-sport-label">{{ item.label }}</span>
+                    <span class="cal-detail-sport-val">{{ item.doneText }}</span>
+                    <span class="cal-detail-sport-kcal">{{ item.kcal.toFixed(0) }} kcal</span>
+                  </div>
+                </div>
+              </div>
+            </template>
+
+            <!-- 当日食谱（始终显示） -->
+            <div v-if="calDetailData.meals" class="cal-detail-block">
+              <div class="cal-detail-block-title">🍽 当日食谱</div>
+              <div class="cal-detail-meals">
+                <div v-for="meal in ['breakfast','lunch','dinner']" :key="meal" class="cal-detail-meal-row">
+                  <span class="cal-detail-meal-label">{{ { breakfast:'早餐', lunch:'午餐', dinner:'晚餐' }[meal] }}</span>
+                  <div class="cal-detail-meal-dishes">
+                    <span
+                      v-for="dish in calDetailData.meals[meal]"
+                      :key="dish.name"
+                      class="cal-detail-dish"
+                      :class="{ 'cal-detail-dish--checked': calDetailData.checkedDishes[meal]?.includes(dish.name) }"
+                    >{{ dish.name }}</span>
+                  </div>
+                  <span class="cal-detail-meal-kcal">{{ calDetailData.meals[meal].reduce((s,d)=>s+d.kcal,0) }} kcal</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Transition>
+      </div>
     </section>
 
     <!-- ═══════════════════════════════════════════════════════════
@@ -129,14 +241,21 @@
         </div>
 
         <div v-else class="exercise-content">
+
           <!-- 总热量进度 -->
           <div class="kcal-summary">
             <div class="kcal-summary__info">
               <span class="kcal-summary__label">今日总消耗</span>
-              <span class="kcal-summary__val">{{ totalKcalToday.toFixed(0) }}<em> / {{ ridePlanStore.plan.planDailyIntake }} kcal</em></span>
+              <span class="kcal-summary__val">
+                {{ totalKcalToday.toFixed(0) }}<em> / {{ ridePlanStore.plan.planDailyIntake }} kcal</em>
+                <span v-if="totalKcalRatio > 1" class="kcal-over-tag">+{{ (totalKcalToday - ridePlanStore.plan.planDailyIntake).toFixed(0) }}</span>
+              </span>
             </div>
             <div class="kcal-bar-track">
-              <div class="kcal-bar-fill" :style="{ width: Math.min(totalKcalRatio * 100, 100) + '%' }" :class="{ 'kcal-bar-fill--done': totalKcalRatio >= 1 }"></div>
+              <div class="kcal-bar-fill"
+                :style="{ width: Math.min(totalKcalRatio * 100, 100) + '%' }"
+                :class="{ 'kcal-bar-fill--done': totalKcalRatio >= 1, 'kcal-bar-fill--over': totalKcalRatio > 1.1 }"
+              ></div>
             </div>
           </div>
 
@@ -168,19 +287,27 @@
                 <span class="sport-item__pct">{{ Math.round(Math.min(item.ratio, 1) * 100) }}%</span>
               </div>
 
-              <!-- 右：完成值 / 打卡按钮 -->
+              <!-- 右：完成值 + 热量小计 / 打卡按钮 -->
               <div class="sport-item__right">
-                <span class="sport-item__done-val">{{ item.doneText }}</span>
-                <!-- 骑行自动同步，其他运动手动打卡 -->
+                <div class="sport-item__done-info">
+                  <span class="sport-item__done-val">{{ item.doneText }}</span>
+                  <span v-if="item.kcalDone > 0" class="sport-item__kcal-hint">{{ item.kcalDone.toFixed(0) }} kcal</span>
+                </div>
+                <!-- 骑行：点击弹出今日统计 -->
                 <button
-                  v-if="item.key !== 'cycling'"
+                  v-if="item.key === 'cycling'"
+                  class="sport-checkin-btn sport-checkin-btn--auto"
+                  @click="openCyclingDetail"
+                >详情</button>
+                <!-- 其他运动：未达标=打卡，已达标=修改记录 -->
+                <button
+                  v-else
                   class="sport-checkin-btn"
                   :class="{ 'sport-checkin-btn--done': item.ratio >= 1 }"
                   @click="openCheckinModal(item)"
                 >
-                  {{ item.ratio >= 1 ? '✓ 已达标' : '打卡' }}
+                  {{ item.ratio >= 1 ? '修改记录' : '打卡' }}
                 </button>
-                <span v-else class="sport-item__auto-tag">自动同步</span>
               </div>
             </div>
           </div>
@@ -201,29 +328,79 @@
             <h3 class="modal-title">{{ checkinModal.icon }} {{ checkinModal.label }} 打卡</h3>
             <p class="checkin-modal-goal">今日目标：{{ checkinModal.goalText }}</p>
 
+            <!-- 已有记录时显示累加/替换切换 -->
+            <div v-if="checkinModal.prevVal > 0" class="checkin-mode-row">
+              <span class="checkin-prev-val">已记录：{{ checkinModal.prevVal }}</span>
+              <div class="checkin-mode-toggle">
+                <button
+                  class="checkin-mode-btn"
+                  :class="{ active: checkinModal.addMode }"
+                  @click="checkinModal.addMode = true"
+                >累加</button>
+                <button
+                  class="checkin-mode-btn"
+                  :class="{ active: !checkinModal.addMode }"
+                  @click="checkinModal.addMode = false"
+                >替换</button>
+              </div>
+            </div>
+
             <div class="checkin-modal-form">
               <template v-if="checkinModal.inputType === 'duration'">
-                <label class="checkin-form-label">完成时长（分钟）</label>
-                <input class="checkin-form-input" type="number" min="0" v-model.number="checkinModal.inputVal" placeholder="输入分钟数" />
+                <label class="checkin-form-label">{{ checkinModal.addMode && checkinModal.prevVal > 0 ? '本次时长（分钟）' : '完成时长（分钟）' }}</label>
+                <input ref="checkinInputRef" class="checkin-form-input" type="number" min="0" v-model.number="checkinModal.inputVal" placeholder="输入分钟数" @keyup.enter="confirmCheckin" />
               </template>
               <template v-else-if="checkinModal.inputType === 'distance'">
-                <label class="checkin-form-label">完成距离（km）</label>
-                <input class="checkin-form-input" type="number" min="0" step="0.01" v-model.number="checkinModal.inputVal" placeholder="输入公里数" />
+                <label class="checkin-form-label">{{ checkinModal.addMode && checkinModal.prevVal > 0 ? '本次距离（km）' : '完成距离（km）' }}</label>
+                <input ref="checkinInputRef" class="checkin-form-input" type="number" min="0" step="0.01" v-model.number="checkinModal.inputVal" placeholder="输入公里数" @keyup.enter="confirmCheckin" />
               </template>
               <template v-else-if="checkinModal.inputType === 'steps'">
-                <label class="checkin-form-label">完成步数</label>
-                <input class="checkin-form-input" type="number" min="0" v-model.number="checkinModal.inputVal" placeholder="输入步数" />
+                <label class="checkin-form-label">{{ checkinModal.addMode && checkinModal.prevVal > 0 ? '本次步数' : '完成步数' }}</label>
+                <input ref="checkinInputRef" class="checkin-form-input" type="number" min="0" v-model.number="checkinModal.inputVal" placeholder="输入步数" @keyup.enter="confirmCheckin" />
               </template>
               <template v-else-if="checkinModal.inputType === 'jumprope'">
-                <label class="checkin-form-label">完成个数</label>
-                <input class="checkin-form-input" type="number" min="0" v-model.number="checkinModal.inputVal" placeholder="输入跳绳个数" />
+                <label class="checkin-form-label">{{ checkinModal.addMode && checkinModal.prevVal > 0 ? '本次个数' : '完成个数' }}</label>
+                <input ref="checkinInputRef" class="checkin-form-input" type="number" min="0" v-model.number="checkinModal.inputVal" placeholder="输入跳绳个数" @keyup.enter="confirmCheckin" />
               </template>
+              <!-- 累加模式下显示合计预览 -->
+              <p v-if="checkinModal.addMode && checkinModal.prevVal > 0 && checkinModal.inputVal > 0" class="checkin-sum-preview">
+                合计：{{ checkinModal.prevVal }} + {{ checkinModal.inputVal }} = {{ checkinModal.prevVal + checkinModal.inputVal }}
+              </p>
             </div>
 
             <div class="checkin-modal-actions">
               <button class="checkin-modal-cancel" @click="closeCheckinModal">取消</button>
               <button class="checkin-modal-confirm" @click="confirmCheckin">确认打卡</button>
             </div>
+          </div>
+        </div>
+      </Transition>
+
+      <!-- ── 骑行今日详情弹窗 ── -->
+      <Transition name="modal-fade">
+        <div v-if="cyclingDetailVisible" class="modal-overlay" @click.self="cyclingDetailVisible = false">
+          <div class="modal-box cycling-detail-box" role="dialog">
+            <button class="modal-close" @click="cyclingDetailVisible = false">✕</button>
+            <h3 class="modal-title">🚴 今日骑行统计</h3>
+            <div class="cycling-detail-grid">
+              <div class="cycling-detail-item">
+                <span class="cycling-detail-label">骑行时长</span>
+                <span class="cycling-detail-val">{{ todayStats.durationMin.toFixed(0) }} <em>min</em></span>
+              </div>
+              <div class="cycling-detail-item">
+                <span class="cycling-detail-label">骑行距离</span>
+                <span class="cycling-detail-val">{{ todayStats.distanceKm.toFixed(2) }} <em>km</em></span>
+              </div>
+              <div class="cycling-detail-item">
+                <span class="cycling-detail-label">消耗热量</span>
+                <span class="cycling-detail-val">{{ todayStats.kcal.toFixed(0) }} <em>kcal</em></span>
+              </div>
+              <div class="cycling-detail-item">
+                <span class="cycling-detail-label">今日骑行次数</span>
+                <span class="cycling-detail-val">{{ todayRideCount }} <em>次</em></span>
+              </div>
+            </div>
+            <p class="cycling-detail-tip">骑行数据由骑行记录自动同步，无需手动打卡</p>
           </div>
         </div>
       </Transition>
@@ -357,7 +534,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, reactive, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRidePlanStore } from '@/stores/rideplan.js'
 import { useRideHistoryStore } from '@/stores/rideHistory.js'
 
@@ -464,23 +641,26 @@ const todayStats = computed(() => {
   return { distanceKm, durationMin, kcal }
 })
 
-// ══════════════════════════════════════════════════════════════════════════
-// 运动打卡数据（localStorage，非骑行运动手动打卡）
-// ══════════════════════════════════════════════════════════════════════════
-const SPORT_CHECKIN_KEY = 'helmet_sport_checkin'
+const todayRideCount = computed(() => {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const todayTs = today.getTime()
+  return rideHistoryStore.rides.filter(ride => {
+    const d = new Date(ride.startTime)
+    d.setHours(0, 0, 0, 0)
+    return d.getTime() === todayTs
+  }).length
+})
 
-function loadSportCheckin() {
-  try { return JSON.parse(localStorage.getItem(SPORT_CHECKIN_KEY) || '{}') } catch { return {} }
-}
-function saveSportCheckinLocal(data) {
-  localStorage.setItem(SPORT_CHECKIN_KEY, JSON.stringify(data))
-}
-
-const sportCheckinData = ref(loadSportCheckin())
+// ══════════════════════════════════════════════════════════════════════════
+// 运动打卡数据（纯后端，非骑行运动手动打卡）
+// ══════════════════════════════════════════════════════════════════════════
+// 结构：{ 'YYYY-MM-DD': { sportKey: value } }
+const sportCheckinData = ref({})
 
 function getToken() { return sessionStorage.getItem('token') || '' }
 
-// 从后端拉取今日打卡数据，合并到本地
+// 从后端拉取今日打卡数据
 async function fetchTodaySportCheckin() {
   const token = getToken()
   if (!token) return
@@ -490,11 +670,9 @@ async function fetchTodaySportCheckin() {
     })
     if (!res.ok) return
     const serverData = await res.json() // { running: 3.2, jumprope: 200, ... }
-    const local = loadSportCheckin()
-    if (!local[todayKey()]) local[todayKey()] = {}
-    Object.assign(local[todayKey()], serverData)
-    saveSportCheckinLocal(local)
-    sportCheckinData.value = { ...local }
+    const data = { ...sportCheckinData.value }
+    data[todayKey()] = serverData
+    sportCheckinData.value = data
   } catch {}
 }
 
@@ -561,6 +739,20 @@ const sportGoalItems = computed(() => {
       ratio = goalVal > 0 ? doneVal / goalVal : 0
     }
 
+    // 计算该项运动已消耗热量
+    let kcalDone = 0
+    if (cfg.key === 'cycling') {
+      kcalDone = todayStats.value.kcal
+    } else if (opt.inputType === 'duration') {
+      kcalDone = doneVal * (opt.kcalPerMin || 6)
+    } else if (opt.inputType === 'distance') {
+      kcalDone = doneVal * (opt.kcalPerKm || 60)
+    } else if (opt.inputType === 'steps') {
+      kcalDone = (doneVal / 1000) * (opt.kcalPer1k || 40)
+    } else if (opt.inputType === 'jumprope') {
+      kcalDone = doneVal * (opt.kcalPerRep || 0.1)
+    }
+
     return {
       key: cfg.key,
       label: opt.label,
@@ -570,6 +762,7 @@ const sportGoalItems = computed(() => {
       goalText,
       doneVal,
       doneText,
+      kcalDone,
       ratio,
       cfg,
     }
@@ -610,7 +803,12 @@ const checkinModal = reactive({
   inputType: '',
   goalText: '',
   inputVal: 0,
+  prevVal: 0,   // 今日已记录的旧值
+  addMode: true, // true=累加，false=替换
 })
+
+// ── 打卡弹窗 input ref（自动聚焦）──────────────────────────────────────────
+const checkinInputRef = ref(null)
 
 function openCheckinModal(item) {
   checkinModal.visible = true
@@ -619,26 +817,39 @@ function openCheckinModal(item) {
   checkinModal.icon = item.icon
   checkinModal.inputType = item.inputType
   checkinModal.goalText = item.goalText
-  checkinModal.inputVal = item.doneVal || 0
+  checkinModal.prevVal = item.doneVal || 0
+  checkinModal.inputVal = 0
+  checkinModal.addMode = item.doneVal > 0
+  nextTick(() => checkinInputRef.value?.focus())
 }
 
 function closeCheckinModal() {
   checkinModal.visible = false
 }
 
+// ── 骑行今日详情弹窗 ────────────────────────────────────────────────────────
+const cyclingDetailVisible = ref(false)
+
+function openCyclingDetail() {
+  cyclingDetailVisible.value = true
+}
+
 async function confirmCheckin() {
-  const val = Number(checkinModal.inputVal) || 0
-  if (val < 0) return
+  const inputVal = Number(checkinModal.inputVal) || 0
+  if (inputVal < 0) return
 
-  // 本地立即更新
-  const data = loadSportCheckin()
+  const val = checkinModal.addMode
+    ? checkinModal.prevVal + inputVal
+    : inputVal
+
+  // 乐观更新本地 ref（立即反映到 UI）
   const key = todayKey()
+  const data = { ...sportCheckinData.value }
   if (!data[key]) data[key] = {}
-  data[key][checkinModal.key] = val
-  saveSportCheckinLocal(data)
-  sportCheckinData.value = { ...data }
+  data[key] = { ...data[key], [checkinModal.key]: val }
+  sportCheckinData.value = data
 
-  // 后端异步同步
+  // 写入后端
   const token = getToken()
   if (token) {
     fetch('/api/user/sport-checkin', {
@@ -731,14 +942,19 @@ function isDishAllowed(dishName, restrictions) {
 // 过滤一餐的菜单，冲突的菜用安全菜替换
 function filterMeal(dishes, restrictions) {
   if (!restrictions || restrictions.length === 0) return dishes
+  const usedNames = new Set(dishes.map(d => d.name))
   return dishes.map(dish => {
     if (isDishAllowed(dish.name, restrictions)) return dish
-    // 找一个安全替换菜（不在当前餐里已有的）
-    const existing = dishes.map(d => d.name)
+    // 找一个安全替换菜（不在当前餐已用菜名里）
     const replacement = SAFE_DISHES.find(s =>
-      !existing.includes(s.name) && isDishAllowed(s.name, restrictions)
+      !usedNames.has(s.name) && isDishAllowed(s.name, restrictions)
     )
-    return replacement || dish  // 找不到就保留原菜
+    if (replacement) {
+      usedNames.delete(dish.name)
+      usedNames.add(replacement.name)
+      return replacement
+    }
+    return dish  // 找不到就保留原菜
   })
 }
 
@@ -879,25 +1095,25 @@ const recipeTypeName = computed(() => {
 })
 
 // 按周轮换：5天一循环（第6天复用第1天，即 idx % 5）
-function getWeeklyRecipeIndex() {
+// 注意：此函数只在 onMounted 里调用一次，不在 computed 里调用，避免副作用
+function initWeeklyRecipeIndex() {
   const key = 'helmet_recipe_week_index'
   const now = new Date()
-  // ISO 周数
   const jan4 = new Date(now.getFullYear(), 0, 4)
   const weekNum = Math.ceil((((now - jan4) / 86400000) + jan4.getDay() + 1) / 7)
   const stored = JSON.parse(localStorage.getItem(key) || 'null')
   if (stored && stored.weekNum === weekNum) return stored.idx % 5
-  // 新的一周，切换下一套
   const prevIdx = stored ? stored.idx : 0
   const newIdx = (prevIdx + 1) % 5
   localStorage.setItem(key, JSON.stringify({ weekNum, idx: newIdx }))
   return newIdx
 }
 
+const weeklyRecipeIndex = ref(0)
+
 const todayRecipe = computed(() => {
   const set = getRecipeSet()
-  const idx = getWeeklyRecipeIndex()
-  return set[idx]
+  return set[weeklyRecipeIndex.value]
 })
 
 // ── 换搭配：每餐独立维护当前替换套（在同食谱类型的5套里循环） ──────────────
@@ -906,7 +1122,7 @@ const mealSwapIdx = reactive({ breakfast: 0, lunch: 0, dinner: 0 })
 // 初始化各餐用 todayRecipe 的菜单，换搭配时从其他4套里轮换
 const currentMeals = computed(() => {
   const set = getRecipeSet()
-  const baseIdx = getWeeklyRecipeIndex()
+  const baseIdx = weeklyRecipeIndex.value
   const restrictions = ridePlanStore.dietRestrictions || []
   const result = {}
   for (const meal of ['breakfast', 'lunch', 'dinner']) {
@@ -1010,21 +1226,25 @@ const heatmapDays = computed(() => {
   const month = base.getMonth()
   const daysInMonth = new Date(year, month + 1, 0).getDate()
   const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`
+  // 每餐标准菜数（用当前食谱的实际菜数作为参考）
+  const mealsRef = currentMeals.value
+  const mealSizes = {
+    breakfast: mealsRef.breakfast.length,
+    lunch:     mealsRef.lunch.length,
+    dinner:    mealsRef.dinner.length,
+  }
+  const totalDishes = mealSizes.breakfast + mealSizes.lunch + mealSizes.dinner
 
   for (let day = 1; day <= daysInMonth; day++) {
     const key = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`
     const entry = data[key]
     let checked = 0
-    let total = 0
     if (entry) {
       for (const m of ['breakfast','lunch','dinner']) {
         checked += (entry[m] || []).length
-        total += 3
       }
-    } else {
-      total = 9
     }
-    const ratio = total > 0 ? checked / total : 0
+    const ratio = totalDishes > 0 ? checked / totalDishes : 0
     days.push({
       label: key,
       level: ratio === 0 ? 0 : ratio < 0.4 ? 1 : ratio < 1 ? 2 : 3,
@@ -1034,21 +1254,218 @@ const heatmapDays = computed(() => {
   return days
 })
 
-// 累计全勤天数（三餐都有打卡记录的天）
+// 累计全勤天数（三餐都有打卡记录，且总打卡菜数 >= 当天总菜数）
 const totalCheckinDays = computed(() => {
   const data = checkinData.value
-  return Object.values(data).filter(day =>
-    ['breakfast','lunch','dinner'].every(m => (day[m] || []).length > 0)
-  ).length
+  const mealsRef = currentMeals.value
+  const mealSizes = {
+    breakfast: mealsRef.breakfast.length,
+    lunch:     mealsRef.lunch.length,
+    dinner:    mealsRef.dinner.length,
+  }
+  const totalDishes = mealSizes.breakfast + mealSizes.lunch + mealSizes.dinner
+  return Object.values(data).filter(day => {
+    const checked = ['breakfast','lunch','dinner'].reduce((s, m) => s + (day[m] || []).length, 0)
+    return checked >= totalDishes
+  }).length
 })
+
+// ══════════════════════════════════════════════════════════════════════════
+// 月历统计
+// ══════════════════════════════════════════════════════════════════════════
+const calMonthOffset = ref(0)   // 0=本月, -1=上月
+const calSelectedDate = ref('') // 当前展开的日期 'YYYY-MM-DD'，空=收起
+// 缓存：{ 'YYYY-MM': { checkin: {...}, rides: {...} } }
+const monthDataCache = ref({})
+const calLoading = ref(false)
+
+const calMonthLabel = computed(() => {
+  const d = new Date()
+  d.setDate(1)
+  d.setMonth(d.getMonth() + calMonthOffset.value)
+  return `${d.getFullYear()}年${d.getMonth() + 1}月`
+})
+
+// 当前月历所有日期格子
+const calDays = computed(() => {
+  const now = new Date()
+  const base = new Date(now.getFullYear(), now.getMonth() + calMonthOffset.value, 1)
+  const year = base.getFullYear()
+  const month = base.getMonth()
+  const daysInMonth = new Date(year, month + 1, 0).getDate()
+  const firstWeekday = base.getDay() // 0=周日
+  const todayStr = fmtDate(now)
+  const cacheKey = `${year}-${String(month + 1).padStart(2, '0')}`
+  const cache = monthDataCache.value[cacheKey] || {}
+  const checkinMap = cache.checkin || {}
+  const ridesMap   = cache.rides   || {}
+
+  const cells = []
+  // 补齐月初空格
+  for (let i = 0; i < firstWeekday; i++) cells.push(null)
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const key = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+    const isFuture = key > todayStr
+    const checkin = checkinMap[key] || {}
+    const ride    = ridesMap[key]   || null
+    // 计算完成率（有任何数据就算有记录）
+    const hasCheckin = Object.keys(checkin).length > 0
+    const hasRide    = ride && (ride.durationMin > 0 || ride.distanceKm > 0)
+    const hasAny     = hasCheckin || hasRide
+    // 热量估算（用于色阶）
+    let kcal = ride ? (ride.calories || 0) : 0
+    for (const [k, v] of Object.entries(checkin)) {
+      const opt = SPORT_OPTIONS.find(o => o.key === k)
+      if (!opt) continue
+      if (opt.inputType === 'duration')   kcal += v * (opt.kcalPerMin || 6)
+      else if (opt.inputType === 'distance') kcal += v * (opt.kcalPerKm || 60)
+      else if (opt.inputType === 'steps')    kcal += (v / 1000) * (opt.kcalPer1k || 40)
+      else if (opt.inputType === 'jumprope') kcal += v * (opt.kcalPerRep || 0.1)
+    }
+    // 色阶 0-3
+    const level = isFuture || !hasAny ? 0 : kcal < 150 ? 1 : kcal < 400 ? 2 : 3
+    cells.push({ key, day, isFuture, isToday: key === todayStr, hasAny, level })
+  }
+  return cells
+})
+
+// 当前展开日期的详情数据
+const calDetailData = computed(() => {
+  if (!calSelectedDate.value) return null
+  const d = calSelectedDate.value
+  const [y, m] = d.split('-')
+  const cacheKey = `${y}-${m}`
+  const cache = monthDataCache.value[cacheKey] || {}
+  const checkin = (cache.checkin || {})[d] || {}
+  const ride    = (cache.rides   || {})[d] || null
+
+  const sportItems = []
+
+  // 骑行作为第一项并入运动打卡列表
+  const hasRide = ride && (ride.durationMin > 0 || ride.distanceKm > 0)
+  if (hasRide) {
+    const parts = []
+    if (ride.durationMin > 0) parts.push(`${Math.round(ride.durationMin)} 分钟`)
+    if (ride.distanceKm > 0) parts.push(`${Number(ride.distanceKm).toFixed(2)} km`)
+    sportItems.push({ key: 'cycling', label: '骑行', icon: '🚴', doneText: parts.join(' / '), kcal: ride.calories || 0 })
+  }
+
+  for (const [k, v] of Object.entries(checkin)) {
+    if (!v) continue
+    const opt = SPORT_OPTIONS.find(o => o.key === k)
+    if (!opt) continue
+    let doneText = ''
+    let kcal = 0
+    if (opt.inputType === 'duration')      { doneText = `${v} 分钟`;              kcal = v * (opt.kcalPerMin || 6) }
+    else if (opt.inputType === 'distance') { doneText = `${Number(v).toFixed(2)} km`; kcal = v * (opt.kcalPerKm || 60) }
+    else if (opt.inputType === 'steps')    { doneText = `${v} 步`;                kcal = (v / 1000) * (opt.kcalPer1k || 40) }
+    else if (opt.inputType === 'jumprope') { doneText = `${v} 个`;                kcal = v * (opt.kcalPerRep || 0.1) }
+    sportItems.push({ key: k, label: opt.label, icon: opt.icon, doneText, kcal })
+  }
+
+  let totalKcal = 0
+  sportItems.forEach(i => { totalKcal += i.kcal })
+
+  // ── 推算该日食谱 ──────────────────────────────────────────────────────
+  // 根据日期计算周次，推算当天使用的食谱套餐索引（与 initWeeklyRecipeIndex 逻辑一致）
+  function getRecipeForDate(dateStr) {
+    const date = new Date(dateStr)
+    const jan4 = new Date(date.getFullYear(), 0, 4)
+    const weekNum = Math.ceil((((date - jan4) / 86400000) + jan4.getDay() + 1) / 7)
+    const recipeIdx = ((weekNum - 1) % 5 + 5) % 5
+    const set = getRecipeSet()
+    const restrictions = ridePlanStore.dietRestrictions || []
+    const recipe = set[recipeIdx % set.length]
+    const meals = {}
+    for (const meal of ['breakfast', 'lunch', 'dinner']) {
+      meals[meal] = filterMeal(recipe[meal], restrictions)
+    }
+    return meals
+  }
+
+  const meals = getRecipeForDate(d)
+
+  // 摄入热量 = 该日食谱各餐热量之和（不管是否打卡，代表计划摄入）
+  let intakeKcal = 0
+  for (const meal of ['breakfast', 'lunch', 'dinner']) {
+    intakeKcal += (meals[meal] || []).reduce((s, dish) => s + (dish.kcal || 0), 0)
+  }
+
+  // 该日已打卡的菜品（从 localStorage checkinData 读取）
+  const dayCheckin = checkinData.value[d] || {}
+  const checkedDishes = {
+    breakfast: dayCheckin.breakfast || [],
+    lunch:     dayCheckin.lunch     || [],
+    dinner:    dayCheckin.dinner    || [],
+  }
+
+  const isEmpty = sportItems.length === 0
+
+  const netKcal = totalKcal - intakeKcal
+
+  return { date: d, sportItems, totalKcal, intakeKcal, netKcal, meals, checkedDishes, isEmpty }
+})
+
+function fmtDate(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+function calMonthKey(offset) {
+  const d = new Date()
+  d.setDate(1)
+  d.setMonth(d.getMonth() + offset)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+}
+
+async function loadMonthData(offset) {
+  const mk = calMonthKey(offset)
+  if (monthDataCache.value[mk]) return  // 已缓存
+  const token = getToken()
+  if (!token) return
+  calLoading.value = true
+  const [year, month] = mk.split('-').map(Number)
+  const from = `${mk}-01`
+  const lastDay = new Date(year, month, 0).getDate()
+  const to = `${mk}-${String(lastDay).padStart(2, '0')}`
+  try {
+    const [checkinRes, ridesRes] = await Promise.all([
+      fetch(`/api/user/sport-checkin/range?from=${from}&to=${to}`, { headers: { Authorization: 'Bearer ' + token } }),
+      fetch(`/api/user/rides/range?from=${from}&to=${to}`,         { headers: { Authorization: 'Bearer ' + token } })
+    ])
+    const checkin = checkinRes.ok ? await checkinRes.json() : {}
+    const rides   = ridesRes.ok  ? await ridesRes.json()   : {}
+    monthDataCache.value = { ...monthDataCache.value, [mk]: { checkin, rides } }
+  } catch {}
+  calLoading.value = false
+}
+
+function prevCalMonth() {
+  calSelectedDate.value = ''
+  calMonthOffset.value--
+  loadMonthData(calMonthOffset.value)
+}
+function nextCalMonth() {
+  if (calMonthOffset.value >= 0) return
+  calSelectedDate.value = ''
+  calMonthOffset.value++
+  loadMonthData(calMonthOffset.value)
+}
+
+function onCalDayClick(cell) {
+  if (!cell || cell.isFuture) return
+  calSelectedDate.value = calSelectedDate.value === cell.key ? '' : cell.key
+}
 
 // ══════════════════════════════════════════════════════════════════════════
 // 生命周期
 // ══════════════════════════════════════════════════════════════════════════
 onMounted(() => {
+  weeklyRecipeIndex.value = initWeeklyRecipeIndex()
   ridePlanStore.fetchPlan()
   rideHistoryStore.loadFromStorage()
   fetchTodaySportCheckin()
+  loadMonthData(0)  // 预加载本月数据
   resetTimer()
 })
 
@@ -1412,6 +1829,17 @@ onUnmounted(() => {
   transition: width 0.5s ease;
 }
 .kcal-bar-fill--done { background: linear-gradient(90deg, #22c55e, #4ade80); }
+.kcal-bar-fill--over { background: linear-gradient(90deg, #f59e0b, #ef4444); }
+.kcal-over-tag {
+  margin-left: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #f59e0b;
+  background: rgba(245,158,11,0.12);
+  border: 1px solid rgba(245,158,11,0.3);
+  border-radius: 4px;
+  padding: 0 5px;
+}
 
 /* 运动项目列表 */
 .sport-items {
@@ -1476,9 +1904,16 @@ onUnmounted(() => {
   align-items: flex-end;
   gap: 4px;
   flex-shrink: 0;
-  min-width: 72px;
+  min-width: 80px;
+}
+.sport-item__done-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
 }
 .sport-item__done-val { font-size: 11px; color: #e2e8f0; font-weight: 600; }
+.sport-item__kcal-hint { font-size: 10px; color: rgba(255,255,255,0.35); }
 .sport-item__auto-tag {
   font-size: 9px;
   color: rgba(56,189,248,0.5);
@@ -1502,8 +1937,50 @@ onUnmounted(() => {
 .sport-checkin-btn:hover { background: rgba(56,189,248,0.15); }
 .sport-checkin-btn--done {
   border-color: rgba(34,197,94,0.35);
-  background: rgba(34,197,94,0.08);
+  background: rgba(34,197,94,0.06);
+  color: rgba(34,197,94,0.8);
+  font-size: 10px;
+}
+.sport-checkin-btn--done:hover {
+  background: rgba(34,197,94,0.12);
   color: #22c55e;
+}
+.sport-checkin-btn--auto {
+  border-color: rgba(56,189,248,0.2);
+  background: transparent;
+  color: rgba(56,189,248,0.6);
+  font-size: 10px;
+}
+.sport-checkin-btn--auto:hover {
+  background: rgba(56,189,248,0.08);
+  color: #38bdf8;
+}
+
+/* 骑行详情弹窗 */
+.cycling-detail-box { max-width: 320px; }
+.cycling-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 16px 0;
+}
+.cycling-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 8px;
+}
+.cycling-detail-label { font-size: 11px; color: rgba(255,255,255,0.4); }
+.cycling-detail-val { font-size: 20px; font-weight: 700; color: #38bdf8; }
+.cycling-detail-val em { font-size: 11px; font-style: normal; color: rgba(255,255,255,0.4); margin-left: 2px; }
+.cycling-detail-tip {
+  font-size: 11px;
+  color: rgba(255,255,255,0.3);
+  text-align: center;
+  margin: 0;
 }
 
 .exercise-comment {
@@ -1521,6 +1998,303 @@ onUnmounted(() => {
   background: rgba(34, 197, 94, 0.06);
   color: #22c55e;
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   月历统计
+══════════════════════════════════════════════════════════════════ */
+.cal-section {
+  margin-top: 20px;
+  margin-bottom: 16px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.cal-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.cal-month-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #e2e8f0;
+  flex: 1;
+  text-align: center;
+}
+.cal-nav-btn {
+  width: 24px; height: 24px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 4px;
+  color: rgba(255,255,255,0.6);
+  cursor: pointer;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.cal-nav-btn:hover:not(:disabled) { background: rgba(56,189,248,0.12); color: #38bdf8; }
+.cal-nav-btn:disabled { opacity: 0.3; cursor: default; }
+.cal-loading { font-size: 11px; color: rgba(255,255,255,0.35); }
+
+.cal-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-bottom: 3px;
+}
+.cal-weekdays span {
+  text-align: center;
+  font-size: 9px;
+  color: rgba(255,255,255,0.3);
+  padding: 1px 0;
+}
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+.cal-cell {
+  height: 28px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid transparent;
+  transition: all 0.15s;
+}
+.cal-cell--empty { background: transparent; border-color: transparent; }
+.cal-cell--future { opacity: 0.25; }
+.cal-cell--clickable { cursor: pointer; }
+.cal-cell--past-empty { cursor: pointer; }
+.cal-cell--past-empty:hover { border-color: rgba(255,255,255,0.15); }
+.cal-cell--clickable:hover { border-color: rgba(56,189,248,0.3); }
+.cal-cell--today { border-color: rgba(56,189,248,0.6) !important; }
+.cal-cell--selected { border-color: #38bdf8 !important; background: rgba(56,189,248,0.12) !important; }
+
+/* 色阶 */
+.cal-cell--lv1 { background: rgba(56,189,248,0.12); }
+.cal-cell--lv2 { background: rgba(56,189,248,0.28); }
+.cal-cell--lv3 { background: rgba(56,189,248,0.50); }
+
+.cal-day-num {
+  font-size: 10px;
+  color: rgba(255,255,255,0.7);
+  line-height: 1;
+}
+.cal-cell--lv2 .cal-day-num,
+.cal-cell--lv3 .cal-day-num { color: #fff; }
+.cal-cell--today .cal-day-num { color: #38bdf8; font-weight: 700; }
+
+.cal-legend {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+  justify-content: flex-end;
+}
+.cal-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  color: rgba(255,255,255,0.35);
+}
+.cal-legend-dot {
+  width: 8px; height: 8px;
+  border-radius: 2px;
+}
+.cal-legend-dot--0 { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); }
+.cal-legend-dot--1 { background: rgba(56,189,248,0.12); }
+.cal-legend-dot--2 { background: rgba(56,189,248,0.28); }
+.cal-legend-dot--3 { background: rgba(56,189,248,0.50); }
+
+/* 展开面板 */
+.cal-panel-slide-enter-active,
+.cal-panel-slide-leave-active {
+  transition: all 0.25s ease;
+  overflow: hidden;
+}
+.cal-panel-slide-enter-from,
+.cal-panel-slide-leave-to {
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-6px);
+}
+.cal-panel-slide-enter-to,
+.cal-panel-slide-leave-from {
+  max-height: 400px;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.cal-detail-panel {
+  margin-top: 10px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(56,189,248,0.2);
+  border-radius: 8px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.cal-detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.cal-detail-date {
+  font-size: 13px;
+  font-weight: 600;
+  color: #38bdf8;
+}
+.cal-detail-close {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.35);
+  cursor: pointer;
+  font-size: 13px;
+  padding: 0;
+  line-height: 1;
+}
+.cal-detail-close:hover { color: rgba(255,255,255,0.7); }
+
+.cal-detail-block { display: flex; flex-direction: column; gap: 6px; }
+.cal-detail-block-title {
+  font-size: 11px;
+  color: rgba(255,255,255,0.4);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+.cal-detail-stats {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.cal-detail-stat {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+}
+.cal-detail-stat-val {
+  font-size: 18px;
+  font-weight: 700;
+  color: #e2e8f0;
+}
+.cal-detail-stat-unit {
+  font-size: 11px;
+  color: rgba(255,255,255,0.4);
+}
+
+.cal-detail-sport-list { display: flex; flex-direction: column; gap: 5px; }
+.cal-detail-sport-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  background: rgba(255,255,255,0.03);
+  border-radius: 5px;
+}
+.cal-detail-sport-icon { font-size: 14px; }
+.cal-detail-sport-label { font-size: 12px; color: rgba(255,255,255,0.6); flex: 1; }
+.cal-detail-sport-val { font-size: 12px; font-weight: 600; color: #e2e8f0; }
+.cal-detail-sport-kcal { font-size: 11px; color: rgba(255,255,255,0.35); min-width: 52px; text-align: right; }
+
+.cal-detail-total {
+  font-size: 12px;
+  color: rgba(255,255,255,0.5);
+  text-align: right;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+.cal-detail-total strong { color: #38bdf8; font-size: 14px; }
+.cal-detail-empty {
+  font-size: 12px;
+  color: rgba(255,255,255,0.3);
+  text-align: center;
+  padding: 8px 0 4px;
+}
+
+/* 净消耗热量大数字 */
+.cal-detail-net-kcal {
+  background: rgba(56,189,248,0.06);
+  border: 1px solid rgba(56,189,248,0.15);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  text-align: center;
+}
+.cal-detail-net-kcal__main {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 4px;
+}
+.cal-detail-net-kcal__val {
+  font-size: 22px;
+  font-weight: 700;
+  color: #38bdf8;
+  letter-spacing: -0.5px;
+}
+.cal-detail-net-kcal__val--neg { color: #f87171; }
+.cal-detail-net-kcal__unit {
+  font-size: 11px;
+  color: rgba(255,255,255,0.45);
+}
+.cal-detail-net-kcal__breakdown {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: 11px;
+  color: rgba(255,255,255,0.4);
+}
+.cal-detail-net-kcal__minus { color: rgba(255,255,255,0.25); }
+
+/* 当日食谱 */
+.cal-detail-meals { display: flex; flex-direction: column; gap: 6px; }
+.cal-detail-meal-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+.cal-detail-meal-label {
+  font-size: 11px;
+  color: rgba(255,255,255,0.4);
+  min-width: 28px;
+  padding-top: 2px;
+  flex-shrink: 0;
+}
+.cal-detail-meal-dishes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  flex: 1;
+}
+.cal-detail-dish {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.4);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.cal-detail-dish--checked {
+  background: rgba(56,189,248,0.12);
+  color: #7dd3fc;
+  border-color: rgba(56,189,248,0.25);
+}
+.cal-detail-meal-kcal {
+  font-size: 10px;
+  color: rgba(255,255,255,0.25);
+  white-space: nowrap;
+  padding-top: 3px;
+  flex-shrink: 0;
+}
+
 
 /* 打卡弹窗 */
 .checkin-modal-box { max-width: 340px; }
@@ -1567,6 +2341,48 @@ onUnmounted(() => {
   transition: filter 0.15s;
 }
 .checkin-modal-confirm:hover { filter: brightness(1.1); }
+
+/* 累加/替换模式切换 */
+.checkin-mode-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  padding: 6px 10px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.07);
+}
+.checkin-prev-val {
+  font-size: 12px;
+  color: rgba(255,255,255,0.5);
+}
+.checkin-mode-toggle {
+  display: flex;
+  gap: 4px;
+}
+.checkin-mode-btn {
+  padding: 3px 10px;
+  border-radius: 4px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: transparent;
+  color: rgba(255,255,255,0.4);
+  font-size: 12px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+.checkin-mode-btn.active {
+  background: rgba(56,189,248,0.2);
+  border-color: rgba(56,189,248,0.5);
+  color: #38bdf8;
+}
+.checkin-sum-preview {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: rgba(56,189,248,0.8);
+  text-align: right;
+}
 
 /* ══════════════════════════════════════════════════════════════════
    食谱卡片内容

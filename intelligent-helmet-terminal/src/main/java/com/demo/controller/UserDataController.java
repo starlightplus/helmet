@@ -22,6 +22,7 @@ public class UserDataController {
     @Autowired private EmergencyContactRepository contactRepository;
     @Autowired private SportCheckinRepository sportCheckinRepository;
     @Autowired private RideSessionRepository rideSessionRepository;
+    @Autowired private HelmetEventRepository eventRepository;
 
     // ── 从 token 解析用户 ──────────────────────────────────────────
 
@@ -362,4 +363,76 @@ public class UserDataController {
         });
         return ResponseEntity.ok(Map.of("success", true));
     }
+
+    // ── 按日期范围查询（月历用） ────────────────────────────────────────────
+
+    /**
+     * GET /api/user/sport-checkin/range?from=YYYY-MM-DD&to=YYYY-MM-DD
+     * 返回 { "2026-05-01": { "running": 3.2, "jumprope": 200 }, ... }
+     */
+    @GetMapping("/sport-checkin/range")
+    public ResponseEntity<?> getSportCheckinRange(
+            @RequestHeader("Authorization") String auth,
+            @RequestParam String from,
+            @RequestParam String to) {
+        User user = resolveUser(auth);
+        if (user == null) return ResponseEntity.status(401).body("Unauthorized");
+
+        java.time.LocalDate fromDate = java.time.LocalDate.parse(from);
+        java.time.LocalDate toDate   = java.time.LocalDate.parse(to);
+
+        List<com.demo.model.SportCheckin> list =
+                sportCheckinRepository.findByUserIdAndCheckinDateBetween(user.getId(), fromDate, toDate);
+
+        // 按日期分组：{ "YYYY-MM-DD": { sportKey: value } }
+        Map<String, Map<String, Double>> result = new java.util.TreeMap<>();
+        for (com.demo.model.SportCheckin c : list) {
+            String dateKey = c.getCheckinDate().toString();
+            result.computeIfAbsent(dateKey, k -> new HashMap<>())
+                  .put(c.getSportKey(), c.getValue());
+        }
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * GET /api/user/rides/range?from=YYYY-MM-DD&to=YYYY-MM-DD
+     * 返回 { "2026-05-01": { "durationMin": 45.0, "distanceKm": 12.3, "calories": 360.0, "count": 1 }, ... }
+     */
+    @GetMapping("/rides/range")
+    public ResponseEntity<?> getRidesRange(
+            @RequestHeader("Authorization") String auth,
+            @RequestParam String from,
+            @RequestParam String to) {
+        User user = resolveUser(auth);
+        if (user == null) return ResponseEntity.status(401).body("Unauthorized");
+
+        java.time.LocalDateTime fromDt = java.time.LocalDate.parse(from).atStartOfDay();
+        java.time.LocalDateTime toDt   = java.time.LocalDate.parse(to).atTime(23, 59, 59);
+
+        List<com.demo.model.RideSession> sessions =
+                rideSessionRepository.findByUserIdAndStartTimeBetweenOrderByStartTimeAsc(
+                        user.getId(), fromDt, toDt);
+
+        // 按日期分组汇总
+        Map<String, Map<String, Object>> result = new java.util.TreeMap<>();
+        for (com.demo.model.RideSession s : sessions) {
+            if (s.getStartTime() == null) continue;
+            String dateKey = s.getStartTime().toLocalDate().toString();
+            Map<String, Object> day = result.computeIfAbsent(dateKey, k -> {
+                Map<String, Object> m = new HashMap<>();
+                m.put("durationMin", 0.0);
+                m.put("distanceKm",  0.0);
+                m.put("calories",    0.0);
+                m.put("count",       0);
+                return m;
+            });
+            double dur = s.getDuration() != null ? s.getDuration() / 60.0 : 0;
+            day.put("durationMin", (Double) day.get("durationMin") + dur);
+            day.put("distanceKm",  (Double) day.get("distanceKm")  + (s.getDistance()  != null ? s.getDistance()  : 0));
+            day.put("calories",    (Double) day.get("calories")    + (s.getCalories()  != null ? s.getCalories()  : 0));
+            day.put("count",       (Integer) day.get("count") + 1);
+        }
+        return ResponseEntity.ok(result);
+    }
 }
+
