@@ -1,5 +1,6 @@
 com\demo\controller\GitHubOAuthController.class
 com\demo\config\JwtUtil.class
+com\demo\controller\NavigationController.class
 com\demo\repository\SportCheckinRepository.class
 com\demo\service\SensorDataPersistService.class
 com\demo\service\UserService.class

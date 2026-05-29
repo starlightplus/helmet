@@ -34,6 +34,14 @@ public class SensorDataController {
         return ResponseEntity.ok(sensorDataService.getAllLatestSensorData());
     }
 
+    // 从数据库查最新一条有 GPS 的记录，用于地图初始定位（不依赖内存缓存）
+    @GetMapping("/latest-gps")
+    public ResponseEntity<?> getLatestGps() {
+        SensorData data = sensorDataService.getLatestGpsFromDB();
+        if (data == null) return ResponseEntity.ok(Map.of());
+        return ResponseEntity.ok(data);
+    }
+
     @GetMapping("/latest/{deviceId}")
     public ResponseEntity<SensorData> getLatestDataByDevice(@PathVariable String deviceId) {
         SensorData latestData = sensorDataService.getLatestSensorData(deviceId);

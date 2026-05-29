@@ -1498,6 +1498,7 @@ onUnmounted(() => {
   background: transparent;
   border-bottom: 1px solid #1e3a4a;
   flex-shrink: 0;
+  border-radius: 16px;
 }
 
 .carousel-track {
@@ -1723,7 +1724,7 @@ onUnmounted(() => {
    卡片通用
 ══════════════════════════════════════════════════════════════════ */
 .card {
-  background: rgba(10, 15, 26, 0.55);
+  background: rgba(10, 15, 26, 1);
   border: 1px solid #1e3a4a;
   border-radius: 10px;
   padding: 18px 20px 20px;

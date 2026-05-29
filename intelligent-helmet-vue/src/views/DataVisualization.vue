@@ -736,7 +736,6 @@ watch(() => userStore.username, (newUser, oldUser) => {
   padding: 12px 24px;
   border-bottom: 1px solid #1e293b;
   background: rgba(2,8,23,0.95);
-  backdrop-filter: blur(8px);
   position: sticky;
   top: 0;
   z-index: 10;
@@ -759,7 +758,7 @@ watch(() => userStore.username, (newUser, oldUser) => {
   gap: 2px;
   padding: 8px 24px 0;
   border-bottom: 1px solid #1e293b;
-  background: #020817;
+  background: transparent;
 }
 .dv-tab {
   display: flex; align-items: center; gap: 6px;
@@ -776,12 +775,12 @@ watch(() => userStore.username, (newUser, oldUser) => {
 .dv-tab__icon { display: flex; align-items: center; }
 
 /* ── Content ──────────────────────────────────────────────────── */
-.dv-content { flex: 1; padding: 24px; overflow-y: auto; }
+.dv-content { flex: 1; padding: 24px; overflow: visible; }
 
 /* ── Hero ─────────────────────────────────────────────────────── */
 .dv-hero {
   position: relative;
-  background: linear-gradient(135deg, rgba(14,165,233,0.08) 0%, rgba(99,102,241,0.08) 100%);
+  background: rgba(10, 15, 26, 1);
   border: 1px solid rgba(14,165,233,0.15);
   border-radius: 12px;
   padding: 28px 32px;
@@ -844,7 +843,7 @@ watch(() => userStore.username, (newUser, oldUser) => {
 .dv-entry-card__label { font-size: 11px; color: #94a3b8; margin-bottom: 4px; }
 .dv-entry-card__val { font-size: 24px; font-weight: 700; color: #f1f5f9; }
 .dv-entry-card__val-unit { font-size: 13px; color: white; }
-.dv-entry-card__meta { display: flex; gap: 6px; font-size: 10px; color: #475569; }
+.dv-entry-card__meta { display: flex; gap: 6px; font-size: 10px; color: white; }
 .dv-entry-card__footer { display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: #38bdf8; margin-top: auto; }
 .dv-entry-card__link { }
 
@@ -857,7 +856,7 @@ watch(() => userStore.username, (newUser, oldUser) => {
 .dv-guide__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
 .dv-guide__item { }
 .dv-guide__item-title { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: #cbd5e1; margin-bottom: 6px; }
-.dv-guide__item p { font-size: 11px; color: #475569; line-height: 1.6; margin: 0; }
+.dv-guide__item p { font-size: 11px; color: white; line-height: 1.6; margin: 0; }
 
 /* ── Panel ────────────────────────────────────────────────────── */
 .dv-tab-panel { display: flex; flex-direction: column; gap: 16px; }

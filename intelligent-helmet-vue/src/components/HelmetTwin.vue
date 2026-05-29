@@ -24,6 +24,10 @@
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
           {{ isReplaying ? '回放中...' : '回放' }}
         </button>
+        <button class="track-btn track-btn--nav" @click="navPanelOpen = !navPanelOpen" title="骑行导航">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+          导航
+        </button>
         <span class="badge" :class="connected ? 'badge--on' : 'badge--off'">
           <i></i>{{ connected ? '数据同步中' : '等待连接' }}
         </span>
@@ -34,6 +38,84 @@
     <div class="twin-body">
       <!-- 高德 3D 地图容器（全屏） -->
       <div ref="mapContainerRef" class="map-fullscreen"></div>
+
+      <!-- 导航抽屉面板 -->
+      <transition name="nav-slide">
+        <div v-if="navPanelOpen" class="nav-drawer">
+          <div class="nav-drawer__header">
+            <span>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+              骑行导航
+            </span>
+            <button class="nav-close-btn" @click="navPanelOpen = false">✕</button>
+          </div>
+
+          <!-- 手动输入 -->
+          <div class="nav-section">
+            <div class="nav-input-row">
+              <input
+                v-model="navInput"
+                class="nav-input"
+                placeholder="输入目的地名称..."
+                @keyup.enter="startNavigation(navInput)"
+              />
+              <button class="nav-search-btn" @click="startNavigation(navInput)" :disabled="!navInput.trim()">搜索</button>
+            </div>
+          </div>
+
+          <!-- AI 推荐 -->
+          <div class="nav-divider">或 AI 推荐</div>
+          <div class="nav-level-row">
+            <button class="nav-level-btn" :class="{ active: navSelectedLevel === 'short' }" @click="fetchRecommend('short')" :disabled="navLoading">
+              短途<br/><small>5-10km</small>
+            </button>
+            <button class="nav-level-btn" :class="{ active: navSelectedLevel === 'medium' }" @click="fetchRecommend('medium')" :disabled="navLoading">
+              中途<br/><small>15-25km</small>
+            </button>
+            <button class="nav-level-btn" :class="{ active: navSelectedLevel === 'long' }" @click="fetchRecommend('long')" :disabled="navLoading">
+              长途<br/><small>35-50km</small>
+            </button>
+          </div>
+
+          <!-- 加载中 -->
+          <div v-if="navLoading" class="nav-loading">AI 推荐中...</div>
+
+          <!-- 推荐结果卡片 -->
+          <div v-if="navRecommend && navRecommend.name !== '推荐失败'" class="nav-recommend-card">
+            <div class="nav-recommend-name">{{ navRecommend.name }}</div>
+            <div class="nav-recommend-reason">{{ navRecommend.reason }}</div>
+            <div v-if="navRecommend.distanceKm || navRecommend.durationMin" class="nav-recommend-meta">
+              <span v-if="navRecommend.distanceKm">📍 约 {{ navRecommend.distanceKm }} km</span>
+              <span v-if="navRecommend.durationMin">⏱ 约 {{ navRecommend.durationMin }} 分钟</span>
+            </div>
+          </div>
+          <div v-else-if="navRecommend && navRecommend.name === '推荐失败'" class="nav-recommend-error">
+            {{ navRecommend.reason }}
+          </div>
+
+          <!-- 确认导航 -->
+          <button
+            class="nav-confirm-btn"
+            :disabled="!navInput.trim() && !navRecommend"
+            @click="startNavigation(navRecommend ? navRecommend.name : navInput)"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+            开始导航
+          </button>
+
+          <!-- 结束导航 -->
+          <button v-if="navActive" class="nav-stop-btn" @click="clearNavigation">结束导航</button>
+        </div>
+      </transition>
+
+      <!-- 导航指引条 -->
+      <transition name="alert-fade">
+        <div v-if="navActive" class="nav-instruction-bar">
+          <span class="nav-inst-icon">{{ navDirectionIcon }}</span>
+          <span class="nav-inst-text">{{ navInstruction }}</span>
+          <span class="nav-inst-dist">{{ navRemainDist > 1000 ? (navRemainDist / 1000).toFixed(1) + 'km' : Math.round(navRemainDist) + 'm' }}</span>
+        </div>
+      </transition>
 
       <!-- 跌倒警告（叠在地图上） -->
       <transition name="alert-fade">
@@ -89,6 +171,12 @@
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
         轨迹 {{ trackPoints.length }} 点
       </div>
+
+      <!-- 无实时数据提示（右下角，轨迹点为0时显示） -->
+      <div class="no-data-hint" v-if="!connected && trackPoints.length === 0">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        显示最后已知数据
+      </div>
     </div>
   </div>
 </template>
@@ -121,6 +209,29 @@ const fallAlert = ref(false)
 const isReplaying = ref(false)
 const viewMode = ref('follow')
 const replaySpeed = ref(1)
+
+// Navigation state
+const navPanelOpen = ref(false)
+const navInput = ref('')
+const navRecommend = ref(null)
+const navLoading = ref(false)
+const navSelectedLevel = ref('')
+const navPolylines = ref([])
+const navSteps = ref([])
+const navStepIndex = ref(0)
+const navActive = ref(false)
+const navInstruction = ref('')
+const navRemainDist = ref(0)
+let navRemainingPath = []   // 导航剩余路径点（实时裁剪用）
+let navPolylineRemain = null // 剩余路径 Polyline 实例
+
+const navDirectionIcon = computed(() => {
+  const text = navInstruction.value
+  if (text.includes('左转')) return '↰'
+  if (text.includes('右转')) return '↱'
+  if (text.includes('到达')) return '⚑'
+  return '↑'
+})
 
 // Sensor values
 const roll = ref(0)
@@ -186,6 +297,9 @@ let polylineGlow = null   // 发光底层（宽、半透明）
 let polylineMain = null   // 主线（亮色）
 let polylineDir = null    // 方向箭头层
 let replayTimer = null
+
+// 数据库读到的最新位置，用于导航起点 fallback（避免硬编码北京）
+const initialPosition = ref(null)  // { lat, lng }
 
 // ── 头盔 SVG Marker HTML ──────────────────────────────────────────────────────
 function buildHelmetMarkerHTML(yawDeg) {
@@ -348,26 +462,28 @@ function initAMap() {
 // ── 加载数据库最新位置作为地图初始中心 ──────────────────────────────────────
 async function loadInitialPosition() {
   try {
-    const res = await request.get('/api/sensor/latest')
-    // 接口返回 List<SensorData>，直接是数组
-    const list = res.data
-    if (!Array.isArray(list) || list.length === 0) {
-      console.log('[HelmetTwin] 无历史数据，保持默认中心')
+    const res = await request.get('/api/sensor/latest-gps')
+    const data = res.data
+    if (!data || !data.latitude || !data.longitude) {
+      console.log('[HelmetTwin] 数据库无 GPS 记录，保持默认中心')
       return
     }
-
-    // 找第一条有有效 GPS 的记录
-    const record = list.find(d => d.latitude && d.longitude)
-    if (!record) {
-      console.log('[HelmetTwin] 历史数据无有效 GPS，保持默认中心')
-      return
-    }
-
-    const lat = Number(record.latitude)
-    const lng = Number(record.longitude)
-    if (!isNaN(lat) && !isNaN(lng)) {
+    const lat = Number(data.latitude)
+    const lng = Number(data.longitude)
+    if (!isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
       amap.setCenter([lng, lat])
-      console.log('[HelmetTwin] 初始位置已定位到最新记录:', lng, lat)
+      initialPosition.value = { lat, lng }
+      console.log('[HelmetTwin] 初始位置已定位到数据库最新 GPS:', lng, lat)
+
+      // 用数据库最新记录填充姿态面板，让页面有内容显示
+      roll.value  = Number(data.roll)  || 0
+      pitch.value = Number(data.pitch) || 0
+      yaw.value   = Number(data.yaw)   || 0
+      avm.value   = Number(data.avm)   || 0
+      gvm.value   = Number(data.gvm)   || 0
+
+      // 在地图上放一个静态 marker 表示最后已知位置
+      updateHelmetMarker([lng, lat], yaw.value)
     }
   } catch (e) {
     console.warn('[HelmetTwin] 加载初始位置失败:', e.message)
@@ -502,6 +618,244 @@ function clearTrack() {
   arrivalDot = null
 }
 
+// ── 导航功能 ──────────────────────────────────────────────────────────────────
+
+// Haversine 公式，返回两点距离（米）
+function calcDistance(lat1, lng1, lat2, lng2) {
+  const R = 6371000
+  const dLat = (lat2 - lat1) * Math.PI / 180
+  const dLng = (lng2 - lng1) * Math.PI / 180
+  const a = Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
+
+// 获取当前最佳起点坐标（实时GPS > 数据库初始位置 > null）
+function getCurrentOrigin() {
+  if (trackPoints.value.length > 0) {
+    const last = trackPoints.value[trackPoints.value.length - 1]
+    return { lat: last.lat, lng: last.lng }
+  }
+  if (initialPosition.value) {
+    return { lat: initialPosition.value.lat, lng: initialPosition.value.lng }
+  }
+  return null
+}
+
+// 调后端 AI 推荐接口
+async function fetchRecommend(level) {
+  navSelectedLevel.value = level
+  navLoading.value = true
+  navRecommend.value = null
+  try {
+    const token = sessionStorage.getItem('token')
+    const headers = { 'Content-Type': 'application/json' }
+    if (token) headers['Authorization'] = `Bearer ${token}`
+
+    const origin = getCurrentOrigin()
+    const lat = origin ? origin.lat : 0
+    const lng = origin ? origin.lng : 0
+
+    const res = await fetch('/api/navigation/recommend', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ distanceLevel: level, lat, lng })
+    })
+    const data = await res.json()
+    if (data.error) throw new Error(data.error)
+    navRecommend.value = data
+  } catch (e) {
+    console.error('[Nav] 推荐失败:', e.message)
+    navRecommend.value = { name: '推荐失败', reason: e.message }
+  } finally {
+    navLoading.value = false
+  }
+}
+
+// 用高德 REST API 地理编码（Web服务 key，走 /gaodemap 代理）
+async function geocodeAddress(address) {
+  const key = 'f693a401338ee91c2f19ee1dc4b10a0f'
+  const url = `/gaodemap/v3/geocode/geo?key=${key}&address=${encodeURIComponent(address)}&output=JSON`
+  const res = await fetch(url)
+  const data = await res.json()
+  if (data.status !== '1' || !data.geocodes?.length) {
+    throw new Error(`地址解析失败：${address}（${data.info || data.infocode}）`)
+  }
+  const [lng, lat] = data.geocodes[0].location.split(',').map(Number)
+  return { lng, lat }
+}
+
+// 用 AMap.Riding（JS API）规划骑行路线，Promise 包装，带超时 fallback
+function planRidingRoute(originLng, originLat, destLng, destLat) {
+  return new Promise((resolve, reject) => {
+    // 10 秒超时：AMap.Riding 若未开通服务回调永远不触发
+    const timer = setTimeout(() => {
+      reject(new Error('路线规划超时，请确认高德 key 已开通骑行服务，或尝试其他目的地'))
+    }, 10000)
+
+    AMap.plugin('AMap.Riding', () => {
+      const riding = new AMap.Riding()
+      const origin = new AMap.LngLat(originLng, originLat)
+      const dest   = new AMap.LngLat(destLng, destLat)
+      riding.search(origin, dest, (status, result) => {
+        clearTimeout(timer)
+        if (status === 'complete' && result.routes && result.routes.length > 0) {
+          resolve(result.routes[0])
+        } else {
+          reject(new Error(`骑行路线规划失败（${status}）`))
+        }
+      })
+    })
+  })
+}
+
+// 开始导航
+async function startNavigation(destination) {
+  if (!destination || !destination.trim() || !amap) return
+
+  navInstruction.value = '路线规划中...'
+  navActive.value = true
+  navPanelOpen.value = false
+
+  try {
+    // 1. 地理编码
+    const destCoord = await geocodeAddress(destination.trim())
+
+    // 2. 起点
+    const origin = getCurrentOrigin()
+    if (!origin) {
+      navInstruction.value = '无法获取当前位置，请等待 GPS 数据'
+      setTimeout(() => { navActive.value = false }, 3000)
+      return
+    }
+    console.log('[Nav] 起点坐标:', origin)
+
+    // 3. 骑行路线规划
+    const route = await planRidingRouteRest(origin.lng, origin.lat, destCoord.lng, destCoord.lat)
+
+    // 4. 提取步骤和路径
+    const { steps, fullPath } = extractRouteData(route, destCoord)
+    navSteps.value = steps
+    navStepIndex.value = 0
+
+    // 5. 绘制橙色路线（存入 navRemainingPath 供实时裁剪）
+    clearNavPolylines()
+    if (fullPath.length > 1) {
+      navRemainingPath = [...fullPath]
+      navPolylineRemain = new AMap.Polyline({
+        path: navRemainingPath,
+        strokeColor: '#f97316',
+        strokeWeight: 5,
+        strokeOpacity: 0.9,
+        lineJoin: 'round',
+        lineCap: 'round',
+        zIndex: 20
+      })
+      amap.add(navPolylineRemain)
+      navPolylines.value = [navPolylineRemain]
+      try { amap.setFitView([navPolylineRemain], false, [60, 60, 60, 60]) } catch (_) {}
+    }
+
+    navInstruction.value = steps.length > 0 ? (steps[0].action || '沿路线骑行') : '沿路线骑行'
+
+  } catch (e) {
+    console.error('[Nav] 导航失败:', e.message)
+    navInstruction.value = e.message
+    setTimeout(() => { navActive.value = false }, 5000)
+  }
+}
+
+// REST API 骑行路线规划（Web服务 key）
+async function planRidingRouteRest(originLng, originLat, destLng, destLat) {
+  const key = 'f693a401338ee91c2f19ee1dc4b10a0f'
+  const url = `/gaodemap/v4/direction/bicycling?key=${key}&origin=${originLng},${originLat}&destination=${destLng},${destLat}`
+  const res = await fetch(url)
+  const data = await res.json()
+  if (data.errcode !== 0) {
+    throw new Error(`路线规划失败：${data.errmsg || data.errcode}`)
+  }
+  if (!data.data?.paths?.length) {
+    throw new Error('未找到骑行路线')
+  }
+  return { _type: 'rest', ...data.data.paths[0] }
+}
+
+// 统一提取步骤和路径，兼容 JS API 和 REST API 两种数据格式
+function extractRouteData(route, destCoord) {
+  // REST API 格式：steps[].polyline 是 "lng,lat;lng,lat" 字符串
+  if (route._type === 'rest') {
+    const steps = (route.steps || []).map(step => {
+      const pts = (step.polyline || '').split(';').map(s => {
+        const [lng, lat] = s.split(',').map(Number)
+        return [lng, lat]
+      }).filter(([lng, lat]) => !isNaN(lng) && !isNaN(lat))
+      const endPt = pts[pts.length - 1]
+      return {
+        action: step.instruction || '',
+        endLat: endPt ? endPt[1] : destCoord.lat,
+        endLng: endPt ? endPt[0] : destCoord.lng
+      }
+    })
+    const fullPath = []
+    for (const step of (route.steps || [])) {
+      const pts = (step.polyline || '').split(';').map(s => {
+        const [lng, lat] = s.split(',').map(Number)
+        return [lng, lat]
+      }).filter(([lng, lat]) => !isNaN(lng) && !isNaN(lat))
+      fullPath.push(...pts)
+    }
+    return { steps, fullPath }
+  }
+
+  // JS API 格式：steps[].path 是 AMap.LngLat[]
+  const steps = (route.steps || []).map(step => {
+    const pts = step.path || []
+    const endPt = pts[pts.length - 1]
+    return {
+      action: step.instruction || '',
+      endLat: endPt ? endPt.getLat() : destCoord.lat,
+      endLng: endPt ? endPt.getLng() : destCoord.lng
+    }
+  })
+  const fullPath = []
+  for (const step of (route.steps || [])) {
+    if (step.path) fullPath.push(...step.path)
+  }
+  return { steps, fullPath }
+}
+
+// 清除导航路线和状态
+function clearNavigation() {
+  clearNavPolylines()
+  navActive.value = false
+  navSteps.value = []
+  navStepIndex.value = 0
+  navInstruction.value = ''
+  navRemainDist.value = 0
+  navRecommend.value = null
+  navInput.value = ''
+  navSelectedLevel.value = ''
+  navRemainingPath = []
+  // 导航结束后恢复显示蓝色轨迹
+  if (trackPoints.value.length >= 2) updatePolyline()
+}
+
+function clearNavPolylines() {
+  if (amap) {
+    // 直接移除 navPolylineRemain（主要路线对象）
+    if (navPolylineRemain) {
+      try { amap.remove(navPolylineRemain) } catch (_) {}
+      navPolylineRemain = null
+    }
+    // 兜底：移除 navPolylines 数组里的所有对象
+    if (navPolylines.value.length) {
+      try { amap.remove(navPolylines.value) } catch (_) {}
+    }
+  }
+  navPolylines.value = []
+  navPolylineRemain = null
+}
+
 // ── 回放 ──────────────────────────────────────────────────────────────────────
 function cycleReplaySpeed() {
   const speeds = [0.5, 1, 2, 4]
@@ -571,12 +925,49 @@ watch(() => props.sensorData, (data) => {
 
       const lngLat = [lng, lat]
       updateHelmetMarker(lngLat, yaw)
-      updatePolyline()
+
+      // 蓝色轨迹线只在非导航时显示
+      if (!navActive.value) {
+        updatePolyline()
+      }
 
       if (viewMode.value === 'follow' && amap) {
         amap.setCenter(lngLat)
-        amap.setRotation(-yaw)   // 地图旋转，让前进方向始终朝上
-        amap.setPitch(62)        // 保持 3D 倾斜视角
+        amap.setRotation(-yaw)
+        amap.setPitch(62)
+      }
+
+      // 导航步骤推进 + 橙色路线实时裁剪
+      if (navActive.value && navSteps.value.length > 0) {
+        const step = navSteps.value[navStepIndex.value]
+        const dist = calcDistance(lat, lng, step.endLat, step.endLng)
+        navRemainDist.value = dist
+        navInstruction.value = `前方 ${Math.round(dist)} 米 ${step.action}`
+        if (dist < 30 && navStepIndex.value < navSteps.value.length - 1) {
+          navStepIndex.value++
+        }
+        if (navStepIndex.value === navSteps.value.length - 1 && dist < 30) {
+          navInstruction.value = '已到达目的地'
+          clearNavigation()
+          return
+        }
+
+        // 裁剪橙色路线：找到剩余路径中距当前位置最近的点，截掉之前的部分
+        if (navRemainingPath.length > 2) {
+          let closestIdx = 0
+          let minDist = Infinity
+          for (let i = 0; i < navRemainingPath.length; i++) {
+            const [pLng, pLat] = navRemainingPath[i]
+            const d = calcDistance(lat, lng, pLat, pLng)
+            if (d < minDist) { minDist = d; closestIdx = i }
+          }
+          if (closestIdx > 0) {
+            navRemainingPath = navRemainingPath.slice(closestIdx)
+          }
+          if (navPolylineRemain && navRemainingPath.length > 2) {
+            navPolylineRemain.setPath(navRemainingPath)
+          }
+        }
       }
     }
   }
@@ -607,6 +998,7 @@ onUnmounted(() => {
   polylineDir = null
   arrivalDot = null
   helmetMarker = null
+  navPolylines.value = []
 })
 
 defineExpose({
@@ -787,4 +1179,252 @@ defineExpose({
   color: rgba(56,189,248,0.8);
   pointer-events: none;
 }
+
+/* 无实时数据提示（右下角） */
+.no-data-hint {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(15,23,42,0.6);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255,217,61,0.25);
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 11px;
+  color: rgba(255,217,61,0.7);
+  pointer-events: none;
+}
+
+/* 导航按钮 */
+.track-btn--nav { background: rgba(249,115,22,0.15); color: #f97316; border: 1px solid rgba(249,115,22,0.3); }
+.track-btn--nav:hover { background: rgba(249,115,22,0.3); }
+
+/* 导航抽屉 */
+.nav-drawer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 280px;
+  z-index: 150;
+  background: rgba(10,22,40,0.97);
+  border-right: 1px solid rgba(249,115,22,0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 12px;
+  overflow-y: auto;
+  backdrop-filter: blur(8px);
+}
+.nav-drawer__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 600;
+  color: #f97316;
+  margin-bottom: 2px;
+}
+.nav-drawer__header span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.nav-close-btn {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.4);
+  cursor: pointer;
+  font-size: 13px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: color 0.2s;
+}
+.nav-close-btn:hover { color: #fff; }
+
+.nav-section { display: flex; flex-direction: column; gap: 6px; }
+.nav-input-row { display: flex; gap: 6px; }
+.nav-input {
+  flex: 1;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(249,115,22,0.25);
+  border-radius: 5px;
+  color: #e2e8f0;
+  font-size: 12px;
+  padding: 6px 8px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.nav-input:focus { border-color: rgba(249,115,22,0.6); }
+.nav-input::placeholder { color: rgba(255,255,255,0.25); }
+.nav-search-btn {
+  background: rgba(249,115,22,0.2);
+  border: 1px solid rgba(249,115,22,0.4);
+  color: #f97316;
+  border-radius: 5px;
+  font-size: 11px;
+  padding: 6px 10px;
+  cursor: pointer;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+.nav-search-btn:hover:not(:disabled) { background: rgba(249,115,22,0.4); }
+.nav-search-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.nav-divider {
+  text-align: center;
+  font-size: 11px;
+  color: rgba(255,255,255,0.3);
+  position: relative;
+  margin: 2px 0;
+}
+.nav-divider::before, .nav-divider::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 30%;
+  height: 1px;
+  background: rgba(255,255,255,0.1);
+}
+.nav-divider::before { left: 0; }
+.nav-divider::after { right: 0; }
+
+.nav-level-row { display: flex; gap: 6px; }
+.nav-level-btn {
+  flex: 1;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.6);
+  border-radius: 6px;
+  font-size: 11px;
+  padding: 8px 4px;
+  cursor: pointer;
+  text-align: center;
+  line-height: 1.4;
+  transition: all 0.2s;
+}
+.nav-level-btn small { font-size: 10px; color: rgba(255,255,255,0.35); }
+.nav-level-btn:hover:not(:disabled) { border-color: rgba(249,115,22,0.4); color: #f97316; }
+.nav-level-btn.active { background: rgba(249,115,22,0.15); border-color: rgba(249,115,22,0.5); color: #f97316; }
+.nav-level-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.nav-loading {
+  text-align: center;
+  font-size: 11px;
+  color: rgba(249,115,22,0.7);
+  padding: 6px 0;
+  animation: pulse 1.2s infinite;
+}
+
+.nav-recommend-card {
+  background: rgba(249,115,22,0.08);
+  border: 1px solid rgba(249,115,22,0.25);
+  border-radius: 7px;
+  padding: 10px 12px;
+}
+.nav-recommend-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #f97316;
+  margin-bottom: 4px;
+}
+.nav-recommend-reason {
+  font-size: 11px;
+  color: rgba(255,255,255,0.5);
+  line-height: 1.5;
+}
+
+.nav-recommend-meta {
+  display: flex;
+  gap: 12px;
+  margin-top: 6px;
+  font-size: 11px;
+  color: rgba(249,115,22,0.75);
+  font-weight: 500;
+}
+.nav-recommend-error {
+  background: rgba(255,71,87,0.08);
+  border: 1px solid rgba(255,71,87,0.2);
+  border-radius: 7px;
+  padding: 8px 12px;
+  font-size: 11px;
+  color: rgba(255,71,87,0.8);
+}
+
+.nav-confirm-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: rgba(249,115,22,0.2);
+  border: 1px solid rgba(249,115,22,0.5);
+  color: #f97316;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 9px;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-top: 2px;
+}
+.nav-confirm-btn:hover:not(:disabled) { background: rgba(249,115,22,0.35); }
+.nav-confirm-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.nav-stop-btn {
+  background: rgba(255,71,87,0.1);
+  border: 1px solid rgba(255,71,87,0.3);
+  color: #FF4757;
+  border-radius: 6px;
+  font-size: 11px;
+  padding: 7px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.nav-stop-btn:hover { background: rgba(255,71,87,0.25); }
+
+/* 导航指引条 */
+.nav-instruction-bar {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(10,22,40,0.88);
+  border: 1px solid rgba(249,115,22,0.4);
+  border-radius: 8px;
+  padding: 8px 16px;
+  backdrop-filter: blur(8px);
+  pointer-events: none;
+  white-space: nowrap;
+}
+.nav-inst-icon {
+  font-size: 18px;
+  color: #f97316;
+  line-height: 1;
+}
+.nav-inst-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: #e2e8f0;
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.nav-inst-dist {
+  font-size: 12px;
+  color: rgba(249,115,22,0.8);
+  font-weight: 600;
+  margin-left: 4px;
+}
+
+/* 抽屉滑入动画 */
+.nav-slide-enter-active, .nav-slide-leave-active { transition: transform 0.25s ease, opacity 0.25s; }
+.nav-slide-enter-from, .nav-slide-leave-to { transform: translateX(-100%); opacity: 0; }
 </style>

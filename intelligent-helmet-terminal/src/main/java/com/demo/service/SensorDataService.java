@@ -88,6 +88,12 @@ public class SensorDataService {
                 deviceId, PageRequest.of(0, limit));
     }
 
+    // 从数据库查全局最新一条有 GPS 的记录（不限设备，用于地图初始定位）
+    public SensorData getLatestGpsFromDB() {
+        List<SensorData> list = sensorDataRepository.findLatestWithGps(PageRequest.of(0, 1));
+        return list.isEmpty() ? null : list.get(0);
+    }
+
     // 从数据库查最近N小时每小时平均值（小时级别）
     public List<Map<String, Object>> getHourlyHistoryFromDB(String deviceId, int hours) {
         LocalDateTime end = LocalDateTime.now();

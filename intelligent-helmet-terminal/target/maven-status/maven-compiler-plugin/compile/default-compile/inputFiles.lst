@@ -4,6 +4,7 @@ D:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\src\main\java\com\demo\serv
 D:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\src\main\java\com\demo\model\UserProfile.java
 D:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\src\main\java\com\demo\config\JwtFilter.java
 D:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\src\main\java\com\demo\ApplicationAMQPJavaDemo.java
+D:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\src\main\java\com\demo\controller\NavigationController.java
 D:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\src\main\java\com\demo\config\SecurityConfig.java
 D:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\src\main\java\com\demo\service\SensorDataPersistService.java
 D:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\src\main\java\com\demo\controller\SensorDataController.java

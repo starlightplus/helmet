@@ -76,7 +76,7 @@ function startDraw() {
 .bg-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.55);
+  background: rgba(0, 0, 0, 0);
   pointer-events: none;
 }
 </style>

@@ -53,7 +53,7 @@ public class SecurityConfig {
                 .antMatchers("/api/auth/register", "/api/auth/login", "/api/auth/check-username/**").permitAll()
                 .antMatchers("/api/auth/oauth/**").permitAll()
                 .antMatchers("/api/auth/admin/**").hasRole("ADMIN")
-                .antMatchers("/api/sensor/**", "/api/chat/**", "/ws/**").permitAll()
+                .antMatchers("/api/sensor/**", "/api/chat/**", "/api/navigation/**", "/ws/**").permitAll()
                 .anyRequest().authenticated()
             .and()
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);

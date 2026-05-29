@@ -89,7 +89,7 @@
         </div>
 
         <!-- 数字孪生页面 -->
-        <div v-show="activePage === 'twin'" class="page-wrapper">
+        <div v-show="activePage === 'twin'" class="page-wrapper page-wrapper--twin">
           <div class="twin-page">
             <HelmetTwin ref="helmetTwin" :sensorData="latestSensorData" :connected="isConnected" />
           </div>
@@ -284,9 +284,8 @@ onUnmounted(() => {
   align-items: center;
   justify-content: space-between;
   padding: 0 20px;
-  background: rgba(0, 0, 0, 0.5);
+  background: transparent;
   border-bottom: 1px solid rgba(56,189,248,0.15);
-  backdrop-filter: blur(12px);
   z-index: 300;
 }
 
@@ -427,7 +426,8 @@ onUnmounted(() => {
   min-height: 0;
   display: flex;
   flex-direction: row;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 /* ── 左侧选项卡 ── */
@@ -435,7 +435,10 @@ onUnmounted(() => {
   width: 130px;
   flex-shrink: 0;
   background: transparent;
-  position: relative;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  align-self: flex-start;
   border-right: 1px solid rgba(56,189,248,0.12);
   display: flex;
   flex-direction: column;
@@ -488,7 +491,7 @@ onUnmounted(() => {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: visible;
   position: relative;
 }
 .app-content > * {
@@ -501,19 +504,17 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   min-height: 0;
-  overflow: hidden;
+  overflow: visible;
 }
 .page-wrapper--terminal {
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: visible;
 }
 .page-wrapper--dataviz {
-  overflow: hidden;
+  overflow: visible;
   padding: 0;
 }
 .page-wrapper--rideplan {
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: visible;
 }
 .twin-page {
   flex: 1;
@@ -521,6 +522,12 @@ onUnmounted(() => {
   flex-direction: column;
   min-height: 0;
   overflow: hidden;
+  height: 100vh;
+}
+.page-wrapper--twin {
+  height: calc(100vh - 48px);
+  overflow: hidden;
+  flex-shrink: 0;
 }
 
 /* 终端布局：去掉右侧 AiChat，改为单列 */
@@ -544,7 +551,10 @@ onUnmounted(() => {
 .starfield-panel {
   width: 300px;
   flex-shrink: 0;
-  position: relative;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  align-self: flex-start;
   overflow: hidden;
   border-left: 1px solid rgba(56,189,248,0.1);
   display: flex;
@@ -600,6 +610,21 @@ onUnmounted(() => {
 @media (max-width: 768px) {
   .terminal-layout { padding: 14px; gap: 14px; }
   .top-nav .nav-metric { display: none; }
+}
+
+/* ── 全局滚动条（app-body 层） ── */
+.app-body::-webkit-scrollbar {
+  width: 4px;
+}
+.app-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+.app-body::-webkit-scrollbar-thumb {
+  background: rgba(56,189,248,0.25);
+  border-radius: 2px;
+}
+.app-body::-webkit-scrollbar-thumb:hover {
+  background: rgba(56,189,248,0.5);
 }
 </style>
 

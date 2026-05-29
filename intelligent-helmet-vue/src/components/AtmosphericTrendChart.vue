@@ -1,6 +1,6 @@
 <template>
   <!-- 外层容器：半透明背景 + 毛玻璃 + 霓虹边框 -->
-  <div class="bg-black/40 border border-white/10 rounded-xl p-8 backdrop-blur-md flex flex-col h-full relative overflow-hidden">
+  <div class="bg-[#0a1628] border border-white/10 rounded-xl p-8 flex flex-col h-full relative overflow-hidden">
 
     <!-- 头部：标题与自定义图例 -->
     <div class="flex justify-between items-center mb-8">
