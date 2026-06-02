@@ -15,21 +15,31 @@
         </div>
       </div>
 
+      <!-- 中间选项卡 -->
+      <div class="top-nav__tabs">
+        <button class="top-tab" :class="{ 'top-tab--active': activePage === 'terminal' }" @click="activePage = 'terminal'">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+          终端
+        </button>
+        <button class="top-tab" :class="{ 'top-tab--active': activePage === 'twin' }" @click="activePage = 'twin'">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          数字孪生
+        </button>
+        <button class="top-tab" :class="{ 'top-tab--active': activePage === 'dataviz' }" @click="activePage = 'dataviz'">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
+          数据可视化
+        </button>
+        <button class="top-tab" :class="{ 'top-tab--active': activePage === 'rideplan' }" @click="activePage = 'rideplan'">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6l9-3 9 3M3 18l9 3 9-3"/></svg>
+          AI伴骑
+        </button>
+      </div>
+
       <div class="top-nav__right">
-        <div class="nav-metric">
-          <span class="nav-metric__dot nav-metric__dot--green"></span>
-          <span class="nav-metric__label">LATENCY</span>
-          <span class="nav-metric__val">14MS</span>
-        </div>
         <div class="nav-metric">
           <span class="nav-metric__dot nav-metric__dot--green"></span>
           <span class="nav-metric__label">SYNC</span>
           <span class="nav-metric__val nav-metric__val--green">STABLE</span>
-        </div>
-        <div class="nav-metric">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="16" height="10" rx="2"/><path d="M22 11v2"/><rect x="4" y="9" :width="batteryBarWidth" height="6" rx="1" :fill="batteryColor" stroke="none"/></svg>
-          <span class="nav-metric__label">BAT</span>
-          <span class="nav-metric__val" :style="{ color: batteryColor }">{{ batteryDisplay }}</span>
         </div>
         <button class="top-nav__btn" @click="goToProfile">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -44,26 +54,6 @@
 
     <!-- ── 主体：左侧选项卡 + 中间内容 + 右侧星空 ── -->
     <div class="app-body">
-
-      <!-- 左侧竖排选项卡（仅三个页面切换） -->
-      <aside class="side-nav">
-        <button class="side-tab" :class="{ 'side-tab--active': activePage === 'terminal' }" @click="activePage = 'terminal'">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
-          <span>终端</span>
-        </button>
-        <button class="side-tab" :class="{ 'side-tab--active': activePage === 'twin' }" @click="activePage = 'twin'">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-          <span>数字孪生</span>
-        </button>
-        <button class="side-tab" :class="{ 'side-tab--active': activePage === 'dataviz' }" @click="activePage = 'dataviz'">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
-          <span>数据可视化</span>
-        </button>
-        <button class="side-tab" :class="{ 'side-tab--active': activePage === 'rideplan' }" @click="activePage = 'rideplan'">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6l9-3 9 3M3 18l9 3 9-3"/></svg>
-          <span>AI伴骑</span>
-        </button>
-      </aside>
 
       <!-- 中间内容区 -->
       <main class="app-content">
@@ -280,9 +270,9 @@ onUnmounted(() => {
 .top-nav {
   height: 48px;
   flex-shrink: 0;
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: space-between;
   padding: 0 20px;
   background: transparent;
   border-bottom: 1px solid rgba(56,189,248,0.15);
@@ -360,7 +350,44 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
+  justify-content: flex-end;
 }
+
+/* ── 顶部中间选项卡 ── */
+.top-nav__tabs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  justify-content: center;
+}
+.top-tab {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 14px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: rgba(255,255,255,0.5);
+  font-family: var(--font-mono, monospace);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color 0.18s, border-color 0.18s;
+  height: 48px;
+  white-space: nowrap;
+}
+.top-tab:hover {
+  color: rgba(56,189,248,0.8);
+}
+.top-tab--active {
+  color: #38bdf8;
+  border-bottom-color: #38bdf8;
+  text-shadow: 0 0 8px rgba(56,189,248,0.5);
+}
+.top-tab--active svg { stroke: #38bdf8; filter: drop-shadow(0 0 3px rgba(56,189,248,0.6)); }
 .nav-metric {
   display: flex;
   align-items: center;
@@ -429,61 +456,6 @@ onUnmounted(() => {
   overflow-y: auto;
   overflow-x: hidden;
 }
-
-/* ── 左侧选项卡 ── */
-.side-nav {
-  width: 130px;
-  flex-shrink: 0;
-  background: transparent;
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  align-self: flex-start;
-  border-right: 1px solid rgba(56,189,248,0.12);
-  display: flex;
-  flex-direction: column;
-  padding: 16px 8px;
-  gap: 4px;
-  z-index: 200;
-}
-.side-nav > * {
-  position: relative;
-  z-index: 1;
-}
-
-.side-tab {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 11px 12px;
-  background: transparent;
-  border: none;
-  border-left: 2px solid transparent;
-  color: rgba(255, 255, 255, 0.75);
-  font-family: var(--font-mono, monospace);
-  font-size: 0.63rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: color 0.2s, border-color 0.2s, background 0.2s;
-  text-align: left;
-  width: 100%;
-  border-radius: 0 4px 4px 0;
-}
-
-.side-tab:hover {
-  color: rgba(56,189,248,0.7);
-  background: rgba(56,189,248,0.05);
-}
-.side-tab--active {
-  border-left-color: #38bdf8;
-  color: #38bdf8;
-  background: rgba(56,189,248,0.08);
-  text-shadow: 0 0 8px rgba(56,189,248,0.5);
-}
-.side-tab--active svg { stroke: #38bdf8; filter: drop-shadow(0 0 3px rgba(56,189,248,0.6)); }
-.side-tab span { white-space: nowrap; }
 
 /* ── 中间内容区 ── */
 .app-content {
@@ -603,13 +575,11 @@ onUnmounted(() => {
 }
 @media (max-width: 900px) {
   .starfield-panel { display: none; }
-  .side-nav { width: 52px; }
-  .side-tab span { display: none; }
-  .side-tab { justify-content: center; padding: 10px; }
 }
 @media (max-width: 768px) {
   .terminal-layout { padding: 14px; gap: 14px; }
   .top-nav .nav-metric { display: none; }
+  .top-tab span { display: none; }
 }
 
 /* ── 全局滚动条（app-body 层） ── */

@@ -197,14 +197,17 @@ onUnmounted(() => {
 /* ── Card Container ─────────────────────────────────────────────── */
 .ride-card {
   position: relative;
-  background: rgba(10, 15, 26, 0.55);
-  border: 1px solid #1e3a4a;
+  background: rgba(5, 8, 18, 0.82);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(56,189,248,0.18);
   border-radius: 10px;
   overflow: hidden;
   transition: border-color 0.3s, box-shadow 0.3s;
   display: flex;
   flex-direction: column;
   height: 100%;
+  box-shadow: 0 4px 32px rgba(0,0,0,0.55);
 }
 /* top gradient line */
 .ride-card::before {

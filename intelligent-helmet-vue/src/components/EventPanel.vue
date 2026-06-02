@@ -162,13 +162,16 @@ defineExpose({ processDeviceEvents, clearAllEvents, addEvent })
 /* ── Panel Container ───────────────────────────────────────────── */
 .event-panel {
   position: relative;
-  background: rgba(10, 15, 26, 0.55);
-  border: 1px solid #1e3a4a;
+  background: rgba(5, 8, 18, 0.82);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(56,189,248,0.18);
   border-radius: 10px;
   width: 100%;
   box-sizing: border-box;
   overflow: hidden;
   transition: border-color 0.4s ease, box-shadow 0.4s ease;
+  box-shadow: 0 4px 32px rgba(0,0,0,0.55);
 }
 /* top gradient line */
 .event-panel::before {

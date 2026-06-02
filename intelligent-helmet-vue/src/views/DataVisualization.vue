@@ -17,7 +17,7 @@
 
         <!-- Hero -->
         <div class="dv-hero">
-          <div class="dv-hero__bg-text">HELMET</div>
+          <div class="dv-hero__bg-text">HELMET</div> 
           <div class="dv-hero__left">
             <div class="dv-hero__tag">
               <span class="dv-hero__tag-dot"></span>传感器数据实时同步中
