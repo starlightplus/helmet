@@ -1,6 +1,0 @@
-{
-  "name": "Cycling Record Dashboard",
-  "description": "一个用于展示骑行记录的、精致的单页仪表盘，支持查看骑行时间、配速、卡路里、温湿度、超速次数、安全评分以及可视化的骑行轨迹地图。",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}
