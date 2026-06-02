@@ -1,51 +1,11 @@
 <template>
   <div class="cyber-bg">
-    <!-- 隐藏的 video 用于解码，canvas 负责渲染，浏览器不会对 canvas 显示媒体控件 -->
-    <video ref="videoRef" class="bg-video-hidden" autoplay loop muted playsinline
-      disablePictureInPicture
-      @loadeddata="startDraw">
-      <source src="/background.mp4" type="video/mp4">
-    </video>
-    <canvas ref="canvasRef" class="bg-canvas"></canvas>
-    <!-- 统一遮光层 -->
+    <img src="/sky.jpg" class="bg-img" alt="" />
     <div class="bg-overlay"></div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue'
-
-const videoRef = ref(null)
-const canvasRef = ref(null)
-let rafId = null
-
-function startDraw() {
-  const video = videoRef.value
-  const canvas = canvasRef.value
-  if (!video || !canvas) return
-
-  const ctx = canvas.getContext('2d')
-
-  function resize() {
-    canvas.width = window.innerWidth
-    canvas.height = window.innerHeight
-  }
-  resize()
-  window.addEventListener('resize', resize)
-
-  function draw() {
-    if (video.readyState >= 2) {
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
-    }
-    rafId = requestAnimationFrame(draw)
-  }
-  draw()
-
-  onBeforeUnmount(() => {
-    cancelAnimationFrame(rafId)
-    window.removeEventListener('resize', resize)
-  })
-}
 </script>
 
 <style scoped>
@@ -56,20 +16,12 @@ function startDraw() {
   overflow: hidden;
 }
 
-/* video 完全隐藏，只用于解码 */
-.bg-video-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  opacity: 0;
-  pointer-events: none;
-}
-
-.bg-canvas {
+.bg-img {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
+  object-fit: cover;
   pointer-events: none;
 }
 
