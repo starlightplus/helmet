@@ -162,7 +162,10 @@ defineExpose({ processDeviceEvents, clearAllEvents, addEvent })
 /* ── Panel Container ───────────────────────────────────────────── */
 .event-panel {
   position: relative;
-  background: rgba(5, 8, 18, 0.82);
+  background:
+    radial-gradient(circle, rgba(56,189,248,0.035) 1px, transparent 1px),
+    rgba(5, 8, 18, 0.82);
+  background-size: 24px 24px, auto;
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   border: 1px solid rgba(56,189,248,0.18);
@@ -368,14 +371,14 @@ defineExpose({ processDeviceEvents, clearAllEvents, addEvent })
 .empty-shield::before {
   content: '';
   position: absolute;
-  inset: -8px;
+  inset: -12px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(56,189,248,0.12) 0%, transparent 70%);
-  animation: shield-glow 3s ease-in-out infinite;
+  background: radial-gradient(circle, rgba(56,189,248,0.14) 0%, transparent 70%);
+  animation: shield-glow 4s ease-in-out infinite;
 }
 @keyframes shield-glow {
-  0%,100% { opacity: 0.4; transform: scale(0.9); }
-  50%      { opacity: 1;   transform: scale(1.15); }
+  0%,100% { opacity: 0.3; transform: scale(0.85); }
+  50%      { opacity: 0.9; transform: scale(1.2); }
 }
 .empty-shield__pulse {
   position: absolute;

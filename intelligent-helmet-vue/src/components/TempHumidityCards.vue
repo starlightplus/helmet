@@ -10,6 +10,7 @@
         </div>
       </div>
       <div class="card-body card-body--split">
+        <div class="card-header-divider"></div>
         <!-- Temperature -->
         <div class="env-section">
           <canvas ref="tempCanvasRef" class="lottie-canvas"></canvas>
@@ -27,7 +28,7 @@
         <div class="env-divider"></div>
         <!-- Humidity -->
         <div class="env-section">
-          <canvas ref="humCanvasRef" class="lottie-canvas"></canvas>
+          <canvas ref="humCanvasRef" class="lottie-canvas lottie-canvas--hum"></canvas>
           <div class="card-value-block">
             <div class="env-label">湿度</div>
             <div class="value-row">
@@ -79,9 +80,6 @@
               <span class="bat-meta-key">充电状态</span>
               <span class="bat-meta-val" style="color: #4ade80">未充电</span>
             </div>
-          </div>
-          <div class="status-badge" :style="{ color: batColor, borderColor: batColor + '40', background: batColor + '12' }">
-            {{ batStatusText }}
           </div>
         </div>
       </div>
@@ -176,6 +174,7 @@ const batBarHeight = computed(() => Math.round(fakeBattery.value / 100 * 52))
   flex-direction: column;
   gap: 16px;
   width: 100%;
+  height: 100%;
 }
 
 .sensor-card {
@@ -190,6 +189,14 @@ const batBarHeight = computed(() => Math.round(fakeBattery.value / 100 * 52))
   display: flex;
   flex-direction: column;
   gap: 14px;
+}
+.sensor-card--env {
+  flex: 1;
+  min-height: 0;
+}
+.sensor-card--bat {
+  margin-top: 8px;
+  box-shadow: 0 4px 32px rgba(0,0,0,0.55), 0 0 20px -6px rgba(74,222,128,0.10);
 }
 .sensor-card::before {
   content: '';
@@ -246,12 +253,22 @@ const batBarHeight = computed(() => Math.round(fakeBattery.value / 100 * 52))
   display: flex;
   flex-direction: column;
   gap: 0;
+  flex: 1;
+  justify-content: space-evenly;
+}
+/* divider between header title and first section */
+.card-header-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(56,189,248,0.25), transparent);
+  flex-shrink: 0;
+  margin-bottom: 2px;
 }
 .env-section {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 12px;
-  padding: 10px 0;
+  padding: 8px 0;
 }
 .env-divider {
   height: 1px;
@@ -270,6 +287,13 @@ const batBarHeight = computed(() => Math.round(fakeBattery.value / 100 * 52))
   width: 56px;
   height: 56px;
   flex-shrink: 0;
+  align-self: center;
+}
+/* humidity icon slightly smaller to match temp visual weight */
+.lottie-canvas--hum {
+  width: 42px;
+  height: 42px;
+  margin-left: 7px;
 }
 .card-value-block {
   flex: 1;
@@ -277,30 +301,34 @@ const batBarHeight = computed(() => Math.round(fakeBattery.value / 100 * 52))
   display: flex;
   flex-direction: column;
   gap: 6px;
+  align-items: center;
 }
 .value-row {
   display: flex;
   align-items: baseline;
-  gap: 4px;
+  gap: 5px;
   line-height: 1;
 }
 .value-num {
-  font-family: var(--font-mono, monospace);
+  font-family: var(--font-mono, 'JetBrains Mono', 'Roboto Mono', monospace);
   font-size: 2rem;
   font-weight: 700;
   letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
 }
 .value-num--temp { color: #38bdf8; text-shadow: 0 0 12px rgba(56,189,248,0.55); }
-.value-num--hum  { color: #a78bfa; text-shadow: 0 0 12px rgba(167,139,250,0.55); }
+.value-num--hum  { color: #a78bfa; text-shadow: 0 0 14px rgba(167,139,250,0.7); filter: brightness(1.3); }
 .value-unit {
   font-family: var(--font-mono, monospace);
-  font-size: 12px;
-  color: rgba(255,255,255,0.4);
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.45);
+  /* baseline alignment is default in flex align-items: baseline */
 }
 .status-badge {
   display: inline-flex;
   align-items: center;
-  align-self: flex-start;
+  align-self: center;
   padding: 3px 8px;
   border: 1px solid;
   border-radius: 4px;
@@ -371,13 +399,13 @@ const batBarHeight = computed(() => Math.round(fakeBattery.value / 100 * 52))
 .bat-bar-label {
   font-family: var(--font-mono, monospace);
   font-size: 0.58rem;
-  color: rgba(255,255,255,0.35);
+  color: #A0AAB2;
   letter-spacing: 0.06em;
 }
 .bat-meta {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
   border-top: 1px solid rgba(255,255,255,0.06);
   padding-top: 8px;
 }
@@ -386,20 +414,16 @@ const batBarHeight = computed(() => Math.round(fakeBattery.value / 100 * 52))
   flex-direction: column;
   gap: 3px;
 }
-.bat-meta-item:nth-child(2) {
-  padding-left: 12px;
-  border-left: 1px solid rgba(255,255,255,0.06);
-}
 .bat-meta-key {
   font-family: var(--font-mono, monospace);
-  font-size: 0.55rem;
-  color: #A0AAB2;
+  font-size: 0.52rem;
+  color: #8A939C;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 .bat-meta-val {
   font-family: var(--font-mono, monospace);
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   font-weight: 700;
 }
 </style>

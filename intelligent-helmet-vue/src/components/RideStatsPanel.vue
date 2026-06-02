@@ -394,8 +394,8 @@ onUnmounted(() => {
 }
 .ride-card__speed-hint {
   font-family: var(--font-mono, monospace);
-  font-size: 0.6rem;
-  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.62rem;
+  color: #A0AAB2;
   letter-spacing: 0.06em;
   margin-top: 4px;
 }
@@ -454,47 +454,45 @@ onUnmounted(() => {
 .ride-card__stat {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
   align-items: flex-start;
-  padding: 8px 10px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(56,189,248,0.07);
-  border-radius: 6px;
+  padding: 6px 4px;
+  background: none;
+  border: none;
+  border-radius: 0;
 }
 .ride-card__stat--cal {
   flex-direction: row;
   align-items: center;
   gap: 6px;
   padding: 0;
-  background: none;
-  border: none;
 }
 .ride-card__stat--btn {
   align-items: center;
   justify-content: center;
-  background: none;
-  border: none;
   padding: 0;
 }
 .ride-card__stat-val {
-  font-family: var(--font-mono, monospace);
-  font-size: 1.75rem;
+  font-family: var(--font-mono, 'JetBrains Mono', 'Roboto Mono', monospace);
+  font-size: 2.4rem;
   font-weight: 800;
   color: #fff;
   font-variant-numeric: tabular-nums;
   line-height: 1;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
+  text-shadow: 0 0 20px rgba(255,255,255,0.15);
 }
-.ride-card__stat-val--cal { color: #FFAA00; text-shadow: 0 0 8px rgba(255,170,0,0.4); font-size: 1.1rem; }
+.ride-card__stat-val--cal { color: #FFAA00; text-shadow: 0 0 10px rgba(255,170,0,0.45); font-size: 1.2rem; }
 .ride-card__stat-key {
   font-family: var(--font-mono, monospace);
-  font-size: 0.52rem;
-  color: #A0AAB2;
+  font-size: 0.5rem;
+  color: #8A939C;
   font-weight: 500;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
+  margin-top: 2px;
 }
-.ride-card__stat--cal .ride-card__stat-key { color: rgba(255,170,0,0.55); }
+.ride-card__stat--cal .ride-card__stat-key { color: rgba(255,170,0,0.5); }
 
 @media (max-width: 640px) {
   .ride-card__speed-num { font-size: 2.1rem; }

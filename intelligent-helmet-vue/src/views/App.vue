@@ -527,6 +527,7 @@ onUnmounted(() => {
   flex-direction: column;
   gap: 16px;
   overflow: hidden;
+  height: 100%;
 }
 .terminal-right {
   grid-column: 2;
@@ -608,18 +609,18 @@ onUnmounted(() => {
   bottom: 18%;
   left: 50%;
   transform: translateX(-50%);
-  width: 120px;
-  height: 16px;
-  background: radial-gradient(ellipse at center, rgba(56,189,248,0.35) 0%, transparent 70%);
+  width: 140px;
+  height: 24px;
+  background: radial-gradient(ellipse at center, rgba(56,189,248,0.38) 0%, rgba(56,189,248,0.08) 50%, transparent 75%);
   border-radius: 50%;
-  filter: blur(4px);
+  filter: blur(10px);
   animation: landing-breathe 3s ease-in-out infinite;
   pointer-events: none;
   z-index: 1;
 }
 @keyframes landing-breathe {
-  0%,100% { opacity: 0.5; transform: translateX(-50%) scaleX(0.8); }
-  50%      { opacity: 1;   transform: translateX(-50%) scaleX(1.2); }
+  0%,100% { opacity: 0.45; transform: translateX(-50%) scaleX(0.85); }
+  50%      { opacity: 0.9;  transform: translateX(-50%) scaleX(1.15); }
 }
 
 /* 模型淡出动画 */
