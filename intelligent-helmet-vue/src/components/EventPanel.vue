@@ -203,7 +203,7 @@ defineExpose({ processDeviceEvents, clearAllEvents, addEvent })
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 20px 14px;
+  padding: 18px 24px 16px;
   border-bottom: 1px solid rgba(56, 189, 248, 0.08);
 }
 
@@ -337,38 +337,69 @@ defineExpose({ processDeviceEvents, clearAllEvents, addEvent })
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   text-align: center;
   padding: 40px 32px;
+  position: relative;
+  overflow: hidden;
+}
+/* scan-line sweep */
+.event-panel__empty::before {
+  content: '';
+  position: absolute;
+  left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(56,189,248,0.35), transparent);
+  animation: scan-sweep 4s linear infinite;
+  top: 0;
+}
+@keyframes scan-sweep {
+  0%   { top: 0%;   opacity: 0; }
+  5%   { opacity: 1; }
+  95%  { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
 }
 .empty-shield {
   position: relative;
-  width: 56px; height: 56px;
+  width: 64px; height: 64px;
   display: flex; align-items: center; justify-content: center;
+}
+/* glow halo behind shield */
+.empty-shield::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(56,189,248,0.12) 0%, transparent 70%);
+  animation: shield-glow 3s ease-in-out infinite;
+}
+@keyframes shield-glow {
+  0%,100% { opacity: 0.4; transform: scale(0.9); }
+  50%      { opacity: 1;   transform: scale(1.15); }
 }
 .empty-shield__pulse {
   position: absolute;
   width: 44px; height: 44px;
   border-radius: 50%;
-  border: 1px solid rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.18);
   animation: shield-pulse 3s ease infinite;
 }
 @keyframes shield-pulse {
-  0%   { transform: scale(0.8); opacity: 0.5; }
-  50%  { transform: scale(1.3); opacity: 0; }
-  100% { transform: scale(0.8); opacity: 0.5; }
+  0%   { transform: scale(0.8); opacity: 0.6; }
+  50%  { transform: scale(1.4); opacity: 0; }
+  100% { transform: scale(0.8); opacity: 0.6; }
 }
 .empty-text {
   font-family: var(--font-mono, monospace);
-  color: rgba(56, 189, 248, 0.5);
+  color: #A0AAB2;
   font-size: 0.75rem;
   letter-spacing: 0.06em;
 }
 .empty-sub {
   font-family: var(--font-mono, monospace);
-  color: rgba(255, 255, 255, 0.15);
-  font-size: 0.62rem;
-  letter-spacing: 0.12em;
+  color: rgba(56,189,248,0.4);
+  font-size: 0.6rem;
+  letter-spacing: 0.15em;
   text-transform: uppercase;
 }
 </style>

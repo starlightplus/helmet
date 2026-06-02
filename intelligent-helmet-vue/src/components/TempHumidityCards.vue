@@ -172,8 +172,8 @@ const batBarHeight = computed(() => Math.round(fakeBattery.value / 100 * 52))
 <style scoped>
 /* ── Shared card token ── */
 .sensor-cards {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  flex-direction: column;
   gap: 16px;
   width: 100%;
 }
@@ -241,42 +241,42 @@ const batBarHeight = computed(() => Math.round(fakeBattery.value / 100 * 52))
   text-transform: uppercase;
 }
 
-/* ── Env (merged) card ── */
+/* ── Env (merged) card — stacked top/bottom ── */
 .card-body--split {
   display: flex;
-  align-items: stretch;
+  flex-direction: column;
   gap: 0;
 }
 .env-section {
-  flex: 1;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
+  padding: 10px 0;
 }
 .env-divider {
-  width: 1px;
-  background: rgba(56,189,248,0.1);
-  margin: 0 14px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(56,189,248,0.25), transparent);
   flex-shrink: 0;
 }
 .env-label {
   font-family: var(--font-mono, monospace);
-  font-size: 0.6rem;
-  color: rgba(255,255,255,0.4);
-  letter-spacing: 0.1em;
+  font-size: 0.58rem;
+  color: #A0AAB2;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   margin-bottom: 4px;
 }
 .lottie-canvas {
-  width: 64px;
-  height: 64px;
+  width: 56px;
+  height: 56px;
   flex-shrink: 0;
 }
 .card-value-block {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 .value-row {
   display: flex;
@@ -286,7 +286,7 @@ const batBarHeight = computed(() => Math.round(fakeBattery.value / 100 * 52))
 }
 .value-num {
   font-family: var(--font-mono, monospace);
-  font-size: 26px;
+  font-size: 2rem;
   font-weight: 700;
   letter-spacing: -0.03em;
 }
@@ -295,7 +295,7 @@ const batBarHeight = computed(() => Math.round(fakeBattery.value / 100 * 52))
 .value-unit {
   font-family: var(--font-mono, monospace);
   font-size: 12px;
-  color: rgba(255,255,255,0.3);
+  color: rgba(255,255,255,0.4);
 }
 .status-badge {
   display: inline-flex;
@@ -375,23 +375,31 @@ const batBarHeight = computed(() => Math.round(fakeBattery.value / 100 * 52))
   letter-spacing: 0.06em;
 }
 .bat-meta {
-  display: flex;
-  gap: 16px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 0;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  padding-top: 8px;
 }
 .bat-meta-item {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
+}
+.bat-meta-item:nth-child(2) {
+  padding-left: 12px;
+  border-left: 1px solid rgba(255,255,255,0.06);
 }
 .bat-meta-key {
   font-family: var(--font-mono, monospace);
   font-size: 0.55rem;
-  color: rgba(255,255,255,0.3);
-  letter-spacing: 0.06em;
+  color: #A0AAB2;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 .bat-meta-val {
   font-family: var(--font-mono, monospace);
-  font-size: 0.72rem;
+  font-size: 0.78rem;
   font-weight: 700;
 }
 </style>

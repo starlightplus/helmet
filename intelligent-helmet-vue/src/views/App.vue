@@ -60,8 +60,10 @@
         <!-- 终端页面 -->
         <div v-show="activePage === 'terminal'" class="page-wrapper page-wrapper--terminal">
           <div class="terminal-layout">
-            <div class="terminal-top">
+            <div class="terminal-left">
               <TempHumidityCards :temperature="latestTemp" :humidity="latestHumidity" />
+            </div>
+            <div class="terminal-right">
               <RideStatsPanel
                 :isRiding="rideTracking.isRiding.value"
                 :currentSpeed="rideTracking.currentSpeed.value"
@@ -74,7 +76,9 @@
                 :pace="rideTracking.pace.value"
               />
             </div>
-            <EventPanel ref="eventPanel" />
+            <div class="terminal-bottom">
+              <EventPanel ref="eventPanel" />
+            </div>
           </div>
         </div>
 
@@ -110,6 +114,7 @@
         <Transition name="model-fade">
           <div v-if="!showAiChat" class="ai-zone">
             <AiAssistant :sensor-data="latestSensorData" :inline="true" @click-model="toggleAiChat" />
+            <div class="ai-landing-glow"></div>
           </div>
         </Transition>
 
@@ -479,7 +484,8 @@ onUnmounted(() => {
   overflow: visible;
 }
 .page-wrapper--terminal {
-  overflow: visible;
+  overflow: hidden;
+  height: calc(100vh - 48px);
 }
 .page-wrapper--dataviz {
   overflow: visible;
@@ -502,35 +508,51 @@ onUnmounted(() => {
   flex-shrink: 0;
 }
 
-/* 终端布局：去掉右侧 AiChat，改为单列 */
+/* 终端布局：左栏传感器 + 右栏骑行/事件 */
 .terminal-layout {
-  max-width: 960px;
   width: 100%;
-  margin: 0 auto;
-  padding: 24px 20px;
+  height: calc(100vh - 48px);
+  padding: 20px 24px;
   box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  grid-template-rows: 1fr auto;
+  gap: 16px;
+  overflow: hidden;
 }
-.terminal-top {
+.terminal-left {
+  grid-column: 1;
+  grid-row: 1 / 3;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
+  overflow: hidden;
+}
+.terminal-right {
+  grid-column: 2;
+  grid-row: 1;
+  min-height: 0;
+}
+.terminal-bottom {
+  grid-column: 2;
+  grid-row: 2;
 }
 
 /* ── 右侧星空面板 ── */
 .starfield-panel {
-  width: 300px;
+  width: 280px;
   flex-shrink: 0;
   position: sticky;
   top: 0;
-  height: 100vh;
+  height: calc(100vh - 48px);
   align-self: flex-start;
   overflow: hidden;
-  border-left: 1px solid rgba(56,189,248,0.1);
+  border-left: 1px solid rgba(56,189,248,0.08);
   display: flex;
   flex-direction: column;
+  background: rgba(5, 8, 18, 0.55);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .starfield-bg {
@@ -543,8 +565,31 @@ onUnmounted(() => {
   inset: 0;
   z-index: 2;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 12px;
+  padding: 20px 16px;
+}
+.ai-zone::before {
+  content: 'AI · ASSISTANT';
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-mono, monospace);
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: rgba(56,189,248,0.45);
+  white-space: nowrap;
+}
+.ai-zone::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(56,189,248,0.2), transparent);
 }
 
 /* 全屏对话框（覆盖整个右侧面板） */
@@ -555,6 +600,26 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   padding: 0;
+}
+
+/* AI 着陆光晕底座 */
+.ai-landing-glow {
+  position: absolute;
+  bottom: 18%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 16px;
+  background: radial-gradient(ellipse at center, rgba(56,189,248,0.35) 0%, transparent 70%);
+  border-radius: 50%;
+  filter: blur(4px);
+  animation: landing-breathe 3s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+@keyframes landing-breathe {
+  0%,100% { opacity: 0.5; transform: translateX(-50%) scaleX(0.8); }
+  50%      { opacity: 1;   transform: translateX(-50%) scaleX(1.2); }
 }
 
 /* 模型淡出动画 */
@@ -572,12 +637,17 @@ onUnmounted(() => {
 /* 响应式 */
 @media (max-width: 1200px) {
   .starfield-panel { width: 240px; }
+  .terminal-layout { grid-template-columns: 280px 1fr; }
 }
 @media (max-width: 900px) {
   .starfield-panel { display: none; }
+  .terminal-layout { grid-template-columns: 1fr; grid-template-rows: auto auto auto; }
+  .terminal-left  { grid-column: 1; grid-row: 1; }
+  .terminal-right { grid-column: 1; grid-row: 2; }
+  .terminal-bottom { grid-column: 1; grid-row: 3; }
 }
 @media (max-width: 768px) {
-  .terminal-layout { padding: 14px; gap: 14px; }
+  .terminal-layout { padding: 12px; gap: 12px; }
   .top-nav .nav-metric { display: none; }
   .top-tab span { display: none; }
 }

@@ -36,32 +36,32 @@
       <!-- 分隔线 -->
       <div class="ride-card__divider"></div>
 
-      <!-- 右：统计数据 3×2 -->
-      <div class="ride-card__stats">
-        <!-- 第一排：距离、均速、卡路里 -->
-        <div class="ride-card__stat">
-          <span class="ride-card__stat-val">{{ isRiding ? formattedDistance : '--' }}</span>
-          <span class="ride-card__stat-key">距离 km</span>
+      <!-- 右：统计数据 2×2 + 底部行 -->
+      <div class="ride-card__stats-wrap">
+        <div class="ride-card__stats">
+          <div class="ride-card__stat">
+            <span class="ride-card__stat-val">{{ isRiding ? formattedDistance : '--' }}</span>
+            <span class="ride-card__stat-key">距离 km</span>
+          </div>
+          <div class="ride-card__stat">
+            <span class="ride-card__stat-val">{{ isRiding ? avgSpeed.toFixed(1) : '--' }}</span>
+            <span class="ride-card__stat-key">均速 km/h</span>
+          </div>
+          <div class="ride-card__stat">
+            <span class="ride-card__stat-val">{{ isRiding ? maxSpeed.toFixed(1) : '--' }}</span>
+            <span class="ride-card__stat-key">最高 km/h</span>
+          </div>
+          <div class="ride-card__stat">
+            <span class="ride-card__stat-val">{{ isRiding ? formattedPace : '--' }}</span>
+            <span class="ride-card__stat-key">配速 /km</span>
+          </div>
         </div>
-        <div class="ride-card__stat">
-          <span class="ride-card__stat-val">{{ isRiding ? avgSpeed.toFixed(1) : '--' }}</span>
-          <span class="ride-card__stat-key">均速 km/h</span>
-        </div>
-        <div class="ride-card__stat ride-card__stat--cal">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M12 6v6l4 2"/></svg>
-          <span class="ride-card__stat-val ride-card__stat-val--cal">{{ isRiding ? Math.round(calories) : '--' }}</span>
-          <span class="ride-card__stat-key">卡路里 kcal</span>
-        </div>
-        <!-- 第二排：最高、配速、骑行记录 -->
-        <div class="ride-card__stat">
-          <span class="ride-card__stat-val">{{ isRiding ? maxSpeed.toFixed(1) : '--' }}</span>
-          <span class="ride-card__stat-key">最高 km/h</span>
-        </div>
-        <div class="ride-card__stat">
-          <span class="ride-card__stat-val">{{ isRiding ? formattedPace : '--' }}</span>
-          <span class="ride-card__stat-key">配速 /km</span>
-        </div>
-        <div class="ride-card__stat ride-card__stat--btn">
+        <div class="ride-card__stats-footer">
+          <div class="ride-card__stat ride-card__stat--cal">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M12 6v6l4 2"/></svg>
+            <span class="ride-card__stat-val ride-card__stat-val--cal">{{ isRiding ? Math.round(calories) : '--' }}</span>
+            <span class="ride-card__stat-key">kcal</span>
+          </div>
           <button class="ride-history-btn" @click="goToRideHistory">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="5.5" cy="17.5" r="3.5"/><path d="M15 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2z" fill="currentColor"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></svg>
             骑行记录
@@ -250,10 +250,10 @@ onUnmounted(() => {
 
 /* Lottie 骑行动画 */
 .ride-lottie {
-  width: 120px;
-  height: 80px;
+  width: 90px;
+  height: 60px;
   display: block;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 .ride-lottie--idle {
   display: flex;
@@ -319,9 +319,10 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  min-width: 130px;
-  padding-left: 12px;
-  padding-right: 15px;
+  min-width: 110px;
+  max-width: 140px;
+  padding-left: 8px;
+  padding-right: 12px;
 }
 .ride-card__label-row {
   display: flex;
@@ -394,7 +395,7 @@ onUnmounted(() => {
 .ride-card__speed-hint {
   font-family: var(--font-mono, monospace);
   font-size: 0.6rem;
-  color: rgba(255, 255, 255, 0.75);
+  color: rgba(255, 255, 255, 0.55);
   letter-spacing: 0.06em;
   margin-top: 4px;
 }
@@ -427,48 +428,73 @@ onUnmounted(() => {
 }
 
 /* Right: stats grid */
+.ride-card__stats-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 8px;
+}
 .ride-card__stats {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px 10px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px 14px;
   flex: 1;
-  align-content: space-between;
-  padding-top: 24px;
+  align-content: start;
+  padding-top: 8px;
+}
+.ride-card__stats-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 8px;
+  border-top: 1px solid rgba(56,189,248,0.08);
 }
 .ride-card__stat {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  align-items: center;
-  justify-content: center;
+  gap: 2px;
+  align-items: flex-start;
+  padding: 8px 10px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(56,189,248,0.07);
+  border-radius: 6px;
 }
 .ride-card__stat--cal {
   flex-direction: row;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
+  padding: 0;
+  background: none;
+  border: none;
 }
 .ride-card__stat--btn {
   align-items: center;
   justify-content: center;
+  background: none;
+  border: none;
+  padding: 0;
 }
 .ride-card__stat-val {
   font-family: var(--font-mono, monospace);
-  font-size: 1.0rem;
-  font-weight: 700;
+  font-size: 1.75rem;
+  font-weight: 800;
   color: #fff;
   font-variant-numeric: tabular-nums;
-  line-height: 1.2;
+  line-height: 1;
+  letter-spacing: -0.02em;
 }
-.ride-card__stat-val--cal { color: #FFAA00; text-shadow: 0 0 8px rgba(255,170,0,0.4); }
+.ride-card__stat-val--cal { color: #FFAA00; text-shadow: 0 0 8px rgba(255,170,0,0.4); font-size: 1.1rem; }
 .ride-card__stat-key {
   font-family: var(--font-mono, monospace);
-  font-size: 0.58rem;
-  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.52rem;
+  color: #A0AAB2;
   font-weight: 500;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
-.ride-card__stat--cal .ride-card__stat-key { color: rgba(255, 170, 0, 0.45); }
+.ride-card__stat--cal .ride-card__stat-key { color: rgba(255,170,0,0.55); }
 
 @media (max-width: 640px) {
   .ride-card__speed-num { font-size: 2.1rem; }

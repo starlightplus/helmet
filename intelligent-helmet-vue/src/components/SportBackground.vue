@@ -28,7 +28,7 @@
 .bg-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0);
+  background: rgba(2, 6, 18, 0.42);
   pointer-events: none;
 }
 </style>
