@@ -37,6 +37,20 @@ public class SensorData {
     private Double avm;
     private Double gvm;
 
+    // 健康数据
+    @Column(name = "heart_rate")
+    private Integer heartRate;
+
+    @Column(name = "spo2")
+    private Integer spo2;
+
+    // 电源数据
+    @Column(name = "voltage")
+    private Double voltage;
+
+    @Column(name = "battery")
+    private Integer battery;
+
     // 状态标志
     @Column(name = "fall_flag")
     private Boolean fallFlag;
@@ -103,6 +117,18 @@ public class SensorData {
 
     public Double getGvm() { return gvm; }
     public void setGvm(Double gvm) { this.gvm = gvm; }
+
+    public Integer getHeartRate() { return heartRate; }
+    public void setHeartRate(Integer heartRate) { this.heartRate = heartRate; }
+
+    public Integer getSpo2() { return spo2; }
+    public void setSpo2(Integer spo2) { this.spo2 = spo2; }
+
+    public Double getVoltage() { return voltage; }
+    public void setVoltage(Double voltage) { this.voltage = voltage; }
+
+    public Integer getBattery() { return battery; }
+    public void setBattery(Integer battery) { this.battery = battery; }
 
     public Boolean getFallFlag() { return fallFlag; }
     public void setFallFlag(Boolean fallFlag) { this.fallFlag = fallFlag; }

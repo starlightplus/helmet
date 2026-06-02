@@ -94,6 +94,21 @@ public class SensorDataService {
         return list.isEmpty() ? null : list.get(0);
     }
 
+    // 心率历史
+    public List<SensorData> getHeartRateHistory(String deviceId, int limit) {
+        return sensorDataRepository.findHeartRateHistory(deviceId, PageRequest.of(0, limit));
+    }
+
+    // 血氧历史
+    public List<SensorData> getSpo2History(String deviceId, int limit) {
+        return sensorDataRepository.findSpo2History(deviceId, PageRequest.of(0, limit));
+    }
+
+    // 电量历史
+    public List<SensorData> getBatteryHistory(String deviceId, int limit) {
+        return sensorDataRepository.findBatteryHistory(deviceId, PageRequest.of(0, limit));
+    }
+
     // 从数据库查最近N小时每小时平均值（小时级别）
     public List<Map<String, Object>> getHourlyHistoryFromDB(String deviceId, int hours) {
         LocalDateTime end = LocalDateTime.now();

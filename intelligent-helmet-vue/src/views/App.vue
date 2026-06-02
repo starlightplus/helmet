@@ -61,7 +61,12 @@
         <div v-show="activePage === 'terminal'" class="page-wrapper page-wrapper--terminal">
           <div class="terminal-layout">
             <div class="terminal-left">
-              <TempHumidityCards :temperature="latestTemp" :humidity="latestHumidity" />
+              <TempHumidityCards
+                :temperature="latestTemp"
+                :humidity="latestHumidity"
+                :battery="latestSensorData.battery != null ? Number(latestSensorData.battery) : null"
+                :voltage="latestSensorData.voltage != null ? Number(latestSensorData.voltage) : null"
+              />
             </div>
             <div class="terminal-right">
               <RideStatsPanel
@@ -115,6 +120,32 @@
           <div v-if="!showAiChat" class="ai-zone">
             <AiAssistant :sensor-data="latestSensorData" :inline="true" @click-model="toggleAiChat" />
             <div class="ai-landing-glow"></div>
+            <!-- 用户指引 -->
+            <div class="ai-guide">
+              <div class="ai-guide__tip" @click="toggleAiChat">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                点击模型开启 AI 对话
+              </div>
+              <div class="ai-guide__divider"></div>
+              <div class="ai-guide__list">
+                <div class="ai-guide__item">
+                  <span class="ai-guide__dot"></span>
+                  <span>实时分析头盔传感器数据</span>
+                </div>
+                <div class="ai-guide__item">
+                  <span class="ai-guide__dot"></span>
+                  <span>骑行安全预警与建议</span>
+                </div>
+                <div class="ai-guide__item">
+                  <span class="ai-guide__dot"></span>
+                  <span>导航 · 天气 · 路线规划</span>
+                </div>
+                <div class="ai-guide__item">
+                  <span class="ai-guide__dot"></span>
+                  <span>摔倒检测自动触发报警</span>
+                </div>
+              </div>
+            </div>
           </div>
         </Transition>
 
@@ -250,6 +281,8 @@ onMounted(async () => {
       const d = res.data[0]
       if (d.temperature != null) latestTemp.value = Number(d.temperature)
       if (d.humidity != null) latestHumidity.value = Number(d.humidity)
+      // 用数据库最近一条记录初始化 latestSensorData，使电量/心率/血氧在终端页面立即显示
+      latestSensorData.value = { ...latestSensorData.value, ...d }
     }
   } catch {}
 })
@@ -601,6 +634,64 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   padding: 0;
+}
+
+/* 用户指引区 */
+.ai-guide {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.ai-guide__tip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border: 1px solid rgba(56,189,248,0.2);
+  background: rgba(56,189,248,0.05);
+  border-radius: 6px;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.62rem;
+  color: rgba(56,189,248,0.75);
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.ai-guide__tip:hover {
+  background: rgba(56,189,248,0.1);
+  color: #38bdf8;
+  box-shadow: 0 0 10px rgba(56,189,248,0.15);
+}
+.ai-guide__tip svg { stroke: rgba(56,189,248,0.7); flex-shrink: 0; }
+.ai-guide__divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(56,189,248,0.15), transparent);
+}
+.ai-guide__list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.ai-guide__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.58rem;
+  color: rgba(255,255,255,0.4);
+  letter-spacing: 0.04em;
+}
+.ai-guide__dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(56,189,248,0.4);
+  flex-shrink: 0;
 }
 
 /* AI 着陆光晕底座 */

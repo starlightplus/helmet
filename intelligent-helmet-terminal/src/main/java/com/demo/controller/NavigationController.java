@@ -54,11 +54,12 @@ public class NavigationController {
             // 3. 构造 Prompt
             String prompt = String.format(
                 "你是骑行路线推荐助手。用户当前位置：%s，想骑行%s公里。" +
-                "请推荐一个该城市真实存在、适合骑行的具体目的地（公园/绿道/景区/湖边/江边），" +
-                "必须是%s附近真实的地名，不要编造。给出目的地名称、一句推荐理由、" +
-                "距当前位置的大概距离（公里，整数）、预计骑行时间（分钟，整数，按平均15km/h计算）。" +
-                "只返回 JSON，不要有任何其他文字：" +
-                "{\"name\":\"目的地全称\",\"reason\":\"推荐理由\",\"keywords\":\"公园\",\"distanceKm\":8,\"durationMin\":32}",
+                "请推荐3个该城市真实存在、适合骑行的具体目的地（公园/绿道/景区/湖边/江边），" +
+                "必须是%s附近真实的地名，不要编造。每个给出目的地名称、一句推荐理由、" +
+                "距当前位置的大概距离（公里）、预计骑行时间（分钟）。" +
+                "严格要求：只返回合法 JSON 数组，不要有任何其他文字，" +
+                "distanceKm 和 durationMin 必须是纯数字（不加引号），例如：" +
+                "[{\"name\":\"示例公园\",\"reason\":\"风景优美\",\"keywords\":\"公园\",\"distanceKm\":5,\"durationMin\":20}]",
                 regionName, distanceRange, regionName
             );
 
@@ -67,17 +68,26 @@ public class NavigationController {
                 null
             );
 
-            // 4. 解析 AI 返回的 JSON
+            // 4. 解析 AI 返回的 JSON 数组
             String jsonStr = extractJson(aiReply);
-            JsonNode result = objectMapper.readTree(jsonStr);
+            JsonNode root = objectMapper.readTree(jsonStr);
 
-            return ResponseEntity.ok(Map.of(
-                "name",        result.path("name").asText("推荐目的地"),
-                "reason",      result.path("reason").asText("适合骑行"),
-                "keywords",    result.path("keywords").asText("公园"),
-                "distanceKm",  result.path("distanceKm").asInt(0),
-                "durationMin", result.path("durationMin").asInt(0)
+            // 支持数组或单对象
+            java.util.List<java.util.Map<String,Object>> results = new java.util.ArrayList<>();
+            java.util.function.Consumer<JsonNode> addItem = node -> results.add(Map.of(
+                "name",        node.path("name").asText("推荐目的地"),
+                "reason",      node.path("reason").asText("适合骑行"),
+                "keywords",    node.path("keywords").asText("公园"),
+                "distanceKm",  node.path("distanceKm").asInt(0),
+                "durationMin", node.path("durationMin").asInt(0)
             ));
+            if (root.isArray()) {
+                root.forEach(addItem);
+            } else {
+                addItem.accept(root);
+            }
+
+            return ResponseEntity.ok(Map.of("recommendations", results));
 
         } catch (Exception e) {
             return ResponseEntity.internalServerError()
@@ -112,19 +122,36 @@ public class NavigationController {
     }
 
     /**
-     * 从 AI 回复中提取并修复 JSON 字符串
-     * 处理 AI 常见问题：全角引号、字符串值内嵌引号
+     * 从 AI 回复中提取并修复 JSON 字符串（支持数组和对象）
      */
     private String extractJson(String text) {
-        if (text == null) return "{}";
-        int start = text.indexOf('{');
-        int end = text.lastIndexOf('}');
-        if (start < 0 || end <= start) return "{}";
-        String json = text.substring(start, end + 1);
+        if (text == null) return "[]";
+        // 优先找数组
+        int arrStart = text.indexOf('[');
+        int arrEnd   = text.lastIndexOf(']');
+        int objStart = text.indexOf('{');
+        int objEnd   = text.lastIndexOf('}');
 
-        // 把全角引号替换为中文括号（避免破坏 JSON 结构）
-        json = json.replace('\u201C', '\uff08').replace('\u201D', '\uff09')
-                   .replace('\u2018', '\uff08').replace('\u2019', '\uff09');
+        String json;
+        if (arrStart >= 0 && arrEnd > arrStart &&
+            (objStart < 0 || arrStart <= objStart)) {
+            json = text.substring(arrStart, arrEnd + 1);
+        } else if (objStart >= 0 && objEnd > objStart) {
+            json = text.substring(objStart, objEnd + 1);
+        } else {
+            return "[]";
+        }
+
+        // 把全角引号替换为普通引号
+        json = json.replace('\u201C', '"').replace('\u201D', '"')
+                   .replace('\u2018', '\'').replace('\u2019', '\'');
+
+        // 修复 AI 在数字后面多写一个 " 的问题：如 20"} → 20}  或  32", → 32,
+        json = json.replaceAll("(\\d)\"(\\s*[,}\\]])", "$1$2");
+
+        // 修复 AI 在布尔/null 后面多写一个 " 的问题
+        json = json.replaceAll("(true|false|null)\"(\\s*[,}\\]])", "$1$2");
+
         return json;
     }
 }

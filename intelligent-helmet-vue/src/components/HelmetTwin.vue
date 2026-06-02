@@ -7,23 +7,6 @@
         数字孪生 · 实时状态
       </div>
       <div class="twin-header__right">
-        <button class="track-btn track-btn--view" @click="toggleViewMode" :disabled="trackPoints.length < 2" title="切换视图模式">
-          <svg v-if="viewMode === 'follow'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
-          <svg v-else width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/></svg>
-          {{ viewMode === 'follow' ? '跟随' : '全局' }}
-        </button>
-        <button class="track-btn track-btn--speed" @click="cycleReplaySpeed" title="调整回放速度">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          {{ replaySpeed }}x
-        </button>
-        <button class="track-btn track-btn--clear" @click="clearTrack" title="清除轨迹">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
-          清除
-        </button>
-        <button class="track-btn track-btn--replay" @click="replayTrack" :disabled="trackPoints.length < 2">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-          {{ isReplaying ? '回放中...' : '回放' }}
-        </button>
         <button class="track-btn track-btn--nav" @click="navPanelOpen = !navPanelOpen" title="骑行导航">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
           导航
@@ -80,24 +63,32 @@
           <!-- 加载中 -->
           <div v-if="navLoading" class="nav-loading">AI 推荐中...</div>
 
-          <!-- 推荐结果卡片 -->
-          <div v-if="navRecommend && navRecommend.name !== '推荐失败'" class="nav-recommend-card">
-            <div class="nav-recommend-name">{{ navRecommend.name }}</div>
-            <div class="nav-recommend-reason">{{ navRecommend.reason }}</div>
-            <div v-if="navRecommend.distanceKm || navRecommend.durationMin" class="nav-recommend-meta">
-              <span v-if="navRecommend.distanceKm">📍 约 {{ navRecommend.distanceKm }} km</span>
-              <span v-if="navRecommend.durationMin">⏱ 约 {{ navRecommend.durationMin }} 分钟</span>
+          <!-- 推荐结果卡片列表 -->
+          <div v-if="navRecommends.length > 0" class="nav-recommend-list">
+            <div
+              v-for="(item, idx) in navRecommends"
+              :key="idx"
+              class="nav-recommend-card"
+              :class="{ 'nav-recommend-card--selected': navSelected === item, 'nav-recommend-card--error': item.name === '推荐失败' }"
+              @click="item.name !== '推荐失败' && (navSelected = item)"
+            >
+              <div class="nav-recommend-card__index">{{ idx + 1 }}</div>
+              <div class="nav-recommend-card__body">
+                <div class="nav-recommend-name">{{ item.name }}</div>
+                <div class="nav-recommend-reason">{{ item.reason }}</div>
+                <div v-if="item.distanceKm || item.durationMin" class="nav-recommend-meta">
+                  <span v-if="item.distanceKm">📍 约 {{ item.distanceKm }} km</span>
+                  <span v-if="item.durationMin">⏱ 约 {{ item.durationMin }} 分钟</span>
+                </div>
+              </div>
             </div>
-          </div>
-          <div v-else-if="navRecommend && navRecommend.name === '推荐失败'" class="nav-recommend-error">
-            {{ navRecommend.reason }}
           </div>
 
           <!-- 确认导航 -->
           <button
             class="nav-confirm-btn"
-            :disabled="!navInput.trim() && !navRecommend"
-            @click="startNavigation(navRecommend ? navRecommend.name : navInput)"
+            :disabled="!navInput.trim() && !navSelected"
+            @click="startNavigation(navSelected ? navSelected.name : navInput)"
           >
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
             开始导航
@@ -111,9 +102,26 @@
       <!-- 导航指引条 -->
       <transition name="alert-fade">
         <div v-if="navActive" class="nav-instruction-bar">
+          <div class="nav-inst-dest" ref="destLabelRef">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+            <div class="nav-inst-dest__ticker">
+              <span class="nav-inst-dest__text" ref="destTextRef">{{ navDestName }}&nbsp;&nbsp;{{ navDestName }}</span>
+            </div>
+          </div>
+          <div class="nav-inst-divider"></div>
           <span class="nav-inst-icon">{{ navDirectionIcon }}</span>
           <span class="nav-inst-text">{{ navInstruction }}</span>
           <span class="nav-inst-dist">{{ navRemainDist > 1000 ? (navRemainDist / 1000).toFixed(1) + 'km' : Math.round(navRemainDist) + 'm' }}</span>
+          <div class="nav-inst-actions">
+            <button class="nav-inst-btn nav-inst-btn--change" @click="navPanelOpen = true; navActive && clearNavigation()">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              更改目的地
+            </button>
+            <button class="nav-inst-btn nav-inst-btn--stop" @click="clearNavigation">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+              结束骑行
+            </button>
+          </div>
         </div>
       </transition>
 
@@ -213,7 +221,8 @@ const replaySpeed = ref(1)
 // Navigation state
 const navPanelOpen = ref(false)
 const navInput = ref('')
-const navRecommend = ref(null)
+const navRecommends = ref([])   // array of 3
+const navSelected = ref(null)   // currently selected recommend item
 const navLoading = ref(false)
 const navSelectedLevel = ref('')
 const navPolylines = ref([])
@@ -221,6 +230,10 @@ const navSteps = ref([])
 const navStepIndex = ref(0)
 const navActive = ref(false)
 const navInstruction = ref('')
+const navDestName = ref('')
+const destLabelRef = ref(null)
+const destTextRef = ref(null)
+
 const navRemainDist = ref(0)
 let navRemainingPath = []   // 导航剩余路径点（实时裁剪用）
 let navPolylineRemain = null // 剩余路径 Polyline 实例
@@ -646,7 +659,8 @@ function getCurrentOrigin() {
 async function fetchRecommend(level) {
   navSelectedLevel.value = level
   navLoading.value = true
-  navRecommend.value = null
+  navRecommends.value = []
+  navSelected.value = null
   try {
     const token = sessionStorage.getItem('token')
     const headers = { 'Content-Type': 'application/json' }
@@ -663,10 +677,11 @@ async function fetchRecommend(level) {
     })
     const data = await res.json()
     if (data.error) throw new Error(data.error)
-    navRecommend.value = data
+    navRecommends.value = data.recommendations || []
+    if (navRecommends.value.length > 0) navSelected.value = navRecommends.value[0]
   } catch (e) {
     console.error('[Nav] 推荐失败:', e.message)
-    navRecommend.value = { name: '推荐失败', reason: e.message }
+    navRecommends.value = [{ name: '推荐失败', reason: e.message, distanceKm: 0, durationMin: 0 }]
   } finally {
     navLoading.value = false
   }
@@ -713,6 +728,7 @@ function planRidingRoute(originLng, originLat, destLng, destLat) {
 async function startNavigation(destination) {
   if (!destination || !destination.trim() || !amap) return
 
+  navDestName.value = destination.trim()
   navInstruction.value = '路线规划中...'
   navActive.value = true
   navPanelOpen.value = false
@@ -831,8 +847,10 @@ function clearNavigation() {
   navSteps.value = []
   navStepIndex.value = 0
   navInstruction.value = ''
+  navDestName.value = ''
   navRemainDist.value = 0
-  navRecommend.value = null
+  navRecommends.value = []
+  navSelected.value = null
   navInput.value = ''
   navSelectedLevel.value = ''
   navRemainingPath = []
@@ -1320,39 +1338,70 @@ defineExpose({
   animation: pulse 1.2s infinite;
 }
 
-.nav-recommend-card {
-  background: rgba(249,115,22,0.08);
-  border: 1px solid rgba(249,115,22,0.25);
-  border-radius: 7px;
-  padding: 10px 12px;
+.nav-recommend-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
+.nav-recommend-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: rgba(249,115,22,0.06);
+  border: 1px solid rgba(249,115,22,0.18);
+  border-radius: 7px;
+  padding: 9px 10px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.nav-recommend-card:hover {
+  background: rgba(249,115,22,0.12);
+  border-color: rgba(249,115,22,0.35);
+}
+.nav-recommend-card--selected {
+  background: rgba(249,115,22,0.18);
+  border-color: #f97316;
+  box-shadow: 0 0 8px rgba(249,115,22,0.25);
+}
+.nav-recommend-card--error {
+  cursor: default;
+  background: rgba(255,71,87,0.08);
+  border-color: rgba(255,71,87,0.2);
+}
+.nav-recommend-card__index {
+  flex-shrink: 0;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: rgba(249,115,22,0.2);
+  border: 1px solid rgba(249,115,22,0.4);
+  color: #f97316;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  margin-top: 1px;
+}
+.nav-recommend-card__body { flex: 1; min-width: 0; }
 .nav-recommend-name {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: #f97316;
-  margin-bottom: 4px;
+  margin-bottom: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .nav-recommend-reason {
-  font-size: 11px;
+  font-size: 10px;
   color: rgba(255,255,255,0.5);
-  line-height: 1.5;
+  line-height: 1.4;
 }
-
 .nav-recommend-meta {
   display: flex;
-  gap: 12px;
-  margin-top: 6px;
-  font-size: 11px;
+  gap: 10px;
+  margin-top: 5px;
+  font-size: 10px;
   color: rgba(249,115,22,0.75);
   font-weight: 500;
-}
-.nav-recommend-error {
-  background: rgba(255,71,87,0.08);
-  border: 1px solid rgba(255,71,87,0.2);
-  border-radius: 7px;
-  padding: 8px 12px;
-  font-size: 11px;
-  color: rgba(255,71,87,0.8);
 }
 
 .nav-confirm-btn {
@@ -1390,7 +1439,7 @@ defineExpose({
 .nav-instruction-bar {
   position: absolute;
   top: 10px;
-  left: 50%;
+  left: calc(50% + 80px);
   transform: translateX(-50%);
   z-index: 200;
   display: flex;
@@ -1399,11 +1448,79 @@ defineExpose({
   background: rgba(10,22,40,0.88);
   border: 1px solid rgba(249,115,22,0.4);
   border-radius: 8px;
-  padding: 8px 16px;
+  padding: 8px 12px;
   backdrop-filter: blur(8px);
-  pointer-events: none;
+  pointer-events: auto;
   white-space: nowrap;
 }
+.nav-inst-dest {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #f97316;
+  letter-spacing: 0.04em;
+  width: 90px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.nav-inst-dest svg {
+  flex-shrink: 0;
+}
+.nav-inst-dest__ticker {
+  overflow: hidden;
+  flex: 1;
+  min-width: 0;
+}
+.nav-inst-dest__text {
+  display: inline-block;
+  white-space: nowrap;
+  padding-right: 32px; /* gap between repeat */
+  animation: ticker-scroll 6s linear infinite;
+}
+@keyframes ticker-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.nav-inst-divider {
+  width: 1px;
+  height: 18px;
+  background: rgba(255,255,255,0.12);
+  flex-shrink: 0;
+}
+.nav-inst-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 6px;
+  padding-left: 10px;
+  border-left: 1px solid rgba(255,255,255,0.1);
+}
+.nav-inst-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+.nav-inst-btn--change {
+  background: rgba(56,189,248,0.1);
+  border: 1px solid rgba(56,189,248,0.3);
+  color: #38bdf8;
+}
+.nav-inst-btn--change:hover { background: rgba(56,189,248,0.2); }
+.nav-inst-btn--stop {
+  background: rgba(255,71,87,0.1);
+  border: 1px solid rgba(255,71,87,0.3);
+  color: #FF4757;
+}
+.nav-inst-btn--stop:hover { background: rgba(255,71,87,0.22); }
 .nav-inst-icon {
   font-size: 18px;
   color: #f97316;

@@ -215,7 +215,6 @@
               {{ latestBattery.percentage }}%
             </span>
             <span class="dv-stat-pill dv-stat-pill--blue">{{ batteryRecords.length }} 条采样</span>
-            <button class="dv-pill-btn dv-pill-btn--danger" @click="clearBattery">清空</button>
           </div>
         </div>
 
@@ -239,42 +238,42 @@
               <v-chart class="dv-echart" :option="batteryChartOption" autoresize />
             </div>
           </div>
-          <!-- 右：录入表单 + 历史 -->
+          <!-- 右：历史记录 + 注意事项 -->
           <div class="dv-battery-right">
-            <div class="dv-form-title">记录采样</div>
-            <div class="dv-form-row">
-              <label class="dv-form-label">电量 %</label>
-              <input v-model.number="batInput.percentage" type="range" min="0" max="100" class="dv-slider" />
-              <span class="dv-form-num">{{ batInput.percentage }}</span>
+            <div class="dv-form-title">历史记录
+              <span class="dv-hr-record-count">共 {{ batteryRecords.length }} 条</span>
             </div>
-            <div class="dv-form-row">
-              <label class="dv-form-label">温度 °C</label>
-              <input v-model.number="batInput.temperature" type="range" min="0" max="60" class="dv-slider" />
-              <span class="dv-form-num">{{ batInput.temperature }}</span>
+            <div class="dv-hr-table-wrap">
+              <table class="dv-hr-table">
+                <thead>
+                  <tr>
+                    <th>时间</th>
+                    <th>电量</th>
+                    <th>电压</th>
+                    <th>温度</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="r in batteryRecords.slice().reverse()" :key="r.id">
+                    <td class="dv-hr-table__time">{{ r.timestamp?.slice(11,16) }}</td>
+                    <td :style="{ color: r.percentage > 50 ? '#4ade80' : r.percentage > 20 ? '#f59e0b' : '#ef4444' }">
+                      {{ r.percentage }}<span class="dv-hr-table__unit">%</span>
+                    </td>
+                    <td style="color:#60a5fa">{{ r.voltage?.toFixed(2) ?? '--' }}<span class="dv-hr-table__unit">V</span></td>
+                    <td style="color:#94a3b8">{{ r.temperature ?? '--' }}<span class="dv-hr-table__unit">°C</span></td>
+                  </tr>
+                  <tr v-if="batteryRecords.length === 0">
+                    <td colspan="4" class="dv-hr-table__empty">暂无数据</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
-            <div class="dv-form-row">
-              <label class="dv-form-label">电压 V</label>
-              <input v-model.number="batInput.voltage" type="range" min="3.0" max="4.2" step="0.01" class="dv-slider" />
-              <span class="dv-form-num">{{ batInput.voltage.toFixed(2) }}</span>
-            </div>
-            <div class="dv-form-row">
-              <label class="dv-form-label">状态</label>
-              <div class="dv-form-toggle">
-                <button :class="['dv-toggle-btn', batInput.status === 'charging' && 'active']" @click="batInput.status = 'charging'">充电</button>
-                <button :class="['dv-toggle-btn', batInput.status === 'discharging' && 'active']" @click="batInput.status = 'discharging'">放电</button>
-              </div>
-            </div>
-            <div class="dv-form-actions">
-              <button class="dv-form-btn dv-form-btn--primary" @click="addBatteryRecord">记录当前</button>
-              <button class="dv-form-btn dv-form-btn--green" @click="simulateCharge">+10% 充电</button>
-              <button class="dv-form-btn dv-form-btn--amber" @click="simulateDrain">-12% 放电</button>
-            </div>
-            <div class="dv-mini-list">
-              <div class="dv-mini-list__title">最近采样</div>
-              <div v-for="r in batteryRecords.slice(-8).reverse()" :key="r.id" class="dv-mini-row">
-                <span class="dv-mini-row__time">{{ r.timestamp?.slice(11,16) }}</span>
-                <span class="dv-mini-row__val" :class="r.percentage > 50 ? 'clr-green' : r.percentage > 20 ? 'clr-amber' : 'clr-red'">{{ r.percentage }}%</span>
-                <span class="dv-mini-row__sub">{{ r.voltage?.toFixed(2) }}V · {{ r.temperature }}°C</span>
+            <!-- 注意事项 -->
+            <div class="dv-bat-notice">
+              <div class="dv-form-title" style="margin-top:12px">注意事项</div>
+              <div class="dv-bat-notice__body">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" style="flex-shrink:0;margin-top:2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                <span>电池电压低于 <b>4.8V</b>（电量约 <b>79%</b>）后，电压将加速下降，头盔可能随时因电压不足而无法使用。请及时充电，避免影响使用。</span>
               </div>
             </div>
           </div>
@@ -291,6 +290,7 @@
           <div class="dv-stat-pills">
             <span class="dv-stat-pill dv-stat-pill--rose">均值 {{ hrAvg }} BPM</span>
             <span class="dv-stat-pill dv-stat-pill--red">峰值 {{ hrMax }} BPM</span>
+            <span v-if="latestSpo2 != null" class="dv-stat-pill dv-stat-pill--violet">血氧 {{ latestSpo2 }}%</span>
             <div class="dv-hr-day-switch">
               <button v-for="d in hrDays" :key="d.date"
                 :class="['dv-range-btn', hrSelectedDate === d.date && 'active']"
@@ -315,36 +315,33 @@
               </div>
             </div>
           </div>
-          <!-- 右：录入面板 -->
+          <!-- 右：历史记录表格 -->
           <div class="dv-hr-form">
-            <div class="dv-form-title">整点心率调整</div>
-            <div class="dv-form-row">
-              <label class="dv-form-label">选择时段</label>
-              <select v-model.number="hrInput.hour" class="dv-select">
-                <option v-for="h in 24" :key="h-1" :value="h-1">{{ String(h-1).padStart(2,'0') }}:00</option>
-              </select>
+            <div class="dv-form-title">历史记录
+              <span class="dv-hr-record-count">共 {{ hrRawHistory.length }} 条</span>
             </div>
-            <div class="dv-form-row">
-              <label class="dv-form-label">心率 BPM</label>
-              <input v-model.number="hrInput.bpm" type="range" min="40" max="200" class="dv-slider" />
-              <span class="dv-form-num" :style="{ color: hrZoneColor(hrInput.bpm) }">{{ hrInput.bpm }}</span>
-            </div>
-            <div class="dv-form-row">
-              <label class="dv-form-label">骑行速度</label>
-              <input v-model.number="hrInput.speed" type="range" min="0" max="40" class="dv-slider" />
-              <span class="dv-form-num">{{ hrInput.speed }} km/h</span>
-            </div>
-            <div class="dv-zone-tag" :style="{ background: hrZoneColor(hrInput.bpm) + '20', color: hrZoneColor(hrInput.bpm), borderColor: hrZoneColor(hrInput.bpm) + '50' }">
-              {{ hrZoneName(hrInput.bpm) }}
-            </div>
-            <div class="dv-form-actions">
-              <button class="dv-form-btn dv-form-btn--primary" @click="updateHrPoint">更新此时段</button>
-            </div>
-            <div class="dv-preset-btns">
-              <div class="dv-form-title" style="margin-top:12px">预设场景</div>
-              <button class="dv-form-btn dv-form-btn--red" @click="applyHrPreset('hiit')">HIIT 高强度</button>
-              <button class="dv-form-btn dv-form-btn--amber" @click="applyHrPreset('endurance')">有氧耐力</button>
-              <button class="dv-form-btn dv-form-btn--blue" @click="applyHrPreset('recovery')">恢复骑行</button>
+            <div class="dv-hr-table-wrap">
+              <table class="dv-hr-table">
+                <thead>
+                  <tr>
+                    <th>时间</th>
+                    <th>心率</th>
+                    <th>血氧</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="r in hrRawHistory" :key="r.id">
+                    <td class="dv-hr-table__time">{{ r.time }}</td>
+                    <td :style="{ color: hrZoneColor(r.bpm) }">{{ r.bpm }} <span class="dv-hr-table__unit">BPM</span></td>
+                    <td :style="{ color: r.spo2 != null ? '#a78bfa' : 'rgba(255,255,255,0.3)' }">
+                      {{ r.spo2 != null ? r.spo2 + '%' : '--' }}
+                    </td>
+                  </tr>
+                  <tr v-if="hrRawHistory.length === 0">
+                    <td colspan="3" class="dv-hr-table__empty">暂无数据</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
             <!-- 区间说明 -->
             <div class="dv-zone-legend">
@@ -443,13 +440,61 @@ const tempChartData = computed(() => {
 })
 
 watch(() => props.sensorData, (v) => {
-  if (!v || v.temperature == null || v.humidity == null) return
-  tempHistory.value.push({
-    time: new Date().toISOString().replace('T', ' ').slice(0, 19),
-    temp: v.temperature,
-    hum:  v.humidity,
-  })
-  if (tempHistory.value.length > 1440) tempHistory.value.shift()
+  if (!v) return
+  // Temperature/humidity
+  if (v.temperature != null && v.humidity != null) {
+    tempHistory.value.push({
+      time: new Date().toISOString().replace('T', ' ').slice(0, 19),
+      temp: v.temperature,
+      hum:  v.humidity,
+    })
+    if (tempHistory.value.length > 1440) tempHistory.value.shift()
+  }
+  // Real-time battery
+  if (v.battery != null) {
+    batteryRecords.value.push({
+      id: Date.now(),
+      timestamp: new Date().toISOString().replace('T', ' ').slice(0, 19),
+      percentage: Number(v.battery),
+      temperature: v.temperature ?? 0,
+      voltage: v.voltage ?? null,
+      status: 'discharging',
+      source: 'device',
+    })
+    if (batteryRecords.value.length > 500) batteryRecords.value.shift()
+  }
+  // Real-time heart rate
+  if (v.heartRate != null) {
+    const now = new Date()
+    const dateStr = now.toISOString().slice(0, 10)
+    const hour = now.getHours()
+    const timeStr = now.toISOString().replace('T', ' ').slice(0, 16)
+
+    // 追加到原始表格（最新在前）
+    hrRawHistory.value.unshift({
+      id: Date.now(),
+      time: timeStr,
+      bpm: v.heartRate,
+      spo2: v.spo2 ?? null,
+    })
+    if (hrRawHistory.value.length > 200) hrRawHistory.value.pop()
+
+    // 更新图表数据
+    let day = hrDays.value.find(d => d.date === dateStr)
+    if (!day) {
+      day = { date: dateStr, label: '今天', points: [] }
+      hrDays.value.push(day)
+      hrSelectedDate.value = dateStr
+    }
+    const existing = day.points.find(p => p.hour === hour)
+    if (existing) {
+      existing.bpm = v.heartRate
+      existing.spo2 = v.spo2 ?? existing.spo2
+    } else {
+      day.points.push({ hour, bpm: v.heartRate, spo2: v.spo2 ?? null })
+      day.points.sort((a, b) => a.hour - b.hour)
+    }
+  }
 })
 
 async function loadTempHistory() {
@@ -514,7 +559,71 @@ function saveBattery() {
   localStorage.setItem(userKey('helmet_battery_records'), JSON.stringify(batteryRecords.value))
 }
 
-const batInput = ref({ percentage: 80, temperature: 25, voltage: 3.85, status: 'discharging' })
+async function loadBatteryFromBackend() {
+  try {
+    const token = sessionStorage.getItem('token')
+    const headers = token ? { Authorization: 'Bearer ' + token } : {}
+    const res = await fetch('/api/sensor/history/battery?limit=200', { headers })
+    if (!res.ok) return
+    const list = await res.json()
+    const points = [...list].reverse()
+      .filter(d => d.battery != null)
+      .map(d => ({
+        id: d.id,
+        timestamp: (d.receiveTime || '').replace('T', ' ').slice(0, 19),
+        percentage: d.battery,
+        temperature: d.temperature ?? 0,
+        voltage: d.voltage ?? null,
+        status: 'discharging',
+        source: 'device',
+      }))
+    if (points.length) batteryRecords.value = points
+  } catch {}
+}
+
+async function loadHeartRateFromBackend() {
+  try {
+    const token = sessionStorage.getItem('token')
+    const headers = token ? { Authorization: 'Bearer ' + token } : {}
+    const res = await fetch('/api/sensor/history/heartrate?limit=200', { headers })
+    if (!res.ok) return
+    const list = await res.json()
+
+    // 原始表格数据（按时间正序，最新在上）
+    hrRawHistory.value = list
+      .filter(d => d.heartRate != null)
+      .map(d => ({
+        id: d.id,
+        time: (d.receiveTime || '').replace('T', ' ').slice(0, 16),
+        bpm: d.heartRate,
+        spo2: d.spo2 ?? null,
+      }))
+
+    // 按日期+小时聚合用于图表
+    list.forEach(d => {
+      if (d.heartRate == null || !d.receiveTime) return
+      const ts = (d.receiveTime || '').replace('T', ' ')
+      const dateStr = ts.slice(0, 10)
+      const hour = parseInt(ts.slice(11, 13), 10)
+      let day = hrDays.value.find(x => x.date === dateStr)
+      if (!day) {
+        const dt = new Date(dateStr)
+        const label = `${dt.getMonth()+1}/${dt.getDate()}`
+        day = { date: dateStr, label, points: [] }
+        hrDays.value.push(day)
+      }
+      if (!day.points.find(p => p.hour === hour)) {
+        day.points.push({ hour, bpm: d.heartRate, spo2: d.spo2 ?? null })
+      }
+    })
+    hrDays.value.sort((a, b) => a.date.localeCompare(b.date))
+    if (hrDays.value.length > 7) hrDays.value = hrDays.value.slice(-7)
+    hrDays.value.forEach(d => d.points.sort((a, b) => a.hour - b.hour))
+    const today = new Date().toISOString().slice(0, 10)
+    if (hrDays.value.find(d => d.date === today)) hrSelectedDate.value = today
+    else if (hrDays.value.length) hrSelectedDate.value = hrDays.value[hrDays.value.length - 1].date
+  } catch {}
+}
 
 const latestBattery = computed(() => {
   if (!batteryRecords.value.length) return { percentage: 0, status: 'discharging', voltage: 0, temperature: 0 }
@@ -530,50 +639,19 @@ const batBarClass = computed(() => {
   return p > 50 ? 'dv-bat-bar--green' : p > 20 ? 'dv-bat-bar--amber' : 'dv-bat-bar--red'
 })
 
-function addBatteryRecord() {
-  batteryRecords.value.push({
-    id: Date.now(),
-    timestamp: new Date().toISOString().replace('T', ' ').slice(0, 19),
-    percentage: batInput.value.percentage,
-    temperature: batInput.value.temperature,
-    voltage: batInput.value.voltage,
-    status: batInput.value.status,
-  })
-  saveBattery()
-}
-
-function simulateCharge() {
-  const last = latestBattery.value
-  batInput.value = { percentage: Math.min(100, last.percentage + 10), temperature: last.temperature, voltage: Math.min(4.2, (last.voltage || 3.7) + 0.08), status: 'charging' }
-  addBatteryRecord()
-}
-
-function simulateDrain() {
-  const last = latestBattery.value
-  batInput.value = { percentage: Math.max(0, last.percentage - 12), temperature: last.temperature, voltage: Math.max(3.0, (last.voltage || 3.7) - 0.1), status: 'discharging' }
-  addBatteryRecord()
-}
-
-function clearBattery() {
-  batteryRecords.value = []
-  saveBattery()
-}
-
 const batteryChartOption = computed(() => {
   const data = batteryRecords.value.slice(-50)
   return {
     backgroundColor: 'transparent',
     tooltip: { trigger: 'axis', backgroundColor: '#0f172a', borderColor: '#334155', textStyle: { color: '#e2e8f0' } },
-    legend: { data: ['电量%', '电压V'], textStyle: { color: '#94a3b8' }, top: 4 },
-    grid: { left: 44, right: 44, top: 36, bottom: 40 },
+    legend: { data: ['电量%'], textStyle: { color: '#94a3b8' }, top: 4 },
+    grid: { left: 44, right: 20, top: 36, bottom: 40 },
     xAxis: { type: 'category', data: data.map(r => r.timestamp?.slice(11, 16) || ''), axisLabel: { color: 'white', fontSize: 10 }, axisLine: { lineStyle: { color: '#1e293b' } } },
     yAxis: [
       { type: 'value', min: 0, max: 100, name: '%', nameTextStyle: { color: 'white' }, axisLabel: { color: 'white' }, splitLine: { lineStyle: { color: '#1e293b' } } },
-      { type: 'value', min: 2.8, max: 4.4, name: 'V', nameTextStyle: { color: 'white' }, axisLabel: { color: 'white', formatter: v => v.toFixed(1) }, splitLine: { show: false } },
     ],
     series: [
       { name: '电量%', type: 'line', data: data.map(r => r.percentage), lineStyle: { color: '#4ade80' }, itemStyle: { color: '#4ade80' }, areaStyle: { color: 'rgba(74,222,128,0.08)' }, smooth: true },
-      { name: '电压V', type: 'line', yAxisIndex: 1, data: data.map(r => r.voltage?.toFixed(2)), lineStyle: { color: '#60a5fa' }, itemStyle: { color: '#60a5fa' }, smooth: true },
     ],
   }
 })
@@ -614,6 +692,7 @@ function loadHrDays() {
 
 const hrDays = ref(loadHrDays())
 const hrSelectedDate = ref(hrDays.value[hrDays.value.length - 1]?.date || '')
+const hrRawHistory = ref([]) // 直接来自数据库的原始记录，用于表格
 
 const selectedDayData = computed(() => hrDays.value.find(d => d.date === hrSelectedDate.value) || hrDays.value[0])
 
@@ -625,6 +704,11 @@ const hrAvg = computed(() => {
 const hrMax = computed(() => {
   const pts = selectedDayData.value?.points || []
   return pts.length ? Math.max(...pts.map(p => p.bpm)) : 0
+})
+const latestSpo2 = computed(() => {
+  const pts = selectedDayData.value?.points || []
+  const withSpo2 = pts.filter(p => p.spo2 != null)
+  return withSpo2.length ? withSpo2[withSpo2.length - 1].spo2 : null
 })
 
 function hrZoneColor(bpm) {
@@ -672,16 +756,17 @@ const hrAreaOption = computed(() => {
   const pts = (selectedDayData.value?.points || []).sort((a, b) => a.hour - b.hour)
   const hours = pts.map(p => String(p.hour).padStart(2, '0') + ':00')
   const bpms  = pts.map(p => p.bpm)
-  const speeds = pts.map(p => p.speed)
+  const spo2s = pts.map(p => p.spo2 ?? null)
+  const hasSpo2 = spo2s.some(v => v != null)
   return {
     backgroundColor: 'transparent',
     tooltip: { trigger: 'axis', backgroundColor: '#0f172a', borderColor: '#334155', textStyle: { color: '#e2e8f0' } },
-    legend: { data: ['心率 BPM', '速度 km/h'], textStyle: { color: '#94a3b8' }, top: 4 },
+    legend: { data: hasSpo2 ? ['心率 BPM', '血氧 SpO2%'] : ['心率 BPM'], textStyle: { color: '#94a3b8' }, top: 4 },
     grid: { left: 44, right: 44, top: 36, bottom: 40 },
     xAxis: { type: 'category', data: hours, axisLabel: { color: 'white', fontSize: 10 }, axisLine: { lineStyle: { color: '#1e293b' } } },
     yAxis: [
       { type: 'value', name: 'BPM', nameTextStyle: { color: 'white' }, axisLabel: { color: 'white' }, splitLine: { lineStyle: { color: '#1e293b' } } },
-      { type: 'value', name: 'km/h', nameTextStyle: { color: 'white' }, axisLabel: { color: 'white' }, splitLine: { show: false } },
+      ...(hasSpo2 ? [{ type: 'value', name: 'SpO2%', min: 90, max: 100, nameTextStyle: { color: 'white' }, axisLabel: { color: 'white' }, splitLine: { show: false } }] : []),
     ],
     series: [
       {
@@ -695,7 +780,11 @@ const hrAreaOption = computed(() => {
           label: { color: '#f59e0b', fontSize: 10 },
         },
       },
-      { name: '速度 km/h', type: 'bar', yAxisIndex: 1, data: speeds, itemStyle: { color: 'rgba(96,165,250,0.5)' }, barMaxWidth: 12 },
+      ...(hasSpo2 ? [{
+        name: '血氧 SpO2%', type: 'line', yAxisIndex: 1, data: spo2s,
+        lineStyle: { color: '#a78bfa', width: 1.5, type: 'dashed' }, itemStyle: { color: '#a78bfa' },
+        smooth: true, connectNulls: true,
+      }] : []),
     ],
   }
 })
@@ -703,6 +792,8 @@ const hrAreaOption = computed(() => {
 // ── Lifecycle ──────────────────────────────────────────────────────
 onMounted(() => {
   loadBattery()
+  loadBatteryFromBackend()
+  loadHeartRateFromBackend()
   loadTempHistory()
 })
 
@@ -712,8 +803,10 @@ watch(() => userStore.username, (newUser, oldUser) => {
   tempHistory.value = []
   loadTempHistory()
   loadBattery()
+  loadBatteryFromBackend()
   hrDays.value = loadHrDays()
   hrSelectedDate.value = hrDays.value[hrDays.value.length - 1]?.date || ''
+  loadHeartRateFromBackend()
 })
 </script>
 
@@ -810,7 +903,7 @@ watch(() => userStore.username, (newUser, oldUser) => {
 /* ── Entry cards ──────────────────────────────────────────────── */
 .dv-cards-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 14px;
   margin-bottom: 20px;
 }
@@ -853,7 +946,7 @@ watch(() => userStore.username, (newUser, oldUser) => {
 .dv-guide__dot-wrap { position: relative; width: 10px; height: 10px; }
 .dv-guide__dot { position: absolute; inset: 0; width: 8px; height: 8px; border-radius: 50%; background: #38bdf8; margin: auto; }
 .dv-guide__dot-ping { position: absolute; inset: 0; width: 10px; height: 10px; border-radius: 50%; background: rgba(56,189,248,0.4); animation: pulse 2s infinite; }
-.dv-guide__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+.dv-guide__grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
 .dv-guide__item { }
 .dv-guide__item-title { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: #cbd5e1; margin-bottom: 6px; }
 .dv-guide__item p { font-size: 11px; color: white; line-height: 1.6; margin: 0; }
@@ -880,6 +973,7 @@ watch(() => userStore.username, (newUser, oldUser) => {
 .dv-stat-pill--red     { background: rgba(239,68,68,0.1);  color: #ef4444; border-color: rgba(239,68,68,0.2); }
 .dv-stat-pill--orange  { background: rgba(249,115,22,0.1); color: #f97316; border-color: rgba(249,115,22,0.2); }
 .dv-stat-pill--rose    { background: rgba(251,113,133,0.1); color: #fb7185; border-color: rgba(251,113,133,0.2); }
+.dv-stat-pill--violet  { background: rgba(167,139,250,0.1); color: #a78bfa; border-color: rgba(167,139,250,0.2); }
 .dv-pill-btn {
   padding: 3px 10px; font-size: 11px; font-family: inherit; border-radius: 20px;
   cursor: pointer; border: 1px solid; transition: all 0.2s;
@@ -916,6 +1010,9 @@ watch(() => userStore.username, (newUser, oldUser) => {
 .dv-battery-layout { display: grid; grid-template-columns: 1fr 300px; gap: 16px; }
 .dv-battery-left { display: flex; flex-direction: column; gap: 14px; }
 .dv-battery-right { background: rgba(15,23,42,0.6); border: 1px solid #1e293b; border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.dv-bat-notice { margin-top: 4px; }
+.dv-bat-notice__body { display: flex; align-items: flex-start; gap: 8px; background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.25); border-radius: 8px; padding: 10px 12px; font-size: 12px; color: #cbd5e1; line-height: 1.6; }
+.dv-bat-notice__body b { color: #f59e0b; }
 .dv-bat-status { background: rgba(15,23,42,0.8); border: 1px solid #1e293b; border-radius: 10px; padding: 16px; }
 .dv-bat-status__pct { font-size: 36px; font-weight: 800; margin-bottom: 8px; }
 .dv-bat-bar-wrap { height: 6px; background: #1e293b; border-radius: 3px; overflow: hidden; margin-bottom: 8px; }
@@ -941,6 +1038,62 @@ watch(() => userStore.username, (newUser, oldUser) => {
 .dv-zone-tag { display: inline-block; padding: 4px 12px; font-size: 11px; border-radius: 20px; border: 1px solid; font-weight: 600; }
 .dv-zone-legend { }
 .dv-zone-legend-row { display: flex; align-items: center; gap: 8px; font-size: 11px; color: white; margin-bottom: 5px; }
+
+.dv-hr-record-count {
+  margin-left: 8px;
+  font-size: 10px;
+  color: rgba(255,255,255,0.35);
+  font-weight: 400;
+}
+.dv-hr-table-wrap {
+  flex: 1;
+  overflow-y: auto;
+  margin-top: 8px;
+  border: 1px solid rgba(56,189,248,0.1);
+  border-radius: 6px;
+  max-height: 320px;
+}
+.dv-hr-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+}
+.dv-hr-table thead th {
+  position: sticky;
+  top: 0;
+  background: rgba(5,8,18,0.95);
+  color: rgba(255,255,255,0.45);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  padding: 6px 10px;
+  text-align: left;
+  border-bottom: 1px solid rgba(56,189,248,0.15);
+}
+.dv-hr-table tbody tr {
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  transition: background 0.15s;
+}
+.dv-hr-table tbody tr:hover {
+  background: rgba(56,189,248,0.05);
+}
+.dv-hr-table td {
+  padding: 5px 10px;
+  color: rgba(255,255,255,0.8);
+}
+.dv-hr-table__time {
+  color: rgba(255,255,255,0.4) !important;
+  font-size: 10px;
+}
+.dv-hr-table__unit {
+  font-size: 9px;
+  opacity: 0.5;
+}
+.dv-hr-table__empty {
+  text-align: center;
+  color: rgba(255,255,255,0.25);
+  padding: 20px !important;
+}
 
 /* ── Form ─────────────────────────────────────────────────────── */
 .dv-form-title { font-size: 11px; font-weight: 600; color: white; text-transform: uppercase; letter-spacing: 0.05em; }

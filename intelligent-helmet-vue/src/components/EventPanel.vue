@@ -19,6 +19,16 @@
         </div>
       </div>
       <div class="event-panel__header-right">
+        <!-- 紧急联系人 -->
+        <div class="event-panel__contact">
+          <template v-if="primaryContact">
+            <div class="event-panel__contact-name">紧急联系人：{{ primaryContact.name }}　{{ primaryContact.phone }}</div>
+            <div class="event-panel__contact-note">用户摔倒时，系统会第一时间呼叫紧急联系人</div>
+          </template>
+          <template v-else>
+            <router-link to="/emergency-contacts" class="event-panel__contact-setup">去设置您的紧急联系人</router-link>
+          </template>
+        </div>
         <div class="event-panel__status">
           <div class="event-panel__live-dot" :class="{ 'event-panel__live-dot--active': eventHistory.length > 0 }"></div>
           <span>{{ eventHistory.length > 0 ? 'ALERT' : 'MONITORING' }}</span>
@@ -49,7 +59,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import EventItem from './EventItem.vue'
 import { eventDefinitions } from '@/utils/eventConfig.js'
 import request from '@/utils/request'
@@ -57,6 +67,13 @@ import request from '@/utils/request'
 const eventHistory = ref([])
 const lastEventState = ref({})
 const eventList = ref(null)
+const contacts = ref([])
+
+onMounted(() => {
+  try { contacts.value = JSON.parse(localStorage.getItem('emergency_contacts')) || [] } catch { contacts.value = [] }
+})
+
+const primaryContact = computed(() => contacts.value[0] || null)
 
 let voiceReady = false
 let cachedVoices = []
@@ -265,7 +282,7 @@ defineExpose({ processDeviceEvents, clearAllEvents, addEvent })
 .event-panel__subtitle {
   font-family: var(--font-mono, monospace);
   font-size: 0.6rem;
-  color: rgba(56, 189, 248, 0.4);
+  color: white;
   letter-spacing: 0.15em;
   margin-top: 2px;
 }
@@ -405,4 +422,33 @@ defineExpose({ processDeviceEvents, clearAllEvents, addEvent })
   letter-spacing: 0.15em;
   text-transform: uppercase;
 }
+/* Contact */
+.event-panel__contact {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  text-align: right;
+  margin-right: 12px;
+}
+.event-panel__contact-name {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #38bdf8;
+  white-space: nowrap;
+}
+.event-panel__contact-note {
+  font-size: 0.65rem;
+  color: white;
+  white-space: nowrap;
+}
+.event-panel__contact-setup {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #38bdf8;
+  text-decoration: underline;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.event-panel__contact-setup:hover { color: #7dd3fc; }
 </style>

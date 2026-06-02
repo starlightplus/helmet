@@ -49,4 +49,16 @@ public interface SensorDataRepository extends JpaRepository<SensorData, Long> {
             @Param("deviceId") String deviceId,
             @Param("start") LocalDateTime start,
             @Param("end") LocalDateTime end);
+
+    // 心率历史：按时间倒序取最近N条有心率的记录
+    @Query("SELECT s FROM SensorData s WHERE s.deviceId = :deviceId AND s.heartRate IS NOT NULL ORDER BY s.receiveTime DESC")
+    List<SensorData> findHeartRateHistory(@Param("deviceId") String deviceId, Pageable pageable);
+
+    // 血氧历史：按时间倒序取最近N条有血氧的记录
+    @Query("SELECT s FROM SensorData s WHERE s.deviceId = :deviceId AND s.spo2 IS NOT NULL ORDER BY s.receiveTime DESC")
+    List<SensorData> findSpo2History(@Param("deviceId") String deviceId, Pageable pageable);
+
+    // 电量历史：按时间倒序取最近N条有电量的记录
+    @Query("SELECT s FROM SensorData s WHERE s.deviceId = :deviceId AND s.battery IS NOT NULL ORDER BY s.receiveTime DESC")
+    List<SensorData> findBatteryHistory(@Param("deviceId") String deviceId, Pageable pageable);
 }

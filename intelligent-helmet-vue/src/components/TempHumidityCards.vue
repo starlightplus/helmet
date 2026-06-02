@@ -59,15 +59,15 @@
             <rect x="2" y="8" width="44" height="68" rx="6" stroke="rgba(255,255,255,0.25)" stroke-width="2" fill="none"/>
             <rect x="5" y="11" width="38" :height="batBarHeight" rx="4" :fill="batColor" :style="{ filter: `drop-shadow(0 0 6px ${batColor})` }"/>
           </svg>
-          <div class="bat-pct" :style="{ color: batColor }">{{ fakeBattery }}%</div>
+          <div class="bat-pct" :style="{ color: batColor }">{{ fakeBattery != null ? fakeBattery + '%' : '--' }}</div>
         </div>
         <div class="bat-info">
           <div class="bat-big" :style="{ color: batColor }">
-            {{ fakeBattery }}<span class="bat-unit">%</span>
+            {{ fakeBattery != null ? fakeBattery : '--' }}<span class="bat-unit">%</span>
           </div>
           <div class="bat-bar-wrap">
             <div class="bat-bar-track">
-              <div class="bat-bar-fill" :style="{ width: fakeBattery + '%', background: batColor, boxShadow: `0 0 8px ${batColor}` }"></div>
+              <div class="bat-bar-fill" :style="{ width: (fakeBattery ?? 0) + '%', background: batColor, boxShadow: `0 0 8px ${batColor}` }"></div>
             </div>
             <span class="bat-bar-label">{{ batStatusText }}</span>
           </div>
@@ -77,9 +77,15 @@
               <span class="bat-meta-val" :style="{ color: batColor }">{{ batRemainHours }}h</span>
             </div>
             <div class="bat-meta-item">
-              <span class="bat-meta-key">充电状态</span>
-              <span class="bat-meta-val" style="color: #4ade80">未充电</span>
+              <span class="bat-meta-key">电压</span>
+              <span class="bat-meta-val" :style="{ color: voltageAbnormal ? '#EF4444' : '#4ade80' }">
+                {{ voltage != null ? voltage.toFixed(2) + 'V' : '--' }}
+              </span>
             </div>
+          </div>
+          <div v-if="voltageAbnormal" class="bat-voltage-warn">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            电压异常 {{ voltage.toFixed(2) }}V（正常 3.0~5.13V）
           </div>
         </div>
       </div>
@@ -93,11 +99,12 @@ import { DotLottie } from '@lottiefiles/dotlottie-web'
 
 const props = defineProps({
   temperature: { type: Number, default: null },
-  humidity:    { type: Number, default: null }
+  humidity:    { type: Number, default: null },
+  battery:     { type: Number, default: null },
+  voltage:     { type: Number, default: null },
 })
 
-// Fake battery: 78%
-const fakeBattery = ref(78)
+const fakeBattery = computed(() => props.battery != null ? Math.max(0, Math.min(100, props.battery)) : null)
 
 const tempCanvasRef = ref(null)
 const humCanvasRef  = ref(null)
@@ -152,19 +159,24 @@ const humStatusColor = computed(() => {
 })
 
 const batColor = computed(() => {
+  if (fakeBattery.value == null) return 'rgba(255,255,255,0.35)'
   if (fakeBattery.value > 50) return '#4ade80'
   if (fakeBattery.value > 20) return '#FFAA00'
   return '#EF4444'
 })
 const batStatusText = computed(() => {
+  if (fakeBattery.value == null) return '等待数据'
   if (fakeBattery.value > 80) return '电量充足'
   if (fakeBattery.value > 50) return '电量良好'
   if (fakeBattery.value > 20) return '电量偏低'
   return '电量不足'
 })
-const batRemainHours = computed(() => Math.round(fakeBattery.value * 0.12))
-// Battery bar height: max fill area is 52px tall
-const batBarHeight = computed(() => Math.round(fakeBattery.value / 100 * 52))
+const batRemainHours = computed(() => fakeBattery.value != null ? Math.round(fakeBattery.value * 0.12) : '--')
+const batBarHeight = computed(() => Math.round((fakeBattery.value ?? 0) / 100 * 52))
+
+// 电压异常：正常工作范围 3.0~5.13V
+const voltageNormal = computed(() => props.voltage != null && props.voltage >= 3.0 && props.voltage <= 5.13)
+const voltageAbnormal = computed(() => props.voltage != null && !voltageNormal.value)
 </script>
 
 <style scoped>
@@ -195,6 +207,8 @@ const batBarHeight = computed(() => Math.round(fakeBattery.value / 100 * 52))
   min-height: 0;
 }
 .sensor-card--bat {
+  flex: 0 0 auto;
+  min-height: 240px;
   margin-top: 8px;
   box-shadow: 0 4px 32px rgba(0,0,0,0.55), 0 0 20px -6px rgba(74,222,128,0.10);
 }
@@ -234,14 +248,14 @@ const batBarHeight = computed(() => Math.round(fakeBattery.value / 100 * 52))
 }
 .card-tag {
   font-family: var(--font-mono, monospace);
-  font-size: 8px;
+  font-size: 12px;
   letter-spacing: 0.15em;
-  color: rgba(255,255,255,0.5);
+  color: #38bdf8;
   text-transform: uppercase;
 }
 .card-title {
   font-family: var(--font-mono, monospace);
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   font-weight: 600;
   color: rgba(255,255,255,0.85);
   letter-spacing: 0.06em;
@@ -398,7 +412,7 @@ const batBarHeight = computed(() => Math.round(fakeBattery.value / 100 * 52))
 }
 .bat-bar-label {
   font-family: var(--font-mono, monospace);
-  font-size: 0.58rem;
+  font-size: 0.7rem;
   color: #A0AAB2;
   letter-spacing: 0.06em;
 }
@@ -416,14 +430,58 @@ const batBarHeight = computed(() => Math.round(fakeBattery.value / 100 * 52))
 }
 .bat-meta-key {
   font-family: var(--font-mono, monospace);
-  font-size: 0.52rem;
-  color: #8A939C;
+  font-size: 0.8rem;
+  color: #38bdf8;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 .bat-meta-val {
   font-family: var(--font-mono, monospace);
-  font-size: 0.8rem;
+  font-size: 1.0rem;
   font-weight: 700;
+}
+.bat-warning-note {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+.bat-warning-note__line {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.52rem;
+  letter-spacing: 0.04em;
+  line-height: 1.4;
+}
+.bat-warning-note__line--amber {
+  color: #FFAA00;
+  text-shadow: 0 0 6px rgba(255,170,0,0.5);
+}
+.bat-warning-note__line--red {
+  color: #EF4444;
+  text-shadow: 0 0 6px rgba(239,68,68,0.5);
+  font-weight: 700;
+}
+.bat-warning-note__line--dim {
+  color: rgba(255,255,255,0.4);
+}
+
+.bat-voltage-warn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 6px;
+  padding: 5px 8px;
+  border: 1px solid rgba(239,68,68,0.35);
+  background: rgba(239,68,68,0.08);
+  border-radius: 4px;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.58rem;
+  color: #EF4444;
+  letter-spacing: 0.04em;
+  animation: warn-blink 1.5s ease infinite;
+}
+@keyframes warn-blink {
+  0%,100% { opacity: 1; }
+  50%      { opacity: 0.5; }
 }
 </style>

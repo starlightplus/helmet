@@ -160,6 +160,36 @@ public class SensorDataController {
         }
     }
 
+    // 心率历史（按 token 过滤）
+    @GetMapping("/history/heartrate")
+    public ResponseEntity<?> getHeartRateHistory(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestParam(defaultValue = "100") int limit) {
+        String deviceId = resolveDeviceId(authHeader);
+        if (deviceId == null) return ResponseEntity.ok(List.of());
+        return ResponseEntity.ok(sensorDataService.getHeartRateHistory(deviceId, limit));
+    }
+
+    // 血氧历史（按 token 过滤）
+    @GetMapping("/history/spo2")
+    public ResponseEntity<?> getSpo2History(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestParam(defaultValue = "100") int limit) {
+        String deviceId = resolveDeviceId(authHeader);
+        if (deviceId == null) return ResponseEntity.ok(List.of());
+        return ResponseEntity.ok(sensorDataService.getSpo2History(deviceId, limit));
+    }
+
+    // 电量历史（按 token 过滤）
+    @GetMapping("/history/battery")
+    public ResponseEntity<?> getBatteryHistory(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestParam(defaultValue = "100") int limit) {
+        String deviceId = resolveDeviceId(authHeader);
+        if (deviceId == null) return ResponseEntity.ok(List.of());
+        return ResponseEntity.ok(sensorDataService.getBatteryHistory(deviceId, limit));
+    }
+
     private String resolveDeviceId(String authHeader) {
         if (authHeader == null || !authHeader.startsWith("Bearer ")) return null;
         String token = authHeader.substring(7);

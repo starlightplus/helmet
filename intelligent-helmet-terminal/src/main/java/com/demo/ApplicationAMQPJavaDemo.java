@@ -197,7 +197,6 @@ public class ApplicationAMQPJavaDemo {
                         sensorData.setTemperature(properties.path("temp").asDouble());
                         sensorData.setHumidity(properties.path("humid").asDouble());
                         hasEnvironmentData = true;
-
                         System.out.println("收到环境数据: 温度=" + sensorData.getTemperature() + "°C, 湿度=" + sensorData.getHumidity() + "%");
                     }
 
@@ -205,8 +204,45 @@ public class ApplicationAMQPJavaDemo {
                         sensorData.setLongitude(properties.path("longitude").asDouble());
                         sensorData.setLatitude(properties.path("latitude").asDouble());
                         hasGpsData = true;
-
                         System.out.println("收到GPS数据: 经度=" + sensorData.getLongitude() + "°, 纬度=" + sensorData.getLatitude() + "°");
+                    }
+
+                    if (properties.has("heart")) {
+                        sensorData.setHeartRate(properties.path("heart").asInt());
+                        System.out.println("收到心率: " + sensorData.getHeartRate() + " BPM");
+                    }
+
+                    if (properties.has("SpO2")) {
+                        sensorData.setSpo2(properties.path("SpO2").asInt());
+                        System.out.println("收到血氧: " + sensorData.getSpo2() + "%");
+                    }
+
+                    if (properties.has("voltage")) {
+                        double v = properties.path("voltage").asDouble();
+                        sensorData.setVoltage(v);
+                        // 分段线性插值换算电量
+                        double[][] table = {
+                            {5.13, 100}, {5.00, 92}, {4.80, 79}, {4.60, 67},
+                            {4.40, 54},  {4.20, 42}, {4.00, 29}, {3.80, 17},
+                            {3.60, 4},   {3.00, 0}
+                        };
+                        int batteryPct;
+                        if (v >= table[0][0]) {
+                            batteryPct = 100;
+                        } else if (v <= table[table.length - 1][0]) {
+                            batteryPct = 0;
+                        } else {
+                            batteryPct = 0;
+                            for (int i = 0; i < table.length - 1; i++) {
+                                if (v <= table[i][0] && v >= table[i + 1][0]) {
+                                    double ratio = (v - table[i + 1][0]) / (table[i][0] - table[i + 1][0]);
+                                    batteryPct = (int) Math.round(table[i + 1][1] + ratio * (table[i][1] - table[i + 1][1]));
+                                    break;
+                                }
+                            }
+                        }
+                        sensorData.setBattery(batteryPct);
+                        System.out.println("收到电压: " + v + "V, 换算电量: " + batteryPct + "%");
                     }
                 }
 
