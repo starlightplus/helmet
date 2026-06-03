@@ -206,7 +206,7 @@ export default { name: 'AppMain' }
 
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import request from '@/utils/request'
 import SportBackground from '@/components/SportBackground.vue'
@@ -225,6 +225,12 @@ import { useRideHistoryStore } from '@/stores/rideHistory.js'
 import { useUserProfileStore } from '@/stores/userProfile.js'
 
 const router = useRouter()
+const route = useRoute()
+
+// 从其他页面返回时刷新联系人
+watch(() => route.path, (path) => {
+  if (path === '/app') loadContacts()
+})
 const userStore = useUserStore()
 
 const activePage = ref('terminal')
@@ -338,7 +344,12 @@ const indicatorClass = computed(() => {
 
 function handleSensorDataFromWS(payload) {
   console.log('[WS] 收到数据 fallFlag=', payload.fallFlag, payload)
-  latestSensorData.value = { ...payload }
+  // 只用非 null 字段合并，避免单次上报覆盖掉其他字段的有效值
+  const merged = { ...latestSensorData.value }
+  Object.keys(payload).forEach(k => {
+    if (payload[k] !== null && payload[k] !== undefined) merged[k] = payload[k]
+  })
+  latestSensorData.value = merged
   if (eventPanel.value?.processDeviceEvents) eventPanel.value.processDeviceEvents(payload)
   if (payload.deviceId) { deviceSet.add(payload.deviceId); deviceCount.value = deviceSet.size }
   deviceOnline.value = true
@@ -680,6 +691,8 @@ onUnmounted(() => {
 .terminal-bottom {
   grid-column: 2;
   grid-row: 2;
+  height: 280px;
+  overflow: hidden;
 }
 
 /* ── 右侧星空面板 ── */

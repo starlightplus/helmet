@@ -177,6 +177,9 @@ defineExpose({ processDeviceEvents, clearAllEvents, addEvent })
 /* ── Panel Container ───────────────────────────────────────────── */
 .event-panel {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   background:
     radial-gradient(circle, rgba(56,189,248,0.035) 1px, transparent 1px),
     rgba(5, 8, 18, 0.82);
@@ -338,7 +341,7 @@ defineExpose({ processDeviceEvents, clearAllEvents, addEvent })
 
 /* List */
 .event-panel__list {
-  max-height: 420px;
+  flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
   padding: 14px 18px 18px;

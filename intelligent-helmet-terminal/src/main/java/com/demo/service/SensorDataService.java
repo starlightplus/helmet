@@ -66,12 +66,20 @@ public class SensorDataService {
             dataList.remove(0);
         }
 
-        // 10 秒节流写数据库（通过独立 Bean 确保 @Async 生效）
+        // 10 秒节流写数据库（只有包含有效传感器值才写，flag-only 消息不写库）
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime lastPersist = lastPersistTimeMap.get(deviceId);
-        if (lastPersist == null || now.isAfter(lastPersist.plusSeconds(PERSIST_INTERVAL_SECONDS))) {
-            lastPersistTimeMap.put(deviceId, now);
-            persistService.persist(sensorData);
+        boolean hasSensorValue = sensorData.getTemperature() != null
+                || sensorData.getHumidity() != null
+                || sensorData.getBattery() != null
+                || sensorData.getHeartRate() != null
+                || sensorData.getSpo2() != null
+                || sensorData.getLongitude() != null;
+        if (hasSensorValue) {
+            LocalDateTime lastPersist = lastPersistTimeMap.get(deviceId);
+            if (lastPersist == null || now.isAfter(lastPersist.plusSeconds(PERSIST_INTERVAL_SECONDS))) {
+                lastPersistTimeMap.put(deviceId, now);
+                persistService.persist(sensorData);
+            }
         }
 
         // WebSocket 推送不受节流影响，保持实时
