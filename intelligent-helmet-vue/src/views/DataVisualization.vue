@@ -1,4 +1,5 @@
 <template>
+<div class="dv-root">
     <!-- ── Tab Bar ───────────────────────────────────────────── -->
     <nav class="dv-tabs">
       <button v-for="tab in tabs" :key="tab.id"
@@ -356,6 +357,7 @@
       </div>
 
     </main>
+</div>
 </template>
 
 <script setup>
@@ -813,12 +815,13 @@ watch(() => userStore.username, (newUser, oldUser) => {
 <style scoped>
 /* ── Root ─────────────────────────────────────────────────────── */
 .dv-root {
-  min-height: 100vh;
+  height: 100%;
   background: #020817;
   color: #e2e8f0;
   font-family: 'JetBrains Mono', 'Consolas', monospace;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 /* ── Header ───────────────────────────────────────────────────── */
@@ -852,6 +855,7 @@ watch(() => userStore.username, (newUser, oldUser) => {
   padding: 8px 24px 0;
   border-bottom: 1px solid #1e293b;
   background: transparent;
+  flex-shrink: 0;
 }
 .dv-tab {
   display: flex; align-items: center; gap: 6px;
@@ -868,7 +872,7 @@ watch(() => userStore.username, (newUser, oldUser) => {
 .dv-tab__icon { display: flex; align-items: center; }
 
 /* ── Content ──────────────────────────────────────────────────── */
-.dv-content { flex: 1; padding: 24px; overflow: visible; }
+.dv-content { flex: 1; min-height: 0; padding: 24px; overflow-y: auto; display: flex; flex-direction: column; }
 
 /* ── Hero ─────────────────────────────────────────────────────── */
 .dv-hero {
@@ -952,8 +956,8 @@ watch(() => userStore.username, (newUser, oldUser) => {
 .dv-guide__item p { font-size: 11px; color: white; line-height: 1.6; margin: 0; }
 
 /* ── Panel ────────────────────────────────────────────────────── */
-.dv-tab-panel { display: flex; flex-direction: column; gap: 16px; }
-.dv-panel-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+.dv-tab-panel { display: flex; flex-direction: column; gap: 16px; flex: 1; min-height: 0; }
+.dv-panel-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; flex-shrink: 0; }
 .dv-panel-title { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: #f1f5f9; }
 .dv-range-switch { display: flex; gap: 4px; }
 .dv-range-btn {
@@ -986,17 +990,17 @@ watch(() => userStore.username, (newUser, oldUser) => {
   background: rgba(15,23,42,0.6); border: 1px solid #1e293b; border-radius: 10px;
   padding: 12px; height: 300px;
 }
-.dv-chart-wrap--ride    { height: 280px; }
-.dv-chart-wrap--battery { height: 240px; }
-.dv-chart-wrap--hr      { height: 260px; }
+.dv-chart-wrap--ride    { flex: 1; min-height: 260px; height: auto; }
+.dv-chart-wrap--battery { flex: 1; min-height: 220px; height: auto; }
+.dv-chart-wrap--hr      { flex: 1; min-height: 240px; height: auto; }
 .dv-echart { width: 100%; height: 100%; }
 
 /* ── Empty ────────────────────────────────────────────────────── */
 .dv-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 60px; color: #475569; font-size: 13px; }
 
 /* ── Ride layout ──────────────────────────────────────────────── */
-.dv-ride-layout { display: grid; grid-template-columns: 1fr 320px; gap: 16px; }
-.dv-ride-list { background: rgba(15,23,42,0.6); border: 1px solid #1e293b; border-radius: 10px; padding: 16px; overflow-y: auto; max-height: 320px; }
+.dv-ride-layout { display: grid; grid-template-columns: 1fr 320px; gap: 16px; flex: 1; min-height: 0; }
+.dv-ride-list { background: rgba(15,23,42,0.6); border: 1px solid #1e293b; border-radius: 10px; padding: 16px; overflow-y: auto; }
 .dv-ride-list__title { font-size: 12px; color: white; margin-bottom: 10px; }
 .dv-ride-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #0f172a; }
 .dv-ride-row:last-child { border-bottom: none; }
@@ -1007,9 +1011,9 @@ watch(() => userStore.username, (newUser, oldUser) => {
 .dv-ride-row__speed { font-size: 11px; color: #60a5fa; }
 
 /* ── Battery layout ───────────────────────────────────────────── */
-.dv-battery-layout { display: grid; grid-template-columns: 1fr 300px; gap: 16px; }
-.dv-battery-left { display: flex; flex-direction: column; gap: 14px; }
-.dv-battery-right { background: rgba(15,23,42,0.6); border: 1px solid #1e293b; border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.dv-battery-layout { display: grid; grid-template-columns: 1fr 300px; gap: 16px; flex: 1; min-height: 0; }
+.dv-battery-left { display: flex; flex-direction: column; gap: 14px; min-height: 0; }
+.dv-battery-right { background: rgba(15,23,42,0.6); border: 1px solid #1e293b; border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; }
 .dv-bat-notice { margin-top: 4px; }
 .dv-bat-notice__body { display: flex; align-items: flex-start; gap: 8px; background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.25); border-radius: 8px; padding: 10px 12px; font-size: 12px; color: #cbd5e1; line-height: 1.6; }
 .dv-bat-notice__body b { color: #f59e0b; }
@@ -1023,9 +1027,9 @@ watch(() => userStore.username, (newUser, oldUser) => {
 .dv-bat-status__meta { display: flex; gap: 12px; font-size: 11px; color: white; }
 
 /* ── HR layout ────────────────────────────────────────────────── */
-.dv-hr-layout { display: grid; grid-template-columns: 1fr 280px; gap: 16px; }
-.dv-hr-charts { display: flex; flex-direction: column; gap: 14px; }
-.dv-hr-form { background: rgba(15,23,42,0.6); border: 1px solid #1e293b; border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; max-height: 600px; }
+.dv-hr-layout { display: grid; grid-template-columns: 1fr 280px; gap: 16px; flex: 1; min-height: 0; }
+.dv-hr-charts { display: flex; flex-direction: column; gap: 14px; min-height: 0; }
+.dv-hr-form { background: rgba(15,23,42,0.6); border: 1px solid #1e293b; border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; }
 .dv-hr-zones { background: rgba(15,23,42,0.6); border: 1px solid #1e293b; border-radius: 10px; padding: 14px; }
 .dv-zone-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
 .dv-zone-row:last-child { margin-bottom: 0; }
@@ -1051,7 +1055,6 @@ watch(() => userStore.username, (newUser, oldUser) => {
   margin-top: 8px;
   border: 1px solid rgba(56,189,248,0.1);
   border-radius: 6px;
-  max-height: 320px;
 }
 .dv-hr-table {
   width: 100%;

@@ -19,16 +19,6 @@
         </div>
       </div>
       <div class="event-panel__header-right">
-        <!-- 紧急联系人 -->
-        <div class="event-panel__contact">
-          <template v-if="primaryContact">
-            <div class="event-panel__contact-name">紧急联系人：{{ primaryContact.name }}　{{ primaryContact.phone }}</div>
-            <div class="event-panel__contact-note">用户摔倒时，系统会第一时间呼叫紧急联系人</div>
-          </template>
-          <template v-else>
-            <router-link to="/emergency-contacts" class="event-panel__contact-setup">去设置您的紧急联系人</router-link>
-          </template>
-        </div>
         <div class="event-panel__status">
           <div class="event-panel__live-dot" :class="{ 'event-panel__live-dot--active': eventHistory.length > 0 }"></div>
           <span>{{ eventHistory.length > 0 ? 'ALERT' : 'MONITORING' }}</span>

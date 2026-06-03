@@ -120,7 +120,7 @@
           <div v-if="!showAiChat" class="ai-zone">
             <AiAssistant :sensor-data="latestSensorData" :inline="true" @click-model="toggleAiChat" />
             <div class="ai-landing-glow"></div>
-            <!-- 用户指引 -->
+            <!-- 用户指引（中部） -->
             <div class="ai-guide">
               <div class="ai-guide__tip" @click="toggleAiChat">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
@@ -128,22 +128,60 @@
               </div>
               <div class="ai-guide__divider"></div>
               <div class="ai-guide__list">
-                <div class="ai-guide__item">
-                  <span class="ai-guide__dot"></span>
-                  <span>实时分析头盔传感器数据</span>
+                <div class="ai-guide__item"><span class="ai-guide__dot"></span><span>实时分析头盔传感器数据</span></div>
+                <div class="ai-guide__item"><span class="ai-guide__dot"></span><span>骑行安全预警与建议</span></div>
+                <div class="ai-guide__item"><span class="ai-guide__dot"></span><span>导航 · 天气 · 路线规划</span></div>
+                <div class="ai-guide__item"><span class="ai-guide__dot"></span><span>摔倒检测自动触发报警</span></div>
+              </div>
+            </div>
+
+            <!-- 底部固定：紧急联系人 + 血氧心率 -->
+            <div class="ai-zone__bottom">
+              <div class="ai-emergency">
+                <div class="ai-emergency__header">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.77 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.68 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.64a16 16 0 0 0 5.66 5.66l1.01-1.01a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.33 15l.01 1.92z"/></svg>
+                  <span>紧急联系人</span>
                 </div>
-                <div class="ai-guide__item">
-                  <span class="ai-guide__dot"></span>
-                  <span>骑行安全预警与建议</span>
+                <template v-if="primaryContact">
+                  <div class="ai-emergency__contact">
+                    <span class="ai-emergency__name">{{ primaryContact.name }}</span>
+                    <span class="ai-emergency__phone">{{ primaryContact.phone }}</span>
+                  </div>
+                  <div class="ai-emergency__note">用户摔倒时，系统会第一时间呼叫紧急联系人</div>
+                </template>
+                <template v-else>
+                  <router-link to="/emergency-contacts" class="ai-emergency__setup">去设置紧急联系人 →</router-link>
+                </template>
+              </div>
+
+              <div class="ai-vitals">
+                <div class="ai-vitals__header">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fb7185" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                  <span>实时生命体征</span>
+                  <span class="ai-vitals__badge">上一分钟</span>
                 </div>
-                <div class="ai-guide__item">
-                  <span class="ai-guide__dot"></span>
-                  <span>导航 · 天气 · 路线规划</span>
+                <div class="ai-vitals__metrics">
+                  <div class="ai-vitals__metric">
+                    <span class="ai-vitals__val ai-vitals__val--hr">{{ currentHR }}</span>
+                    <div class="ai-vitals__meta">
+                      <span class="ai-vitals__unit">BPM</span>
+                      <span class="ai-vitals__name">心率</span>
+                    </div>
+                  </div>
+                  <div class="ai-vitals__sep"></div>
+                  <div class="ai-vitals__metric">
+                    <span class="ai-vitals__val ai-vitals__val--spo2">{{ currentSpo2 != null ? currentSpo2 + '%' : '--' }}</span>
+                    <div class="ai-vitals__meta">
+                      <span class="ai-vitals__unit">SpO2</span>
+                      <span class="ai-vitals__name">血氧</span>
+                    </div>
+                  </div>
                 </div>
-                <div class="ai-guide__item">
-                  <span class="ai-guide__dot"></span>
-                  <span>摔倒检测自动触发报警</span>
+                <div class="ai-vitals__spark" v-if="sparkData.length">
+                  <div v-for="(v, i) in sparkData" :key="i" class="ai-vitals__spark-bar"
+                    :style="{ height: v.h + '%', background: v.color }" :title="v.bpm + ' BPM'"></div>
                 </div>
+                <div class="ai-vitals__spark ai-vitals__spark--empty" v-else><span>等待数据...</span></div>
               </div>
             </div>
           </div>
@@ -241,6 +279,55 @@ watch(() => userProfileStore.weight, (w) => { rideTracking.setWeight(w) })
 const latestTemp = ref(null)
 const latestHumidity = ref(null)
 
+// ── 紧急联系人 ──────────────────────────────────────────────────
+const contacts = ref([])
+const primaryContact = computed(() => contacts.value[0] || null)
+function loadContacts() {
+  try { contacts.value = JSON.parse(localStorage.getItem('emergency_contacts')) || [] } catch { contacts.value = [] }
+}
+
+// ── 血氧心率（滑动窗口，保留上一分钟数据）──────────────────────
+const vitalWindow = ref([]) // { ts: Date, bpm, spo2 }
+const currentHR = computed(() => {
+  const recent = lastMinuteVitals.value
+  if (!recent.length) return '--'
+  return Math.round(recent.reduce((s, v) => s + v.bpm, 0) / recent.length)
+})
+const currentSpo2 = computed(() => {
+  const recent = lastMinuteVitals.value.filter(v => v.spo2 != null)
+  if (!recent.length) return null
+  return Math.round(recent.reduce((s, v) => s + v.spo2, 0) / recent.length)
+})
+const lastMinuteVitals = computed(() => {
+  const cutoff = Date.now() - 60000
+  return vitalWindow.value.filter(v => v.ts > cutoff)
+})
+// sparkline: 最近60秒按5秒一格分12段
+const sparkData = computed(() => {
+  const now = Date.now()
+  const segments = 12
+  const segMs = 5000
+  const result = []
+  for (let i = segments - 1; i >= 0; i--) {
+    const start = now - (i + 1) * segMs
+    const end   = now - i * segMs
+    const pts = vitalWindow.value.filter(v => v.ts >= start && v.ts < end)
+    if (!pts.length) { result.push(null); continue }
+    const avg = Math.round(pts.reduce((s, v) => s + v.bpm, 0) / pts.length)
+    result.push(avg)
+  }
+  const valid = result.filter(v => v != null)
+  const min = valid.length ? Math.min(...valid) : 60
+  const max = valid.length ? Math.max(...valid) : 180
+  const range = Math.max(max - min, 20)
+  return result.map(v => {
+    if (v == null) return { h: 10, color: 'rgba(255,255,255,0.08)', bpm: '--' }
+    const h = 20 + Math.round((v - min) / range * 75)
+    const color = v >= 170 ? '#ef4444' : v >= 140 ? '#f59e0b' : v >= 100 ? '#4ade80' : v >= 60 ? '#22d3ee' : 'rgba(255,255,255,0.4)'
+    return { h, color, bpm: v }
+  })
+})
+
 const indicatorClass = computed(() => {
   if (/断开|失败|error/i.test(wsStatus.value)) return 'app-nav__dot app-nav__dot--error'
   if (/连接中|connecting/i.test(wsStatus.value)) return 'app-nav__dot app-nav__dot--warning'
@@ -259,6 +346,14 @@ function handleSensorDataFromWS(payload) {
   if (payload.longitude && payload.latitude) rideTracking.processGpsData(payload)
   rideTracking.processEventData(payload)
   rideTracking.processSensorData(payload)
+  // 收集心率血氧到滑动窗口
+  if (payload.heartRate != null) {
+    const now = Date.now()
+    vitalWindow.value.push({ ts: now, bpm: Number(payload.heartRate), spo2: payload.spo2 != null ? Number(payload.spo2) : null })
+    // 只保留最近2分钟
+    const cutoff = now - 120000
+    vitalWindow.value = vitalWindow.value.filter(v => v.ts > cutoff)
+  }
 }
 
 function resetDeviceOfflineTimer() {
@@ -272,6 +367,7 @@ function onLogout() { userStore.logout(); router.push('/auth') }
 function goToProfile() { router.push('/profile') }
 
 onMounted(async () => {
+  loadContacts()
   rideHistoryStore.loadFromStorage()
   rideHistoryStore.syncFromBackend()
   connect('ws://localhost:8082/ws/sensor-data')
@@ -521,8 +617,11 @@ onUnmounted(() => {
   height: calc(100vh - 48px);
 }
 .page-wrapper--dataviz {
-  overflow: visible;
+  overflow: hidden;
   padding: 0;
+  height: calc(100vh - 48px);
+  display: flex;
+  flex-direction: column;
 }
 .page-wrapper--rideplan {
   overflow: visible;
@@ -598,17 +697,12 @@ onUnmounted(() => {
   position: absolute;
   inset: 0;
   z-index: 2;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 20px 16px;
 }
+/* title label */
 .ai-zone::before {
   content: 'AI · ASSISTANT';
   position: absolute;
-  top: 16px;
+  top: 8px;
   left: 50%;
   transform: translateX(-50%);
   font-family: var(--font-mono, monospace);
@@ -617,6 +711,8 @@ onUnmounted(() => {
   letter-spacing: 0.18em;
   color: rgba(56,189,248,0.45);
   white-space: nowrap;
+  pointer-events: none;
+  z-index: 1;
 }
 .ai-zone::after {
   content: '';
@@ -624,6 +720,42 @@ onUnmounted(() => {
   bottom: 0; left: 0; right: 0;
   height: 1px;
   background: linear-gradient(90deg, transparent, rgba(56,189,248,0.2), transparent);
+  pointer-events: none;
+}
+
+/* 用户指引区 — 绝对定位，不遮挡模型事件区 */
+.ai-guide {
+  position: absolute;
+  left: 0; right: 0;
+  top: 230px;    /* 模型下方 */
+  bottom: 220px; /* 底部卡片上方 */
+  z-index: 1;
+  padding: 0 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  pointer-events: none; /* 整体不拦截事件，只有子按钮恢复 */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(56,189,248,0.2) transparent;
+}
+.ai-guide__tip,
+.ai-guide__list,
+.ai-guide__item,
+.ai-guide__divider {
+  pointer-events: auto;
+}
+
+/* 底部固定区 */
+.ai-zone__bottom {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 14px 14px;
+  pointer-events: auto;
 }
 
 /* 全屏对话框（覆盖整个右侧面板） */
@@ -641,10 +773,15 @@ onUnmounted(() => {
   position: relative;
   z-index: 2;
   width: 100%;
-  padding: 0 16px;
+  padding: 0 14px 8px;
   display: flex;
   flex-direction: column;
   gap: 10px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(56,189,248,0.2) transparent;
 }
 .ai-guide__tip {
   display: flex;
@@ -725,6 +862,155 @@ onUnmounted(() => {
 .chat-expand-leave-active { transition: all 0.3s ease; }
 .chat-expand-enter-from   { opacity: 0; transform: scale(0.97); }
 .chat-expand-leave-to     { opacity: 0; transform: scale(0.97); }
+
+/* ── 紧急联系人区 ── */
+.ai-emergency {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid rgba(239,68,68,0.18);
+  background: rgba(239,68,68,0.04);
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.ai-emergency__header {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.58rem;
+  color: rgba(239,68,68,0.7);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.ai-emergency__header svg { stroke: rgba(239,68,68,0.7); flex-shrink: 0; }
+.ai-emergency__contact {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.ai-emergency__name {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #fff;
+}
+.ai-emergency__phone {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.68rem;
+  color: #38bdf8;
+}
+.ai-emergency__note {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.58rem;
+  color: rgba(255,255,255,0.4);
+  line-height: 1.4;
+}
+.ai-emergency__setup {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.62rem;
+  color: #38bdf8;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.ai-emergency__setup:hover { color: #7dd3fc; }
+
+/* ── 血氧心率实时体征区 ── */
+.ai-vitals {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid rgba(251,113,133,0.18);
+  background: rgba(251,113,133,0.04);
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ai-vitals__header {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.58rem;
+  color: rgba(251,113,133,0.7);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.ai-vitals__badge {
+  margin-left: auto;
+  font-size: 0.52rem;
+  padding: 1px 6px;
+  border: 1px solid rgba(251,113,133,0.25);
+  background: rgba(251,113,133,0.08);
+  color: rgba(251,113,133,0.6);
+  border-radius: 10px;
+}
+.ai-vitals__metrics {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+.ai-vitals__metric {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ai-vitals__sep {
+  width: 1px;
+  height: 32px;
+  background: rgba(255,255,255,0.08);
+  margin: 0 10px;
+  flex-shrink: 0;
+}
+.ai-vitals__val {
+  font-family: var(--font-mono, monospace);
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1;
+}
+.ai-vitals__val--hr   { color: #fb7185; text-shadow: 0 0 12px rgba(251,113,133,0.5); }
+.ai-vitals__val--spo2 { color: #a78bfa; text-shadow: 0 0 12px rgba(167,139,250,0.5); }
+.ai-vitals__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.ai-vitals__unit {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.6rem;
+  color: rgba(255,255,255,0.4);
+  letter-spacing: 0.06em;
+}
+.ai-vitals__name {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.58rem;
+  color: rgba(255,255,255,0.25);
+}
+/* sparkline */
+.ai-vitals__spark {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 28px;
+  padding: 2px 0;
+}
+.ai-vitals__spark-bar {
+  flex: 1;
+  border-radius: 2px 2px 0 0;
+  min-height: 4px;
+  transition: height 0.3s ease;
+}
+.ai-vitals__spark--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.56rem;
+  color: rgba(255,255,255,0.2);
+}
 
 /* 响应式 */
 @media (max-width: 1200px) {

@@ -45,6 +45,8 @@ const pos = ref({ x: 50, y: 60 })
 const isDragging = ref(false)
 let dragOffsetX = 0, dragOffsetY = 0
 let didDrag = false
+let mouseDownX = 0, mouseDownY = 0
+const DRAG_THRESHOLD = 5 // px，小于此值视为点击
 
 // 当模型在面板上半部时，气泡显示在下方，避免超出顶部
 const bubbleBelow = computed(() => {
@@ -57,16 +59,20 @@ function onMouseDown(e) {
   if (e.target.closest('.speech-bubble')) return
   isDragging.value = true
   didDrag = false
+  mouseDownX = e.clientX
+  mouseDownY = e.clientY
   const rect = e.currentTarget.getBoundingClientRect()
   dragOffsetX = e.clientX - rect.left
   dragOffsetY = e.clientY - rect.top
   document.addEventListener('mousemove', onMouseMove)
   document.addEventListener('mouseup', onMouseUp)
-  e.preventDefault()
 }
 
 function onMouseMove(e) {
   if (!isDragging.value) return
+  const dx = e.clientX - mouseDownX
+  const dy = e.clientY - mouseDownY
+  if (!didDrag && Math.sqrt(dx * dx + dy * dy) < DRAG_THRESHOLD) return
   didDrag = true
   const panel = document.querySelector('.starfield-panel')
   if (!panel) return
@@ -363,15 +369,16 @@ onUnmounted(() => {
   bottom: calc(100% + 8px);
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(2, 8, 23, 0.75);
-  border: 1px solid rgba(56,189,248,0.35);
+  background: rgba(2, 20, 48, 0.96);
+  border: 1px solid rgba(56,189,248,0.6);
   border-radius: 10px;
   padding: 10px 14px;
   min-width: 160px;
   max-width: 240px;
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(12px);
   pointer-events: none;
   white-space: pre-wrap;
+  box-shadow: 0 0 18px rgba(56,189,248,0.25), 0 4px 20px rgba(0,0,0,0.7);
 }
 .speech-bubble::after {
   content: '';
