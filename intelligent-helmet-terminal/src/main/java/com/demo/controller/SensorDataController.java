@@ -42,6 +42,14 @@ public class SensorDataController {
         return ResponseEntity.ok(data);
     }
 
+    // 从数据库查全局最新一条记录，用于终端初始化（不依赖内存缓存）
+    @GetMapping("/latest-db")
+    public ResponseEntity<?> getLatestFromDB() {
+        SensorData data = sensorDataService.getLatestFromDB();
+        if (data == null) return ResponseEntity.ok(Map.of());
+        return ResponseEntity.ok(data);
+    }
+
     @GetMapping("/latest/{deviceId}")
     public ResponseEntity<SensorData> getLatestDataByDevice(@PathVariable String deviceId) {
         SensorData latestData = sensorDataService.getLatestSensorData(deviceId);

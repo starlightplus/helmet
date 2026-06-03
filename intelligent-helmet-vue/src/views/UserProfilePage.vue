@@ -374,6 +374,8 @@
               <a :href="`tel:${c.phone}`" class="flex items-center gap-1.5 text-xs font-bold text-rose-600 hover:underline">
                 <Phone class="w-3.5 h-3.5" />{{ c.phone }}
               </a>
+              <p v-if="c.email" class="text-[10px] text-slate-400 truncate">{{ c.email }}</p>
+              <p v-else class="text-[10px] text-rose-400">未填写邮箱</p>
             </div>
           </div>
 
@@ -431,6 +433,10 @@
                   <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">电话</label>
                   <input type="text" v-model="c.phone" class="up-input font-mono" placeholder="联络电话" @change="updateContact(i)" />
                 </div>
+                <div class="md:col-span-3">
+                  <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">邮箱（摔倒告警）</label>
+                  <input type="email" v-model="c.email" class="up-input" placeholder="告警邮件发送至此邮箱" @change="updateContact(i)" />
+                </div>
               </div>
             </div>
           </div>
@@ -466,6 +472,11 @@
                   class="up-input font-mono" :class="errors.emergencyPhone ? 'border-rose-400' : ''"
                   placeholder="例：138-xxxx-xxxx" />
                 <p v-if="errors.emergencyPhone" class="text-xs text-rose-500 mt-1">{{ errors.emergencyPhone }}</p>
+              </div>
+              <div class="md:col-span-3">
+                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">邮箱（摔倒告警）</label>
+                <input type="email" v-model="contactForm.email"
+                  class="up-input" placeholder="告警邮件将发送至此邮箱" />
               </div>
             </div>
             <button @click="addContact"
@@ -640,6 +651,14 @@ function saveProfile() {
   } else {
     localStorage.removeItem('priority_contact_id')
   }
+  // 同步 priority 到后端：先把所有联系人 priority=false，再把选中的设为 true
+  contacts.value.forEach(c => {
+    const shouldBePriority = c.id === priorityContactId.value
+    if (c.priority !== shouldBePriority) {
+      request.put(`/api/user/contacts/${c.id}`, { priority: shouldBePriority }).catch(() => {})
+      c.priority = shouldBePriority
+    }
+  })
   store.saveToServer()
   triggerToast('资料已成功保存并同步至服务器！')
 }
@@ -650,7 +669,7 @@ function cancelEdit() {
 }
 
 const contacts = ref([])
-const contactForm = ref({ name: '', phone: '', relation: '' })
+const contactForm = ref({ name: '', phone: '', email: '', relation: '' })
 const CONTACTS_KEY = 'emergency_contacts'
 
 async function loadContacts() {
@@ -671,15 +690,15 @@ async function addContact() {
   if (!phone.trim() || phone.trim().length < 5) { errors.emergencyPhone = '请输入有效的联系电话'; return }
   errors.emergencyName = ''; errors.emergencyPhone = ''
   try {
-    const res = await request.post('/api/user/contacts', { name: name.trim(), phone: phone.trim(), relation, notes: '' })
+    const res = await request.post('/api/user/contacts', { name: name.trim(), phone: phone.trim(), relation, email: contactForm.value.email || '', notes: '' })
     contacts.value.push(res.data)
     localStorage.setItem(CONTACTS_KEY, JSON.stringify(contacts.value))
-    contactForm.value = { name: '', phone: '', relation: '' }
+    contactForm.value = { name: '', phone: '', email: '', relation: '' }
     triggerToast('联系人已添加')
   } catch {
-    contacts.value.push({ id: Date.now(), name: name.trim(), phone: phone.trim(), relation, notes: '' })
+    contacts.value.push({ id: Date.now(), name: name.trim(), phone: phone.trim(), relation, email: contactForm.value.email || '', notes: '' })
     localStorage.setItem(CONTACTS_KEY, JSON.stringify(contacts.value))
-    contactForm.value = { name: '', phone: '', relation: '' }
+    contactForm.value = { name: '', phone: '', email: '', relation: '' }
     triggerToast('联系人已添加（本地）', 'info')
   }
 }
@@ -697,7 +716,7 @@ async function updateContact(i) {
   if (!c.id || String(c.id).length > 10) return // local-only entry, skip server sync
   try {
     await request.put(`/api/user/contacts/${c.id}`, {
-      name: c.name, phone: c.phone, relation: c.relation, notes: c.notes || ''
+      name: c.name, phone: c.phone, relation: c.relation, email: c.email || '', notes: c.notes || ''
     })
     localStorage.setItem(CONTACTS_KEY, JSON.stringify(contacts.value))
   } catch { /* best-effort */ }

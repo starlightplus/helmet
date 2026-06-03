@@ -58,6 +58,8 @@ const eventHistory = ref([])
 const lastEventState = ref({})
 const eventList = ref(null)
 const contacts = ref([])
+const lastFallTriggerTime = ref({})
+const FALL_COOLDOWN_MS = 30000
 
 onMounted(() => {
   try { contacts.value = JSON.parse(localStorage.getItem('emergency_contacts')) || [] } catch { contacts.value = [] }
@@ -84,10 +86,27 @@ function processDeviceEvents(data) {
   const deviceId = data.deviceId || 'unknown'
   const previous = lastEventState.value[deviceId] || {}
   const now = new Date()
+
   for (const def of eventDefinitions) {
     const flagNow = !!data[def.key]
     const flagPrev = !!previous[def.key]
-    if (flagNow && !flagPrev) {
+
+    let shouldTrigger = false
+    if (def.type === 'fall') {
+      // 摔倒用冷却时间：flagNow=true 且距上次触发超过冷却时间
+      if (flagNow) {
+        const lastTime = lastFallTriggerTime.value[deviceId] || 0
+        if (now.getTime() - lastTime > FALL_COOLDOWN_MS) {
+          shouldTrigger = true
+          lastFallTriggerTime.value[deviceId] = now.getTime()
+        }
+      }
+    } else {
+      // 其他事件用跳变检测
+      shouldTrigger = flagNow && !flagPrev
+    }
+
+    if (shouldTrigger) {
       const newEvent = {
         id: `${deviceId}_${def.type}_${now.getTime()}`,
         deviceId,
@@ -97,18 +116,7 @@ function processDeviceEvents(data) {
         longitude: data.longitude || null,
         latitude: data.latitude || null
       }
-      const latest = eventHistory.value[0]
-      if (latest && latest.deviceId === newEvent.deviceId && latest.type === newEvent.type) {
-        const diff = now.getTime() - new Date(latest.timestamp).getTime()
-        if (diff < 5000) {
-          // skip duplicate
-        } else {
-          addEvent(newEvent)
-        }
-      } else {
-        addEvent(newEvent)
-      }
-
+      addEvent(newEvent)
       if (def.type === 'fall') {
         speakText('注意，检测到用户摔倒，请及时处理！')
         setTimeout(scrollToLatest, 120)

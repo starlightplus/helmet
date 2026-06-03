@@ -62,10 +62,6 @@
             <span class="ride-card__stat-val ride-card__stat-val--cal">{{ isRiding ? Math.round(calories) : '--' }}</span>
             <span class="ride-card__stat-key">kcal</span>
           </div>
-          <button class="ride-history-btn" @click="goToRideHistory">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="5.5" cy="17.5" r="3.5"/><path d="M15 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2z" fill="currentColor"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></svg>
-            骑行记录
-          </button>
         </div>
       </div>
     </div>

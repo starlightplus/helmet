@@ -20,11 +20,17 @@ public class EmergencyContact {
     @Column(nullable = false, length = 20)
     private String phone;
 
+    @Column(length = 100)
+    private String email;
+
     @Column(length = 30)
     private String relation;
 
     @Column(length = 500)
     private String notes;
+
+    @Column(nullable = false)
+    private boolean priority = false;
 
     public EmergencyContact() {}
 
@@ -40,9 +46,15 @@ public class EmergencyContact {
     public String getPhone() { return phone; }
     public void setPhone(String phone) { this.phone = phone; }
 
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+
     public String getRelation() { return relation; }
     public void setRelation(String relation) { this.relation = relation; }
 
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }
+
+    public boolean isPriority() { return priority; }
+    public void setPriority(boolean priority) { this.priority = priority; }
 }

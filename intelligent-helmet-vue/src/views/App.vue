@@ -26,7 +26,7 @@
           数字孪生
         </button>
         <button class="top-tab" :class="{ 'top-tab--active': activePage === 'dataviz' }" @click="activePage = 'dataviz'">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
+          <img src="/icon/data.svg" width="13" height="13" class="top-tab__img" />
           数据可视化
         </button>
         <button class="top-tab" :class="{ 'top-tab--active': activePage === 'rideplan' }" @click="activePage = 'rideplan'">
@@ -42,11 +42,11 @@
           <span class="nav-metric__val nav-metric__val--green">STABLE</span>
         </div>
         <button class="top-nav__btn" @click="goToProfile">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           个人资料
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         </button>
         <button class="top-nav__btn top-nav__btn--exit" @click="onLogout">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          <img src="/icon/exit.svg" width="13" height="13" class="top-tab__img" />
           EXIT
         </button>
       </div>
@@ -139,13 +139,14 @@
             <div class="ai-zone__bottom">
               <div class="ai-emergency">
                 <div class="ai-emergency__header">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.77 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.68 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.64a16 16 0 0 0 5.66 5.66l1.01-1.01a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.33 15l.01 1.92z"/></svg>
+                  <img src="/icon/communication.svg" width="13" height="13" class="top-tab__img" />
                   <span>紧急联系人</span>
                 </div>
                 <template v-if="primaryContact">
                   <div class="ai-emergency__contact">
                     <span class="ai-emergency__name">{{ primaryContact.name }}</span>
                     <span class="ai-emergency__phone">{{ primaryContact.phone }}</span>
+                    <span v-if="primaryContact.email" class="ai-emergency__email">{{ primaryContact.email }}</span>
                   </div>
                   <div class="ai-emergency__note">用户摔倒时，系统会第一时间呼叫紧急联系人</div>
                 </template>
@@ -156,9 +157,9 @@
 
               <div class="ai-vitals">
                 <div class="ai-vitals__header">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fb7185" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                  <img src="/icon/heart.svg" width="13" height="13" class="top-tab__img" />
                   <span>实时生命体征</span>
-                  <span class="ai-vitals__badge">上一分钟</span>
+                  <span class="ai-vitals__badge">每分钟更新一次</span>
                 </div>
                 <div class="ai-vitals__metrics">
                   <div class="ai-vitals__metric">
@@ -281,27 +282,28 @@ const latestHumidity = ref(null)
 
 // ── 紧急联系人 ──────────────────────────────────────────────────
 const contacts = ref([])
-const primaryContact = computed(() => contacts.value[0] || null)
-function loadContacts() {
-  try { contacts.value = JSON.parse(localStorage.getItem('emergency_contacts')) || [] } catch { contacts.value = [] }
+const primaryContact = computed(() => contacts.value.find(c => c.priority) || contacts.value[0] || null)
+async function loadContacts() {
+  try {
+    const token = sessionStorage.getItem('token')
+    if (!token) return
+    const res = await request.get('/api/user/contacts', { headers: { Authorization: `Bearer ${token}` } })
+    contacts.value = res.data
+  } catch { contacts.value = [] }
 }
 
-// ── 血氧心率（滑动窗口，保留上一分钟数据）──────────────────────
-const vitalWindow = ref([]) // { ts: Date, bpm, spo2 }
+// ── 血氧心率 — 直接读 latestSensorData（启动时从DB初始化，实时WS更新）──
 const currentHR = computed(() => {
-  const recent = lastMinuteVitals.value
-  if (!recent.length) return '--'
-  return Math.round(recent.reduce((s, v) => s + v.bpm, 0) / recent.length)
+  const v = latestSensorData.value?.heartRate
+  return (v != null && !isNaN(v)) ? Math.round(Number(v)) : '--'
 })
 const currentSpo2 = computed(() => {
-  const recent = lastMinuteVitals.value.filter(v => v.spo2 != null)
-  if (!recent.length) return null
-  return Math.round(recent.reduce((s, v) => s + v.spo2, 0) / recent.length)
+  const v = latestSensorData.value?.spo2
+  return (v != null && !isNaN(v)) ? Math.round(Number(v)) : null
 })
-const lastMinuteVitals = computed(() => {
-  const cutoff = Date.now() - 60000
-  return vitalWindow.value.filter(v => v.ts > cutoff)
-})
+
+// sparkline：保留最近60秒滑动窗口用于可视化
+const vitalWindow = ref([]) // { ts: Date, bpm, spo2 }
 // sparkline: 最近60秒按5秒一格分12段
 const sparkData = computed(() => {
   const now = Date.now()
@@ -335,6 +337,7 @@ const indicatorClass = computed(() => {
 })
 
 function handleSensorDataFromWS(payload) {
+  console.log('[WS] 收到数据 fallFlag=', payload.fallFlag, payload)
   latestSensorData.value = { ...payload }
   if (eventPanel.value?.processDeviceEvents) eventPanel.value.processDeviceEvents(payload)
   if (payload.deviceId) { deviceSet.add(payload.deviceId); deviceCount.value = deviceSet.size }
@@ -372,12 +375,11 @@ onMounted(async () => {
   rideHistoryStore.syncFromBackend()
   connect('ws://localhost:8082/ws/sensor-data')
   try {
-    const res = await request.get('/api/sensor/history', { params: { limit: 1 } })
-    if (res.data?.length > 0) {
-      const d = res.data[0]
+    const res = await request.get('/api/sensor/latest-db')
+    const d = res.data
+    if (d && d.deviceId) {
       if (d.temperature != null) latestTemp.value = Number(d.temperature)
       if (d.humidity != null) latestHumidity.value = Number(d.humidity)
-      // 用数据库最近一条记录初始化 latestSensorData，使电量/心率/血氧在终端页面立即显示
       latestSensorData.value = { ...latestSensorData.value, ...d }
     }
   } catch {}
@@ -522,6 +524,15 @@ onUnmounted(() => {
   text-shadow: 0 0 8px rgba(56,189,248,0.5);
 }
 .top-tab--active svg { stroke: #38bdf8; filter: drop-shadow(0 0 3px rgba(56,189,248,0.6)); }
+.top-tab__img {
+  display: block;
+  flex-shrink: 0;
+  object-fit: contain;
+  opacity: 0.75;
+  transition: opacity 0.18s;
+}
+.top-tab:hover .top-tab__img,
+.top-tab--active .top-tab__img { opacity: 1; }
 .nav-metric {
   display: flex;
   align-items: center;
@@ -901,6 +912,12 @@ onUnmounted(() => {
   font-family: var(--font-mono, monospace);
   font-size: 0.68rem;
   color: #38bdf8;
+}
+.ai-emergency__email {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.63rem;
+  color: #6ee7b7;
+  word-break: break-all;
 }
 .ai-emergency__note {
   font-family: var(--font-mono, monospace);

@@ -25,6 +25,29 @@ public interface SensorDataRepository extends JpaRepository<SensorData, Long> {
     @Query("SELECT s FROM SensorData s WHERE s.latitude IS NOT NULL AND s.longitude IS NOT NULL ORDER BY s.receiveTime DESC")
     List<SensorData> findLatestWithGps(Pageable pageable);
 
+    // 全表按时间倒序取最新一条（不限设备，用于初始化终端数据）
+    @Query("SELECT s FROM SensorData s ORDER BY s.receiveTime DESC")
+    List<SensorData> findLatestOne(Pageable pageable);
+
+    // 各字段最新非 null 值（用于终端初始化快照）
+    @Query("SELECT s.temperature FROM SensorData s WHERE s.temperature IS NOT NULL ORDER BY s.receiveTime DESC")
+    List<Double> findLatestTemperature(Pageable pageable);
+
+    @Query("SELECT s.humidity FROM SensorData s WHERE s.humidity IS NOT NULL ORDER BY s.receiveTime DESC")
+    List<Double> findLatestHumidity(Pageable pageable);
+
+    @Query("SELECT s.battery FROM SensorData s WHERE s.battery IS NOT NULL ORDER BY s.receiveTime DESC")
+    List<Integer> findLatestBattery(Pageable pageable);
+
+    @Query("SELECT s.voltage FROM SensorData s WHERE s.voltage IS NOT NULL ORDER BY s.receiveTime DESC")
+    List<Double> findLatestVoltage(Pageable pageable);
+
+    @Query("SELECT s.heartRate FROM SensorData s WHERE s.heartRate IS NOT NULL ORDER BY s.receiveTime DESC")
+    List<Integer> findLatestHeartRate(Pageable pageable);
+
+    @Query("SELECT s.spo2 FROM SensorData s WHERE s.spo2 IS NOT NULL ORDER BY s.receiveTime DESC")
+    List<Integer> findLatestSpo2(Pageable pageable);
+
     // 按时间范围查，正序（用于天级别图表）
     List<SensorData> findByDeviceIdAndReceiveTimeBetweenOrderByReceiveTimeAsc(
             String deviceId, LocalDateTime start, LocalDateTime end);

@@ -1,7 +1,11 @@
 package com.demo.service;
 
+import com.demo.model.EmergencyContact;
 import com.demo.model.SensorData;
+import com.demo.model.User;
+import com.demo.repository.EmergencyContactRepository;
 import com.demo.repository.SensorDataRepository;
+import com.demo.repository.UserRepository;
 import com.demo.websocket.SensorDataWebSocketHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -9,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +33,15 @@ public class SensorDataService {
     @Autowired
     private SensorDataPersistService persistService;
 
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private EmergencyContactRepository emergencyContactRepository;
+
+    @Autowired
+    private EmailAlertService emailAlertService;
+
     // 内存缓存（保持实时推送性能）
     private final ConcurrentHashMap<String, CopyOnWriteArrayList<SensorData>> deviceDataMap = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, SensorData> latestDataMap = new ConcurrentHashMap<>();
@@ -36,6 +50,10 @@ public class SensorDataService {
     // 每个设备上次写数据库的时间，用于 10 秒节流
     private final ConcurrentHashMap<String, LocalDateTime> lastPersistTimeMap = new ConcurrentHashMap<>();
     private static final int PERSIST_INTERVAL_SECONDS = 10;
+
+    // 摔倒告警冷却：同一设备 5 分钟内只发一次邮件
+    private final ConcurrentHashMap<String, LocalDateTime> lastFallAlertMap = new ConcurrentHashMap<>();
+    private static final int FALL_ALERT_COOLDOWN_MINUTES = 5;
 
     public void saveSensorData(SensorData sensorData) {
         String deviceId = sensorData.getDeviceId();
@@ -60,6 +78,47 @@ public class SensorDataService {
         if (webSocketHandler != null) {
             webSocketHandler.broadcastSensorData(sensorData);
         }
+
+        // 摔倒检测：fallFlag=true 且冷却时间已过，发短信给优先联系人
+        if (Boolean.TRUE.equals(sensorData.getFallFlag())) {
+            LocalDateTime lastAlert = lastFallAlertMap.get(deviceId);
+            if (lastAlert == null || now.isAfter(lastAlert.plusMinutes(FALL_ALERT_COOLDOWN_MINUTES))) {
+                lastFallAlertMap.put(deviceId, now);
+                triggerFallAlert(sensorData);
+            }
+        }
+    }
+
+    private void triggerFallAlert(SensorData sensorData) {
+        // 通过 deviceId 找到绑定的用户
+        User user = userRepository.findAll().stream()
+                .filter(u -> sensorData.getDeviceId().equals(u.getDeviceId()))
+                .findFirst().orElse(null);
+        if (user == null) {
+            System.err.println("[Email] 未找到绑定设备 " + sensorData.getDeviceId() + " 的用户，跳过告警");
+            return;
+        }
+
+        // 查找优先联系人
+        List<EmergencyContact> priorities = emergencyContactRepository.findByUserIdAndPriorityTrue(user.getId());
+        if (priorities.isEmpty()) {
+            System.err.println("[Email] 用户 " + user.getUsername() + " 未设置优先联系人，跳过告警");
+            return;
+        }
+
+        String riderName = user.getUsername();
+        String time = now().format(DateTimeFormatter.ofPattern("HH:mm"));
+        for (EmergencyContact contact : priorities) {
+            if (contact.getEmail() != null && !contact.getEmail().isEmpty()) {
+                emailAlertService.sendFallAlert(contact.getEmail(), contact.getName(), riderName, time);
+            } else {
+                System.err.println("[Email] 联系人 " + contact.getName() + " 未填写邮箱，跳过");
+            }
+        }
+    }
+
+    private LocalDateTime now() {
+        return LocalDateTime.now();
     }
 
     public SensorData getLatestSensorData(String deviceId) {
@@ -92,6 +151,40 @@ public class SensorDataService {
     public SensorData getLatestGpsFromDB() {
         List<SensorData> list = sensorDataRepository.findLatestWithGps(PageRequest.of(0, 1));
         return list.isEmpty() ? null : list.get(0);
+    }
+
+    // 从数据库查全局最新一条记录（不限设备，用于终端初始化）
+    public SensorData getLatestFromDB() {
+        PageRequest one = PageRequest.of(0, 1);
+        // 以最新一条记录为基础，再用各字段最新非 null 值填充空缺
+        List<SensorData> base = sensorDataRepository.findLatestOne(one);
+        SensorData result = base.isEmpty() ? new SensorData() : base.get(0);
+
+        if (result.getTemperature() == null) {
+            List<Double> v = sensorDataRepository.findLatestTemperature(one);
+            if (!v.isEmpty()) result.setTemperature(v.get(0));
+        }
+        if (result.getHumidity() == null) {
+            List<Double> v = sensorDataRepository.findLatestHumidity(one);
+            if (!v.isEmpty()) result.setHumidity(v.get(0));
+        }
+        if (result.getBattery() == null) {
+            List<Integer> v = sensorDataRepository.findLatestBattery(one);
+            if (!v.isEmpty()) result.setBattery(v.get(0));
+        }
+        if (result.getVoltage() == null) {
+            List<Double> v = sensorDataRepository.findLatestVoltage(one);
+            if (!v.isEmpty()) result.setVoltage(v.get(0));
+        }
+        if (result.getHeartRate() == null) {
+            List<Integer> v = sensorDataRepository.findLatestHeartRate(one);
+            if (!v.isEmpty()) result.setHeartRate(v.get(0));
+        }
+        if (result.getSpo2() == null) {
+            List<Integer> v = sensorDataRepository.findLatestSpo2(one);
+            if (!v.isEmpty()) result.setSpo2(v.get(0));
+        }
+        return result;
     }
 
     // 心率历史

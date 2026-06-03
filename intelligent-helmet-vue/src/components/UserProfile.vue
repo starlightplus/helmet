@@ -64,6 +64,7 @@
       <form class="contacts-form" @submit.prevent="addContact">
         <input v-model="contactForm.name" type="text" class="contacts-input" placeholder="姓名" maxlength="20" required />
         <input v-model="contactForm.phone" type="tel" class="contacts-input" placeholder="电话" maxlength="20" required />
+        <input v-model="contactForm.email" type="email" class="contacts-input" placeholder="邮箱（摔倒告警用）" />
         <select v-model="contactForm.relation" class="contacts-input" required>
           <option value="" disabled>关系</option>
           <option value="父母">父母</option>
@@ -73,19 +74,29 @@
           <option value="同事">同事</option>
           <option value="其他">其他</option>
         </select>
-        <button type="submit" class="contacts-add-btn">
+        <label class="contacts-priority">
+          <input type="checkbox" v-model="contactForm.priority" />
+          <span>设为优先呼叫</span>
+        </label>
+        <button type="submit" class="contacts-add-btn" :disabled="contactSubmitting">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          添加
+          {{ contactSubmitting ? '添加中...' : '添加' }}
         </button>
       </form>
-      <div v-if="contacts.length === 0" class="contacts-empty">暂无紧急联系人</div>
+      <div v-if="contactsLoading" class="contacts-empty">加载中...</div>
+      <div v-else-if="contacts.length === 0" class="contacts-empty">暂无紧急联系人</div>
       <div v-else class="contacts-list">
-        <div v-for="(c, i) in contacts" :key="c.id" class="contact-item">
+        <div v-for="c in contacts" :key="c.id" class="contact-item" :class="{ 'contact-item--priority': c.priority }">
           <div class="contact-item__info">
-            <span class="contact-item__name">{{ c.name }}</span>
+            <span class="contact-item__name">
+              {{ c.name }}
+              <span v-if="c.priority" class="contact-item__badge">优先</span>
+            </span>
             <span class="contact-item__meta">{{ c.relation }} · {{ c.phone }}</span>
+            <span v-if="c.email" class="contact-item__email">{{ c.email }}</span>
+            <span v-else class="contact-item__email contact-item__email--warn">未填写邮箱</span>
           </div>
-          <button class="contact-item__del" @click="removeContact(i)" title="删除">
+          <button class="contact-item__del" @click="removeContact(c)" title="删除">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
           </button>
         </div>
@@ -95,8 +106,9 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useUserProfileStore } from '@/stores/userProfile'
+import request from '@/utils/request'
 
 const profileStore = useUserProfileStore()
 const activeTab = ref('profile')
@@ -143,26 +155,54 @@ function onWeightChange(e) {
 }
 
 // Emergency contacts
-const CONTACTS_KEY = 'emergency_contacts'
-const contacts = ref(loadContacts())
-const contactForm = ref({ name: '', phone: '', relation: '' })
+const contacts = ref([])
+const contactsLoading = ref(false)
+const contactSubmitting = ref(false)
+const contactForm = ref({ name: '', phone: '', email: '', relation: '', priority: false })
 
-function loadContacts() {
-  try { return JSON.parse(localStorage.getItem(CONTACTS_KEY)) || [] } catch { return [] }
+function getToken() {
+  return sessionStorage.getItem('token')
 }
 
-function addContact() {
+async function fetchContacts() {
+  contactsLoading.value = true
+  try {
+    const res = await request.get('/api/user/contacts', { headers: { Authorization: `Bearer ${getToken()}` } })
+    contacts.value = res.data
+  } catch (e) {
+    console.error('加载联系人失败', e)
+  } finally {
+    contactsLoading.value = false
+  }
+}
+
+async function addContact() {
   const { name, phone, relation } = contactForm.value
   if (!name.trim() || !phone.trim() || !relation) return
-  contacts.value.push({ id: Date.now(), name: name.trim(), phone: phone.trim(), relation })
-  localStorage.setItem(CONTACTS_KEY, JSON.stringify(contacts.value))
-  contactForm.value = { name: '', phone: '', relation: '' }
+  contactSubmitting.value = true
+  try {
+    const res = await request.post('/api/user/contacts', contactForm.value, {
+      headers: { Authorization: `Bearer ${getToken()}` }
+    })
+    contacts.value.push(res.data)
+    contactForm.value = { name: '', phone: '', email: '', relation: '', priority: false }
+  } catch (e) {
+    console.error('添加联系人失败', e)
+  } finally {
+    contactSubmitting.value = false
+  }
 }
 
-function removeContact(index) {
-  contacts.value.splice(index, 1)
-  localStorage.setItem(CONTACTS_KEY, JSON.stringify(contacts.value))
+async function removeContact(c) {
+  try {
+    await request.delete(`/api/user/contacts/${c.id}`, { headers: { Authorization: `Bearer ${getToken()}` } })
+    contacts.value = contacts.value.filter(x => x.id !== c.id)
+  } catch (e) {
+    console.error('删除联系人失败', e)
+  }
 }
+
+onMounted(fetchContacts)
 </script>
 
 <style scoped>
@@ -374,6 +414,48 @@ function removeContact(index) {
 .contact-item__meta {
   font-size: 0.75rem;
   color: #8892A0;
+}
+
+.contact-item__email {
+  font-size: 0.72rem;
+  color: #6ee7b7;
+  word-break: break-all;
+}
+
+.contact-item__email--warn {
+  color: rgba(255, 107, 53, 0.6);
+}
+
+.contact-item--priority {
+  border-color: rgba(255, 107, 53, 0.3);
+  background: rgba(255, 107, 53, 0.04);
+}
+
+.contact-item__badge {
+  font-size: 0.62rem;
+  padding: 1px 6px;
+  border-radius: 8px;
+  background: rgba(255, 107, 53, 0.2);
+  color: #FF6B35;
+  border: 1px solid rgba(255, 107, 53, 0.35);
+  vertical-align: middle;
+}
+
+.contacts-priority {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: #8892A0;
+  cursor: pointer;
+  user-select: none;
+}
+
+.contacts-priority input[type="checkbox"] {
+  accent-color: #FF6B35;
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
 }
 
 .contact-item__del {

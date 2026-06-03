@@ -174,8 +174,10 @@ public class UserDataController {
             m.put("id",       c.getId());
             m.put("name",     c.getName());
             m.put("phone",    c.getPhone());
+            m.put("email",    c.getEmail());
             m.put("relation", c.getRelation());
             m.put("notes",    c.getNotes());
+            m.put("priority", c.isPriority());
             list.add(m);
         }
         return ResponseEntity.ok(list);
@@ -193,14 +195,18 @@ public class UserDataController {
         c.setPhone(body.getOrDefault("phone", "").toString());
         c.setRelation(body.getOrDefault("relation", "").toString());
         c.setNotes(body.containsKey("notes") && body.get("notes") != null ? body.get("notes").toString() : "");
+        c.setEmail(body.containsKey("email") && body.get("email") != null ? body.get("email").toString() : "");
+        c.setPriority(Boolean.TRUE.equals(body.get("priority")));
         contactRepository.save(c);
 
         Map<String, Object> res = new HashMap<>();
         res.put("id",       c.getId());
         res.put("name",     c.getName());
         res.put("phone",    c.getPhone());
+        res.put("email",    c.getEmail());
         res.put("relation", c.getRelation());
         res.put("notes",    c.getNotes());
+        res.put("priority", c.isPriority());
         return ResponseEntity.ok(res);
     }
 
@@ -227,8 +233,10 @@ public class UserDataController {
 
         if (body.containsKey("name"))     c.setName(body.get("name").toString());
         if (body.containsKey("phone"))    c.setPhone(body.get("phone").toString());
+        if (body.containsKey("email"))    c.setEmail(body.get("email") != null ? body.get("email").toString() : "");
         if (body.containsKey("relation")) c.setRelation(body.get("relation").toString());
         if (body.containsKey("notes"))    c.setNotes(body.get("notes") != null ? body.get("notes").toString() : "");
+        if (body.containsKey("priority")) c.setPriority(Boolean.TRUE.equals(body.get("priority")));
         contactRepository.save(c);
         return ResponseEntity.ok(Map.of("success", true));
     }

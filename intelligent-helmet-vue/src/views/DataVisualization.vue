@@ -40,7 +40,7 @@
           <div class="dv-entry-card dv-entry-card--cyan" @click="activeTab = 'temp'">
             <div class="dv-entry-card__top">
               <div class="dv-entry-card__icon dv-entry-card__icon--cyan">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg>
+                <img src="/icon/temp.svg" width="18" height="18" />
               </div>
             </div>
             <div class="dv-entry-card__body">
@@ -120,7 +120,7 @@
           <div class="dv-guide__grid">
             <div class="dv-guide__item">
               <div class="dv-guide__item-title">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg>
+                <img src="/icon/temp.svg" width="12" height="12" />
                 温湿度趋势分析
               </div>
               <p>支持分钟级实时推送、小时级均值、天级别历史三种粒度切换。双折线图展示温度与湿度协同变化，支持 CSV 导出。</p>
@@ -155,7 +155,7 @@
       <div v-else-if="activeTab === 'temp'" class="dv-tab-panel">
         <div class="dv-panel-header">
           <div class="dv-panel-title">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg>
+            <img src="/icon/temp.svg" width="16" height="16" />
             温湿度趋势分析
           </div>
           <div class="dv-range-switch">
@@ -170,9 +170,15 @@
       <!-- ══ 骑行能耗 ══════════════════════════════════════════ -->
       <div v-else-if="activeTab === 'ride'" class="dv-tab-panel">
         <div class="dv-panel-header">
-          <div class="dv-panel-title">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2"><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="5.5" cy="17.5" r="3.5"/><path d="M15 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2z" fill="currentColor"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></svg>
-            骑行里程与能耗
+          <div class="dv-panel-header__left">
+            <div class="dv-panel-title">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2"><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="5.5" cy="17.5" r="3.5"/><path d="M15 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2z" fill="currentColor"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></svg>
+              骑行里程与能耗
+            </div>
+            <button class="dv-ride-history-btn" @click="goToRideHistory">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="5.5" cy="17.5" r="3.5"/><path d="M15 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2z" fill="currentColor"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></svg>
+              详细骑行记录
+            </button>
           </div>
           <div class="dv-stat-pills">
             <span class="dv-stat-pill dv-stat-pill--emerald">累计 {{ totalDistance.toFixed(1) }} km</span>
@@ -362,6 +368,7 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { LineChart, BarChart, PieChart } from 'echarts/charts'
@@ -383,6 +390,8 @@ const props = defineProps({
 })
 const emit = defineEmits(['back'])
 const goBack = () => emit('back')
+const router = useRouter()
+const goToRideHistory = () => router.push('/ride-history')
 
 const userStore = useUserStore()
 
@@ -394,7 +403,7 @@ function userKey(base) {
 // ── Tabs ──────────────────────────────────────────────────────────
 const tabs = [
   { id: 'overview',   label: '总览',   icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>' },
-  { id: 'temp',       label: '温湿度', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg>' },
+  { id: 'temp',       label: '温湿度', icon: '<img src="/icon/temp.svg" width="14" height="14" />' },
   { id: 'ride',       label: '骑行能耗', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="5.5" cy="17.5" r="3.5"/><path d="M15 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2z" fill="currentColor"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></svg>' },
   { id: 'battery',    label: '电量监控', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="16" height="10" rx="2"/><path d="M22 11v2"/></svg>' },
   { id: 'heartrate',  label: '心率监测', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>' },
@@ -958,6 +967,16 @@ watch(() => userStore.username, (newUser, oldUser) => {
 /* ── Panel ────────────────────────────────────────────────────── */
 .dv-tab-panel { display: flex; flex-direction: column; gap: 16px; flex: 1; min-height: 0; }
 .dv-panel-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; flex-shrink: 0; }
+.dv-panel-header__left { display: flex; align-items: center; gap: 12px; }
+.dv-ride-history-btn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 12px;
+  background: rgba(52,211,153,0.08); color: #34d399;
+  border: 1px solid rgba(52,211,153,0.25); border-radius: 6px;
+  font-size: 11px; font-family: inherit; cursor: pointer;
+  transition: all 0.2s;
+}
+.dv-ride-history-btn:hover { background: rgba(52,211,153,0.18); border-color: rgba(52,211,153,0.5); }
 .dv-panel-title { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: #f1f5f9; }
 .dv-range-switch { display: flex; gap: 4px; }
 .dv-range-btn {
