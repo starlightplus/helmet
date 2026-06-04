@@ -3,8 +3,10 @@ package com.demo.service;
 import com.demo.model.EmergencyContact;
 import com.demo.model.SensorData;
 import com.demo.model.User;
+import com.demo.model.UserProfile;
 import com.demo.repository.EmergencyContactRepository;
 import com.demo.repository.SensorDataRepository;
+import com.demo.repository.UserProfileRepository;
 import com.demo.repository.UserRepository;
 import com.demo.websocket.SensorDataWebSocketHandler;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +37,9 @@ public class SensorDataService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private UserProfileRepository userProfileRepository;
 
     @Autowired
     private EmergencyContactRepository emergencyContactRepository;
@@ -114,15 +119,69 @@ public class SensorDataService {
             return;
         }
 
-        String riderName = user.getUsername();
+        // 收件人称呼优先用个人资料里的姓名（nickname），没填则回退到用户名
+        String riderName = userProfileRepository.findByUserId(user.getId())
+                .map(UserProfile::getNickname)
+                .filter(n -> n != null && !n.isBlank())
+                .orElse(user.getUsername());
         String time = now().format(DateTimeFormatter.ofPattern("HH:mm"));
+
+        // 经纬度：优先用本次摔倒帧；若无效（null 或未定位的 0,0），回退到该设备最近一次有效 GPS
+        Double lng = sensorData.getLongitude();
+        Double lat = sensorData.getLatitude();
+        if (!isValidGps(lng, lat)) {
+            SensorData lastGps = findLastValidGps(sensorData.getDeviceId());
+            if (lastGps != null) {
+                lng = lastGps.getLongitude();
+                lat = lastGps.getLatitude();
+                System.out.println("[Email] 摔倒帧 GPS 无效，回退到最近有效定位 -> ["
+                        + lng + ", " + lat + "] @ " + lastGps.getReceiveTime());
+            } else {
+                lng = null;
+                lat = null;
+                System.err.println("[Email] 摔倒帧 GPS 无效，且数据库无该设备历史有效定位");
+            }
+        }
+        final Double fLng = lng;
+        final Double fLat = lat;
+
         for (EmergencyContact contact : priorities) {
             if (contact.getEmail() != null && !contact.getEmail().isEmpty()) {
-                emailAlertService.sendFallAlert(contact.getEmail(), contact.getName(), riderName, time);
+                emailAlertService.sendFallAlert(contact.getEmail(), contact.getName(), riderName, time,
+                        fLng, fLat,
+                        sensorData.getAvm(), sensorData.getGvm());
             } else {
                 System.err.println("[Email] 联系人 " + contact.getName() + " 未填写邮箱，跳过");
             }
         }
+    }
+
+    /**
+     * 判断一对经纬度是否为有效定位：非 null，且不是未定位时的 (0,0)。
+     */
+    private boolean isValidGps(Double lng, Double lat) {
+        if (lng == null || lat == null) return false;
+        return !(lng == 0.0 && lat == 0.0);
+    }
+
+    /**
+     * 查该设备最近一次有效 GPS 记录：先看内存缓存（更实时），再回退数据库。
+     */
+    private SensorData findLastValidGps(String deviceId) {
+        // 内存缓存倒序找第一条有效 GPS 的
+        CopyOnWriteArrayList<SensorData> cached = deviceDataMap.get(deviceId);
+        if (cached != null) {
+            for (int i = cached.size() - 1; i >= 0; i--) {
+                SensorData s = cached.get(i);
+                if (isValidGps(s.getLongitude(), s.getLatitude())) {
+                    return s;
+                }
+            }
+        }
+        // 数据库回退
+        List<SensorData> rows = sensorDataRepository.findLatestWithGpsByDeviceId(
+                deviceId, PageRequest.of(0, 1));
+        return rows.isEmpty() ? null : rows.get(0);
     }
 
     private LocalDateTime now() {

@@ -60,12 +60,37 @@ const eventList = ref(null)
 const contacts = ref([])
 const lastFallTriggerTime = ref({})
 const FALL_COOLDOWN_MS = 30000
+// 每个设备最近一次有效经纬度（摔倒帧 GPS 为空时回退）
+const lastValidCoords = ref({})
 
 onMounted(() => {
   try { contacts.value = JSON.parse(localStorage.getItem('emergency_contacts')) || [] } catch { contacts.value = [] }
 })
 
 const primaryContact = computed(() => contacts.value[0] || null)
+
+/**
+ * 判断经纬度是否为有效定位：非空，且不是未定位时的 (0,0)。
+ */
+function isValidGps(lng, lat) {
+  if (lng == null || lat == null) return false
+  return !(Number(lng) === 0 && Number(lat) === 0)
+}
+
+/**
+ * 根据加速度幅值 AVM 与角速度幅值 GVM 推断撞击程度。
+ * 与后端 EmailAlertService.impactLevel 保持一致。
+ */
+function impactLevel(avm, gvm) {
+  if (avm == null && gvm == null) return '未知'
+  const a = Number(avm) || 0
+  const g = Number(gvm) || 0
+  const score = a + g * 0.5
+  if (score >= 80) return '极严重撞击'
+  if (score >= 50) return '严重撞击'
+  if (score >= 30) return '中等撞击'
+  return '轻微撞击'
+}
 
 let voiceReady = false
 let cachedVoices = []
@@ -87,6 +112,14 @@ function processDeviceEvents(data) {
   const previous = lastEventState.value[deviceId] || {}
   const now = new Date()
 
+  // 记录最近一次有效经纬度，供摔倒帧 GPS 无效时回退（排除未定位的 0,0）
+  if (isValidGps(data.longitude, data.latitude)) {
+    lastValidCoords.value[deviceId] = {
+      longitude: Number(data.longitude),
+      latitude: Number(data.latitude)
+    }
+  }
+
   for (const def of eventDefinitions) {
     const flagNow = !!data[def.key]
     const flagPrev = !!previous[def.key]
@@ -107,14 +140,21 @@ function processDeviceEvents(data) {
     }
 
     if (shouldTrigger) {
+      // 摔倒帧 GPS 无效时，回退到该设备最近一次有效经纬度
+      const fb = lastValidCoords.value[deviceId] || {}
+      const lng = isValidGps(data.longitude, data.latitude) ? Number(data.longitude) : (fb.longitude ?? null)
+      const lat = isValidGps(data.longitude, data.latitude) ? Number(data.latitude)  : (fb.latitude  ?? null)
       const newEvent = {
         id: `${deviceId}_${def.type}_${now.getTime()}`,
         deviceId,
         type: def.type,
         name: def.name,
         timestamp: now,
-        longitude: data.longitude || null,
-        latitude: data.latitude || null
+        longitude: lng,
+        latitude: lat,
+        avm: data.avm != null ? Number(data.avm) : null,
+        gvm: data.gvm != null ? Number(data.gvm) : null,
+        impact: def.type === 'fall' ? impactLevel(data.avm, data.gvm) : null
       }
       addEvent(newEvent)
       if (def.type === 'fall') {

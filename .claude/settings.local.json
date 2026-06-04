@@ -15,7 +15,8 @@
       "Bash(for f in number data ride communication heart temp falldown imformation exit)",
       "Bash(do echo \"==$f==\")",
       "Read(//d/嵌入式/1/amqp-demo/intelligent-helmet-vue/public/**)",
-      "Bash(done)"
+      "Bash(done)",
+      "WebSearch"
     ]
   }
 }

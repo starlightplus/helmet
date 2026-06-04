@@ -21,9 +21,15 @@ public interface SensorDataRepository extends JpaRepository<SensorData, Long> {
     // 分页查最近N条
     List<SensorData> findByDeviceIdOrderByReceiveTimeDesc(String deviceId, Pageable pageable);
 
-    // 全表按时间倒序取最新一条有 GPS 的记录（不限设备）
-    @Query("SELECT s FROM SensorData s WHERE s.latitude IS NOT NULL AND s.longitude IS NOT NULL ORDER BY s.receiveTime DESC")
+    // 全表按时间倒序取最新一条有 GPS 的记录（不限设备），排除未定位的 (0,0)
+    @Query("SELECT s FROM SensorData s WHERE s.latitude IS NOT NULL AND s.longitude IS NOT NULL " +
+           "AND NOT (s.latitude = 0 AND s.longitude = 0) ORDER BY s.receiveTime DESC")
     List<SensorData> findLatestWithGps(Pageable pageable);
+
+    // 指定设备最新一条有 GPS 的记录（摔倒时若当前帧 GPS 为空，回退到此），排除未定位的 (0,0)
+    @Query("SELECT s FROM SensorData s WHERE s.deviceId = :deviceId AND s.latitude IS NOT NULL AND s.longitude IS NOT NULL " +
+           "AND NOT (s.latitude = 0 AND s.longitude = 0) ORDER BY s.receiveTime DESC")
+    List<SensorData> findLatestWithGpsByDeviceId(@Param("deviceId") String deviceId, Pageable pageable);
 
     // 全表按时间倒序取最新一条（不限设备，用于初始化终端数据）
     @Query("SELECT s FROM SensorData s ORDER BY s.receiveTime DESC")

@@ -37,6 +37,10 @@
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
               {{ Number(event.longitude).toFixed(4) }}° , {{ Number(event.latitude).toFixed(4) }}°
             </span>
+            <span v-if="event.impact" class="event-item__impact" :style="{ color: impactColor, borderColor: impactColor, background: impactBg }">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9z"/></svg>
+              {{ event.impact }}
+            </span>
           </div>
         </div>
       </div>
@@ -57,6 +61,26 @@ const props = defineProps({
 })
 
 const formattedTime = computed(() => formatDateTime(props.event.timestamp))
+
+// 撞击程度配色：越严重越红
+const impactColor = computed(() => {
+  switch (props.event.impact) {
+    case '极严重撞击':
+    case '严重撞击': return '#EF4444'
+    case '中等撞击': return '#FFAA00'
+    case '轻微撞击': return '#4ade80'
+    default: return 'rgba(255,255,255,0.5)'
+  }
+})
+const impactBg = computed(() => {
+  switch (props.event.impact) {
+    case '极严重撞击':
+    case '严重撞击': return 'rgba(239,68,68,0.08)'
+    case '中等撞击': return 'rgba(255,170,0,0.08)'
+    case '轻微撞击': return 'rgba(74,222,128,0.08)'
+    default: return 'rgba(255,255,255,0.04)'
+  }
+})
 </script>
 
 <style scoped>
@@ -213,6 +237,17 @@ const formattedTime = computed(() => formatDateTime(props.event.timestamp))
   background: rgba(0, 243, 255, 0.04);
   padding: 1px 6px;
   border: 1px solid rgba(0, 243, 255, 0.08);
+}
+.event-item__impact {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.62rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border: 1px solid;
+  clip-path: polygon(3px 0%,100% 0%,100% calc(100% - 3px),calc(100% - 3px) 100%,0% 100%,0% 3px);
 }
 
 /* Alert flash */
