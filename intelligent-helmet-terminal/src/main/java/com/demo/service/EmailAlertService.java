@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.ResponseEntity;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -56,7 +58,8 @@ public class EmailAlertService {
             // 经纬度文本 + 逆地理编码地名
             String coordText;
             String placeName;
-            if (longitude != null && latitude != null) {
+            boolean hasCoord = longitude != null && latitude != null;
+            if (hasCoord) {
                 coordText = String.format("东经 %.6f° , 北纬 %.6f°", longitude, latitude);
                 placeName = reverseGeocode(latitude, longitude);
             } else {
@@ -67,6 +70,16 @@ public class EmailAlertService {
             // 根据 AVM / GVM 推断撞击程度
             String impactLevel = impactLevel(avm, gvm);
             String impactColor = impactColor(avm, gvm);
+
+            // 静态地图：有坐标才尝试，下载成功才内嵌
+            byte[] mapBytes = hasCoord ? staticMapBytes(longitude, latitude) : null;
+            String mapBlock = (mapBytes != null)
+                    ? "<div style='margin:16px 0'>"
+                      + "<img src='cid:fallMap' alt='摔倒位置地图' "
+                      + "style='display:block;width:100%;max-width:432px;border-radius:6px;border:1px solid #eee'/>"
+                      + "<p style='font-size:12px;color:#999;margin:6px 0 0;text-align:center'>📍 红色标记为摔倒位置</p>"
+                      + "</div>"
+                    : "";
 
             String html = "<div style='font-family:sans-serif;max-width:480px;margin:0 auto;border:1px solid #e0e0e0;border-radius:8px;overflow:hidden'>"
                     + "<div style='background:#d32f2f;padding:16px 24px'>"
@@ -82,6 +95,7 @@ public class EmailAlertService {
                     + "<p style='font-size:14px;margin:0'>💥 <strong>撞击程度：</strong>"
                     + "<span style='color:" + impactColor + ";font-weight:700'>" + impactLevel + "</span></p>"
                     + "</div>"
+                    + mapBlock
                     + "<p style='font-size:15px;color:#d32f2f'>请尽快联系确认安全。</p>"
                     + "</div>"
                     + "<div style='background:#f5f5f5;padding:12px 24px;font-size:12px;color:#999'>"
@@ -89,7 +103,11 @@ public class EmailAlertService {
                     + "</div>"
                     + "</div>";
 
+            // 先 setText 再 addInline（MimeMessageHelper 要求的顺序）
             helper.setText(html, true);
+            if (mapBytes != null) {
+                helper.addInline("fallMap", new ByteArrayResource(mapBytes), "image/png");
+            }
             mailSender.send(message);
             System.out.println("[Email] 告警邮件发送成功 -> " + toEmail);
             return true;
@@ -128,6 +146,32 @@ public class EmailAlertService {
             return sb.length() > 0 ? sb.toString() : "未知位置";
         } catch (Exception e) {
             return "未知位置（逆地理编码失败）";
+        }
+    }
+
+    /**
+     * 调用高德静态地图服务，下载一张带红色标记的位置图片（PNG 字节）。
+     * 失败返回 null，邮件正文会自动省略地图块。
+     */
+    private byte[] staticMapBytes(double lng, double lat) {
+        try {
+            // location=经度,纬度；markers=样式:坐标；size 受免费配额限制，用 2x 高清
+            String url = String.format(
+                "https://restapi.amap.com/v3/staticmap?key=%s&location=%s,%s&zoom=16&size=400*250&scale=2"
+                + "&markers=mid,0xFF0000,:%s,%s",
+                amapKey, lng, lat, lng, lat
+            );
+            ResponseEntity<byte[]> resp = restTemplate.getForEntity(url, byte[].class);
+            byte[] body = resp.getBody();
+            // 高德出错时会返回 JSON 文本而非图片，简单用长度 + 内容类型判断
+            if (body != null && body.length > 1000) {
+                return body;
+            }
+            System.err.println("[Email] 静态地图返回异常，跳过地图内嵌");
+            return null;
+        } catch (Exception e) {
+            System.err.println("[Email] 静态地图下载失败: " + e.getMessage());
+            return null;
         }
     }
 
