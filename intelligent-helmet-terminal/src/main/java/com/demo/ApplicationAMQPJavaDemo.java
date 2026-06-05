@@ -1,7 +1,9 @@
 package com.demo;
 
 import com.demo.model.SensorData;
+import com.demo.model.DeviceStatus;
 import com.demo.service.SensorDataService;
+import com.demo.service.DeviceStatusService;
 import com.demo.websocket.SensorDataWebSocketHandler;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -36,6 +38,7 @@ public class ApplicationAMQPJavaDemo {
     private static ApplicationContext applicationContext;
     private static SensorDataService sensorDataService;
     private static SensorDataWebSocketHandler webSocketHandler;
+    private static DeviceStatusService deviceStatusService;
 
     // AMQP 连接状态管理
     private static Connection amqpConnection = null;
@@ -48,6 +51,7 @@ public class ApplicationAMQPJavaDemo {
         applicationContext = SpringApplication.run(ApplicationAMQPJavaDemo.class, args);
         sensorDataService = applicationContext.getBean(SensorDataService.class);
         webSocketHandler = applicationContext.getBean(SensorDataWebSocketHandler.class);
+        deviceStatusService = applicationContext.getBean(DeviceStatusService.class);
 
         System.out.println("Spring Boot 应用已启动，开始连接AMQP...");
 
@@ -288,6 +292,28 @@ public class ApplicationAMQPJavaDemo {
                         sensorData.setLongitude(properties.path("lon").asDouble());
                         sensorData.setLatitude(properties.path("lat").asDouble());
                         hasGpsData = true;
+                    }
+                }
+
+                else if ("Status".equals(serviceId)) {
+                    DeviceStatus status = new DeviceStatus(deviceId);
+                    if (properties.has("uptime"))         status.setUptime(properties.path("uptime").asLong());
+                    if (properties.has("mpu6050_status")) status.setMpu6050Status(properties.path("mpu6050_status").asInt());
+                    if (properties.has("wifi_status"))    status.setWifiStatus(properties.path("wifi_status").asInt());
+                    if (properties.has("gps_status"))     status.setGpsStatus(properties.path("gps_status").asInt());
+                    if (properties.has("dht_status"))     status.setDhtStatus(properties.path("dht_status").asInt());
+                    if (properties.has("max_status"))     status.setMaxStatus(properties.path("max_status").asInt());
+
+                    if (deviceStatusService != null) {
+                        DeviceStatus saved = deviceStatusService.upsert(status);
+                        System.out.println("收到设备状态: uptime=" + status.getUptime()
+                                + ", mpu=" + status.getMpu6050Status() + ", wifi=" + status.getWifiStatus()
+                                + ", gps=" + status.getGpsStatus() + ", dht=" + status.getDhtStatus()
+                                + ", max=" + status.getMaxStatus());
+                        // 实时推送给前端
+                        if (saved != null && webSocketHandler != null) {
+                            webSocketHandler.broadcastDeviceStatus(saved);
+                        }
                     }
                 }
 

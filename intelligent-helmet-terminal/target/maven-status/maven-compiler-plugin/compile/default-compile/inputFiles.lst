@@ -10,6 +10,7 @@ D:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\src\main\java\com\demo\conf
 D:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\src\main\java\com\demo\service\SensorDataPersistService.java
 D:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\src\main\java\com\demo\controller\SensorDataController.java
 D:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\src\main\java\com\demo\model\SportCheckin.java
+D:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\src\main\java\com\demo\repository\DeviceStatusRepository.java
 D:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\src\main\java\com\demo\repository\SensorDataRepository.java
 D:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\src\main\java\com\demo\config\JwtUtil.java
 D:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\src\main\java\com\demo\config\WebSocketConfig.java
@@ -22,6 +23,7 @@ D:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\src\main\java\com\demo\conf
 D:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\src\main\java\com\demo\controller\GitHubOAuthController.java
 D:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\src\main\java\com\demo\model\EmergencyContact.java
 D:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\src\main\java\com\demo\controller\AuthController.java
+D:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\src\main\java\com\demo\model\DeviceStatus.java
 D:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\src\main\java\com\demo\repository\EmergencyContactRepository.java
 D:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\src\main\java\com\demo\service\UserService.java
 D:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\src\main\java\com\demo\repository\ChatMessageRepository.java
@@ -31,4 +33,6 @@ D:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\src\main\java\com\demo\cont
 D:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\src\main\java\com\demo\repository\HelmetEventRepository.java
 D:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\src\main\java\com\demo\controller\ChatController.java
 D:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\src\main\java\com\demo\websocket\SensorDataWebSocketHandler.java
+D:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\src\main\java\com\demo\service\DeviceStatusService.java
+D:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\src\main\java\com\demo\controller\DeviceStatusController.java
 D:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\src\main\java\com\demo\model\SensorData.java

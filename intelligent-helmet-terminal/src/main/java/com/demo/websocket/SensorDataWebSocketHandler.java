@@ -1,12 +1,14 @@
 package com.demo.websocket;
 
 import com.demo.model.SensorData;
+import com.demo.model.DeviceStatus;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.*;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArraySet;
 
@@ -74,6 +76,24 @@ public class SensorDataWebSocketHandler implements WebSocketHandler {
         }
     }
     
+    /**
+     * 向所有连接的客户端广播设备状态（包一层 type，前端据此区分）
+     */
+    public void broadcastDeviceStatus(DeviceStatus status) {
+        if (sessions.isEmpty()) {
+            return;
+        }
+        try {
+            Map<String, Object> envelope = new HashMap<>();
+            envelope.put("type", "deviceStatus");
+            envelope.put("payload", status);
+            String jsonData = objectMapper.writeValueAsString(envelope);
+            broadcast(jsonData);
+        } catch (Exception e) {
+            System.err.println("序列化设备状态失败: " + e.getMessage());
+        }
+    }
+
     /**
      * 向所有连接的客户端广播消息
      * @param message 消息内容

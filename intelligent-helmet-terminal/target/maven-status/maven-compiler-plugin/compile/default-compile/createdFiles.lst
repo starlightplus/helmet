@@ -9,6 +9,7 @@ com\demo\repository\EmergencyContactRepository.class
 com\demo\repository\ChatMessageRepository.class
 com\demo\repository\UserRepository.class
 com\demo\model\UserProfile.class
+com\demo\service\DeviceStatusService.class
 com\demo\controller\UserDataController.class
 com\demo\model\User.class
 com\demo\service\ClaudeService.class
@@ -18,9 +19,11 @@ com\demo\ApplicationAMQPJavaDemo$1.class
 com\demo\repository\RideSessionRepository.class
 com\demo\repository\SensorDataRepository.class
 com\demo\repository\UserProfileRepository.class
+com\demo\controller\DeviceStatusController.class
 com\demo\config\SecurityConfig.class
 com\demo\model\SportCheckin.class
 com\demo\controller\ChatController.class
+com\demo\model\DeviceStatus.class
 com\demo\controller\SensorDataController.class
 com\demo\model\EmergencyContact.class
 com\demo\service\SensorDataService.class
@@ -28,6 +31,7 @@ com\demo\ApplicationAMQPJavaDemo.class
 com\demo\config\JacksonConfig.class
 com\demo\model\RideSession.class
 com\demo\config\WebSocketConfig.class
+com\demo\repository\DeviceStatusRepository.class
 com\demo\config\JwtFilter.class
 com\demo\repository\HelmetEventRepository.class
 com\demo\model\SensorData.class

@@ -14,9 +14,14 @@ export function useWebSocket() {
 
   // user-provided callback
   let onSensorData = null
+  let onDeviceStatus = null
 
   function setOnSensorData(cb) {
     onSensorData = cb
+  }
+
+  function setOnDeviceStatus(cb) {
+    onDeviceStatus = cb
   }
 
   function connect(url) {
@@ -64,6 +69,9 @@ export function useWebSocket() {
           } else if (data.type === 'status') {
             console.log('[WS] AMQP状态:', data.message)
             connectionStatus.value = data.message || '已连接'
+          } else if (data.type === 'deviceStatus' && data.payload) {
+            console.log('[WS] 设备状态更新:', data.payload)
+            if (onDeviceStatus) onDeviceStatus(data.payload)
           } else {
             console.log('[WS] 走直接数据分支, deviceId=', data.deviceId, 'temp=', data.temperature)
             handleSensorPayload(data)
@@ -134,6 +142,7 @@ export function useWebSocket() {
     connect,
     disconnect,
     sendMessage,
-    setOnSensorData
+    setOnSensorData,
+    setOnDeviceStatus
   }
 }

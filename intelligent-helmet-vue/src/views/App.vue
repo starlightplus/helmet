@@ -90,7 +90,7 @@
         <!-- 数字孪生页面 -->
         <div v-show="activePage === 'twin'" class="page-wrapper page-wrapper--twin">
           <div class="twin-page">
-            <HelmetTwin ref="helmetTwin" :sensorData="latestSensorData" :connected="isConnected" />
+            <HelmetTwin ref="helmetTwin" :sensorData="latestSensorData" :connected="isConnected" :deviceStatus="deviceStatus" />
           </div>
         </div>
 
@@ -266,12 +266,13 @@ watch(activePage, (val) => {
 
 const eventPanel = ref(null)
 
-const { isConnected, connectionStatus, connect, disconnect, setOnSensorData } = useWebSocket()
+const { isConnected, connectionStatus, connect, disconnect, setOnSensorData, setOnDeviceStatus } = useWebSocket()
 const wsStatus = connectionStatus
 const deviceSet = new Set()
 const deviceCount = ref(0)
 const deviceOnline = ref(false)
 const lastUpdate = ref(null)
+const deviceStatus = ref(null)
 let deviceOfflineTimer = null
 const DEVICE_OFFLINE_TIMEOUT = 5000
 
@@ -376,6 +377,7 @@ function resetDeviceOfflineTimer() {
 }
 
 setOnSensorData(handleSensorDataFromWS)
+setOnDeviceStatus((payload) => { deviceStatus.value = payload })
 
 function onLogout() { userStore.logout(); router.push('/auth') }
 function goToProfile() { router.push('/profile') }
@@ -393,6 +395,11 @@ onMounted(async () => {
       if (d.humidity != null) latestHumidity.value = Number(d.humidity)
       latestSensorData.value = { ...latestSensorData.value, ...d }
     }
+  } catch {}
+  // 初始化设备状态（WebSocket 推送前先拿一份）
+  try {
+    const res = await request.get('/api/device/status')
+    if (res.data && res.data.deviceId) deviceStatus.value = res.data
   } catch {}
 })
 
