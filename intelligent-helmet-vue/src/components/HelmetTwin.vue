@@ -7,7 +7,7 @@
         数字孪生 · 实时状态
       </div>
       <div class="twin-header__right">
-        <button class="track-btn track-btn--status" @click="statusPanelOpen = !statusPanelOpen" title="设备状态">
+        <button class="track-btn track-btn--status" @click="goDeviceStatus" title="设备状态">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
           设备状态
         </button>
@@ -100,42 +100,6 @@
 
           <!-- 结束导航 -->
           <button v-if="navActive" class="nav-stop-btn" @click="clearNavigation">结束导航</button>
-        </div>
-      </transition>
-
-      <!-- 设备状态抽屉面板 -->
-      <transition name="nav-slide">
-        <div v-if="statusPanelOpen" class="status-drawer">
-          <div class="status-drawer__header">
-            <span>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00D9FF" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-              设备状态
-            </span>
-            <button class="nav-close-btn" @click="statusPanelOpen = false">✕</button>
-          </div>
-
-          <div v-if="!deviceStatus" class="status-empty">暂无设备状态数据</div>
-
-          <template v-else>
-            <!-- 运行时间 -->
-            <div class="status-uptime">
-              <span class="status-uptime__label">设备运行时间</span>
-              <span class="status-uptime__val">{{ formatUptime(deviceStatus.uptime) }}</span>
-            </div>
-
-            <!-- 各传感器状态 -->
-            <div class="status-list">
-              <div v-for="item in statusItems" :key="item.key" class="status-row">
-                <span class="status-row__label">{{ item.label }}</span>
-                <span class="status-row__badge" :style="{ color: statusInfo(item.code).color, borderColor: statusInfo(item.code).color }">
-                  <i class="status-row__dot" :style="{ background: statusInfo(item.code).color }"></i>
-                  {{ statusInfo(item.code).text }}
-                </span>
-              </div>
-            </div>
-
-            <div v-if="deviceStatus.updateTime" class="status-update">更新于 {{ deviceStatus.updateTime }}</div>
-          </template>
         </div>
       </transition>
 
@@ -234,6 +198,10 @@ import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import request from '@/utils/request'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+function goDeviceStatus() { router.push('/device-status') }
 
 const props = defineProps({
   sensorData: { type: Object, default: () => ({}) },
@@ -261,51 +229,6 @@ const replaySpeed = ref(1)
 
 // Navigation state
 const navPanelOpen = ref(false)
-// 设备状态面板
-const statusPanelOpen = ref(false)
-
-// 状态码 -> { 文案, 颜色 }
-const STATUS_MAP = {
-  0: { text: '未初始化', color: '#9ca3af' },
-  1: { text: '初始化中', color: '#facc15' },
-  2: { text: '就绪',     color: '#4ade80' },
-  3: { text: '错误',     color: '#f87171' },
-  4: { text: '超时',     color: '#fb923c' },
-  5: { text: '断开连接', color: '#f87171' }
-}
-
-function statusInfo(code) {
-  if (code == null) return { text: '无数据', color: '#6b7280' }
-  return STATUS_MAP[code] || { text: '未知(' + code + ')', color: '#6b7280' }
-}
-
-// 运行时间格式化（秒 -> Xd Xh Xm Xs）
-function formatUptime(sec) {
-  if (sec == null) return '无数据'
-  let s = Number(sec)
-  if (!isFinite(s) || s < 0) return '无数据'
-  const d = Math.floor(s / 86400); s -= d * 86400
-  const h = Math.floor(s / 3600);  s -= h * 3600
-  const m = Math.floor(s / 60);    s -= m * 60
-  const parts = []
-  if (d) parts.push(d + '天')
-  if (h || d) parts.push(h + '时')
-  parts.push(m + '分')
-  parts.push(Math.floor(s) + '秒')
-  return parts.join(' ')
-}
-
-// 传感器状态项列表（顺序固定，便于渲染）
-const statusItems = computed(() => {
-  const s = props.deviceStatus || {}
-  return [
-    { key: 'mpu6050Status', label: 'MPU6050 姿态', code: s.mpu6050Status },
-    { key: 'wifiStatus',    label: 'WiFi 网络',    code: s.wifiStatus },
-    { key: 'gpsStatus',     label: 'GPS 定位',     code: s.gpsStatus },
-    { key: 'dhtStatus',     label: 'DHT11 温湿度', code: s.dhtStatus },
-    { key: 'maxStatus',     label: 'MAX 心率血氧', code: s.maxStatus }
-  ]
-})
 const navInput = ref('')
 const navRecommends = ref([])   // array of 3
 const navSelected = ref(null)   // currently selected recommend item

@@ -19,6 +19,12 @@ const routes = [
     component: () => import('@/views/DataVisualization.vue')
   },
   {
+    path: '/device-status',
+    name: 'DeviceStatus',
+    component: () => import('@/views/DeviceStatusPage.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/auth',
     name: 'Auth',
     component: Auth
