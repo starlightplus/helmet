@@ -11,7 +11,7 @@
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
           设备状态
         </button>
-        <button class="track-btn track-btn--nav" @click="navPanelOpen = !navPanelOpen" title="骑行导航">
+        <button class="track-btn track-btn--nav" @click="sheetState === 'mini' ? openFullSheet() : (sheetState = 'mini')" title="骑行导航">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
           导航
         </button>
@@ -26,105 +26,155 @@
       <!-- 高德 3D 地图容器（全屏） -->
       <div ref="mapContainerRef" class="map-fullscreen"></div>
 
-      <!-- 导航抽屉面板 -->
-      <transition name="nav-slide">
-        <div v-if="navPanelOpen" class="nav-drawer">
-          <div class="nav-drawer__header">
-            <span>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
-              骑行导航
-            </span>
-            <button class="nav-close-btn" @click="navPanelOpen = false">✕</button>
+      <!-- iOS 风格三态导航面板 -->
+      <div v-if="!navActive" class="sheet-backdrop" :class="{ 'sheet-backdrop--visible': sheetState === 'full' }" @click="sheetState = 'mini'"></div>
+      <div
+        v-if="!navActive"
+        class="nav-sheet-v2"
+        :class="'nav-sheet-v2--' + sheetState"
+        @touchstart="onSheetTouchStart"
+        @touchmove="onSheetTouchMove"
+        @touchend="onSheetTouchEnd"
+      >
+        <!-- 拖拽手柄 -->
+        <div class="sheet-handle"><div class="sheet-handle__bar"></div></div>
+
+        <!-- Mini 态：搜索胶囊 -->
+        <div v-if="sheetState === 'mini'" class="sheet-mini" @click="openFullSheet">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <span class="sheet-mini__text">搜索目的地 或 AI 推荐骑行路线</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+        </div>
+
+        <!-- Full 态：完整搜索 + AI 推荐 -->
+        <div v-if="sheetState === 'full'" class="sheet-full">
+          <div class="sheet-full__input-row">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input
+              ref="sheetInputRef"
+              v-model="navInput"
+              class="sheet-full__input"
+              placeholder="输入目的地..."
+              @keyup.enter="handleSheetSearch"
+            />
+            <button v-if="navInput.trim()" class="sheet-full__search-btn" @click="handleSheetSearch">搜索</button>
+            <button class="sheet-full__cancel" @click="sheetState = 'mini'">取消</button>
           </div>
 
-          <!-- 手动输入 -->
-          <div class="nav-section">
-            <div class="nav-input-row">
-              <input
-                v-model="navInput"
-                class="nav-input"
-                placeholder="输入目的地名称..."
-                @keyup.enter="startNavigation(navInput)"
-              />
-              <button class="nav-search-btn" @click="startNavigation(navInput)" :disabled="!navInput.trim()">搜索</button>
-            </div>
-          </div>
-
-          <!-- AI 推荐 -->
-          <div class="nav-divider">或 AI 推荐</div>
-          <div class="nav-level-row">
-            <button class="nav-level-btn" :class="{ active: navSelectedLevel === 'short' }" @click="fetchRecommend('short')" :disabled="navLoading">
-              短途<br/><small>5-10km</small>
+          <div class="sheet-full__divider">AI 智能推荐</div>
+          <div class="sheet-full__levels">
+            <button class="sheet-level-btn" :class="{ active: navSelectedLevel === 'short' }" @click="fetchRecommend('short')" :disabled="navLoading">
+              <span class="sheet-level-icon">🚴</span><span>短途</span><small>5-10km</small>
             </button>
-            <button class="nav-level-btn" :class="{ active: navSelectedLevel === 'medium' }" @click="fetchRecommend('medium')" :disabled="navLoading">
-              中途<br/><small>15-25km</small>
+            <button class="sheet-level-btn" :class="{ active: navSelectedLevel === 'medium' }" @click="fetchRecommend('medium')" :disabled="navLoading">
+              <span class="sheet-level-icon">🚵</span><span>中途</span><small>15-25km</small>
             </button>
-            <button class="nav-level-btn" :class="{ active: navSelectedLevel === 'long' }" @click="fetchRecommend('long')" :disabled="navLoading">
-              长途<br/><small>35-50km</small>
+            <button class="sheet-level-btn" :class="{ active: navSelectedLevel === 'long' }" @click="fetchRecommend('long')" :disabled="navLoading">
+              <span class="sheet-level-icon">🏔️</span><span>长途</span><small>35-50km</small>
             </button>
           </div>
 
-          <!-- 加载中 -->
-          <div v-if="navLoading" class="nav-loading">AI 推荐中...</div>
+          <div v-if="navLoading" class="sheet-loading">
+            <div class="sheet-loading__spinner"></div> AI 推荐中...
+          </div>
 
-          <!-- 推荐结果卡片列表 -->
-          <div v-if="navRecommends.length > 0" class="nav-recommend-list">
+          <div v-if="navRecommends.length > 0" class="sheet-recommend-list">
             <div
               v-for="(item, idx) in navRecommends"
               :key="idx"
-              class="nav-recommend-card"
-              :class="{ 'nav-recommend-card--selected': navSelected === item, 'nav-recommend-card--error': item.name === '推荐失败' }"
-              @click="item.name !== '推荐失败' && (navSelected = item)"
+              class="sheet-recommend-card"
+              :class="{ 'sheet-recommend-card--selected': navSelected === item }"
+              @click="item.name !== '推荐失败' && previewLocation(item)"
             >
-              <div class="nav-recommend-card__index">{{ idx + 1 }}</div>
-              <div class="nav-recommend-card__body">
-                <div class="nav-recommend-name">{{ item.name }}</div>
-                <div class="nav-recommend-reason">{{ item.reason }}</div>
-                <div v-if="item.distanceKm || item.durationMin" class="nav-recommend-meta">
-                  <span v-if="item.distanceKm">📍 约 {{ item.distanceKm }} km</span>
-                  <span v-if="item.durationMin">⏱ 约 {{ item.durationMin }} 分钟</span>
+              <div class="sheet-recommend-card__idx">{{ idx + 1 }}</div>
+              <div class="sheet-recommend-card__body">
+                <div class="sheet-recommend-card__name">{{ item.name }}</div>
+                <div class="sheet-recommend-card__reason">{{ item.reason }}</div>
+                <div class="sheet-recommend-card__meta">
+                  <span v-if="item.distanceKm">📍 {{ item.distanceKm }} km</span>
+                  <span v-if="item.durationMin">⏱ {{ item.durationMin }} min</span>
                 </div>
               </div>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
             </div>
           </div>
+        </div>
 
-          <!-- 确认导航 -->
-          <button
-            class="nav-confirm-btn"
-            :disabled="!navInput.trim() && !navSelected"
-            @click="startNavigation(navSelected ? navSelected.name : navInput)"
-          >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+        <!-- Preview 态：地点信息 + 导航按钮 -->
+        <div v-if="sheetState === 'preview' && previewInfo" class="sheet-preview">
+          <div class="sheet-preview__header">
+            <div class="sheet-preview__icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+            </div>
+            <div class="sheet-preview__info">
+              <div class="sheet-preview__name">{{ previewInfo.name }}</div>
+              <div class="sheet-preview__dist">约 {{ previewInfo.distanceKm }} km · 骑行约 {{ Math.round((previewInfo.distanceKm || 0) / 0.25) }} 分钟</div>
+            </div>
+          </div>
+          <button class="sheet-preview__nav-btn" @click="startNavFromPreview">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
             开始导航
           </button>
+          <button class="sheet-preview__back" @click="clearPreview(); sheetState = 'full'">
+            ← 返回搜索
+          </button>
+        </div>
+      </div>
 
-          <!-- 结束导航 -->
-          <button v-if="navActive" class="nav-stop-btn" @click="clearNavigation">结束导航</button>
+      <!-- 导航 HUD 卡片（重新设计：双层布局） -->
+      <transition name="hud-drop">
+        <div v-if="navActive" class="nav-hud">
+          <!-- 上层：方向 + 指令 -->
+          <div class="nav-hud__main">
+            <div class="nav-hud__direction">
+              <svg v-if="navDirectionIcon === '↰'" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4L3 10l6 6"/><path d="M3 10h12a4 4 0 0 1 4 4v6"/></svg>
+              <svg v-else-if="navDirectionIcon === '↱'" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4l6 6-6 6"/><path d="M21 10H9a4 4 0 0 0-4 4v6"/></svg>
+              <svg v-else-if="navDirectionIcon === '⚑'" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+              <svg v-else width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg>
+            </div>
+            <div class="nav-hud__info">
+              <div class="nav-hud__dist">{{ navRemainDist > 1000 ? (navRemainDist / 1000).toFixed(1) + ' km' : Math.round(navRemainDist) + ' m' }}</div>
+              <div class="nav-hud__action" :key="navInstruction">{{ navInstruction }}</div>
+            </div>
+            <div class="nav-hud__actions">
+              <button class="nav-hud-btn nav-hud-btn--change" @click="clearNavigation(); sheetState = 'full'" title="更改目的地">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </button>
+              <button class="nav-hud-btn nav-hud-btn--stop" @click="clearNavigation" title="结束导航">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+              </button>
+            </div>
+          </div>
+          <!-- 下层：目的地 + 剩余总距 + ETA -->
+          <div class="nav-hud__meta">
+            <span class="nav-hud__dest">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+              {{ navDestName }}
+            </span>
+            <span class="nav-hud__sep">|</span>
+            <span class="nav-hud__total-dist">{{ navTotalRemainText }}</span>
+            <span class="nav-hud__sep">|</span>
+            <span class="nav-hud__eta">{{ navEtaText }}</span>
+          </div>
         </div>
       </transition>
 
-      <!-- 导航指引条 -->
-      <transition name="alert-fade">
-        <div v-if="navActive" class="nav-instruction-bar">
-          <div class="nav-inst-dest" ref="destLabelRef">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
-            <div class="nav-inst-dest__ticker">
-              <span class="nav-inst-dest__text" ref="destTextRef">{{ navDestName }}&nbsp;&nbsp;{{ navDestName }}</span>
-            </div>
+      <!-- 底部导航摘要栏 -->
+      <transition name="bar-slide-up">
+        <div v-if="navActive" class="nav-bottom-bar">
+          <div class="nav-bottom-item">
+            <div class="nav-bottom-val">{{ navTotalRemainText }}</div>
+            <div class="nav-bottom-label">剩余距离</div>
           </div>
-          <div class="nav-inst-divider"></div>
-          <span class="nav-inst-icon">{{ navDirectionIcon }}</span>
-          <span class="nav-inst-text">{{ navInstruction }}</span>
-          <span class="nav-inst-dist">{{ navRemainDist > 1000 ? (navRemainDist / 1000).toFixed(1) + 'km' : Math.round(navRemainDist) + 'm' }}</span>
-          <div class="nav-inst-actions">
-            <button class="nav-inst-btn nav-inst-btn--change" @click="navPanelOpen = true; navActive && clearNavigation()">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-              更改目的地
-            </button>
-            <button class="nav-inst-btn nav-inst-btn--stop" @click="clearNavigation">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
-              结束骑行
-            </button>
+          <div class="nav-bottom-divider"></div>
+          <div class="nav-bottom-item">
+            <div class="nav-bottom-val">{{ navEtaText }}</div>
+            <div class="nav-bottom-label">预计到达</div>
+          </div>
+          <div class="nav-bottom-divider"></div>
+          <div class="nav-bottom-item">
+            <div class="nav-bottom-val">{{ currentSpeedText }}</div>
+            <div class="nav-bottom-label">当前速度</div>
           </div>
         </div>
       </transition>
@@ -137,46 +187,58 @@
         </div>
       </transition>
 
-      <!-- 左上角：3D头盔 + 状态面板 -->
-      <div class="side-panel">
-        <!-- 3D 头盔姿态视图 -->
-        <div class="helmet3d-panel">
-          <canvas ref="helmetCanvasRef" class="helmet3d-canvas"></canvas>
-          <div class="helmet3d-label">头盔姿态 · 实时</div>
-        </div>
+      <!-- 左上角：3D头盔 + 状态面板（导航时折叠为迷你圆球） -->
+      <transition name="panel-collapse">
+        <div v-if="!navActive || sidePanelExpanded" class="side-panel" :class="{ 'side-panel--nav': navActive }">
+          <!-- 3D 头盔姿态视图 -->
+          <div class="helmet3d-panel">
+            <canvas ref="helmetCanvasRef" class="helmet3d-canvas"></canvas>
+            <div class="helmet3d-label">头盔姿态 · 实时</div>
+          </div>
 
-        <!-- 直观状态卡片 -->
-        <div class="status-panel">
-          <div class="status-item">
-            <span class="status-icon">↔</span>
-            <div class="status-text">
-              <div class="status-name">左右倾斜</div>
-              <div class="status-val" :style="{ color: rollStatusColor }">{{ rollStatusText }}</div>
+          <!-- 直观状态卡片 -->
+          <div class="status-panel">
+            <div class="status-item">
+              <span class="status-icon">↔</span>
+              <div class="status-text">
+                <div class="status-name">左右倾斜</div>
+                <div class="status-val" :style="{ color: rollStatusColor }">{{ rollStatusText }}</div>
+              </div>
+            </div>
+            <div class="status-item">
+              <span class="status-icon">↕</span>
+              <div class="status-text">
+                <div class="status-name">前后俯仰</div>
+                <div class="status-val" :style="{ color: pitchStatusColor }">{{ pitchStatusText }}</div>
+              </div>
+            </div>
+            <div class="status-item">
+              <span class="status-icon">⚡</span>
+              <div class="status-text">
+                <div class="status-name">运动强度</div>
+                <div class="status-val" :style="{ color: avmStatusColor }">{{ avmStatusText }}</div>
+              </div>
+            </div>
+            <div class="status-item">
+              <span class="status-icon">⬡</span>
+              <div class="status-text">
+                <div class="status-name">整体稳定</div>
+                <div class="status-val" :style="{ color: gvmStatusColor }">{{ gvmStatusText }}</div>
+              </div>
             </div>
           </div>
-          <div class="status-item">
-            <span class="status-icon">↕</span>
-            <div class="status-text">
-              <div class="status-name">前后俯仰</div>
-              <div class="status-val" :style="{ color: pitchStatusColor }">{{ pitchStatusText }}</div>
-            </div>
-          </div>
-          <div class="status-item">
-            <span class="status-icon">⚡</span>
-            <div class="status-text">
-              <div class="status-name">运动强度</div>
-              <div class="status-val" :style="{ color: avmStatusColor }">{{ avmStatusText }}</div>
-            </div>
-          </div>
-          <div class="status-item">
-            <span class="status-icon">⬡</span>
-            <div class="status-text">
-              <div class="status-name">整体稳定</div>
-              <div class="status-val" :style="{ color: gvmStatusColor }">{{ gvmStatusText }}</div>
-            </div>
-          </div>
+          <!-- 导航模式下显示收起按钮 -->
+          <button v-if="navActive" class="side-panel__collapse-btn" @click="sidePanelExpanded = false">收起 ▲</button>
         </div>
-      </div>
+      </transition>
+
+      <!-- 导航时的迷你状态球 -->
+      <transition name="orb-pop">
+        <div v-if="navActive && !sidePanelExpanded" class="nav-mini-orb" @click="sidePanelExpanded = true" title="展开状态面板">
+          <div class="nav-mini-orb__ring" :style="{ borderColor: overallStatusColor }"></div>
+          <div class="nav-mini-orb__icon">⬡</div>
+        </div>
+      </transition>
 
       <!-- 轨迹点数量提示（右下角） -->
       <div class="track-info" v-if="trackPoints.length > 0">
@@ -226,9 +288,12 @@ const fallAlert = ref(false)
 const isReplaying = ref(false)
 const viewMode = ref('follow')
 const replaySpeed = ref(1)
+const sidePanelExpanded = ref(false)  // 导航模式下侧面板是否展开
 
 // Navigation state
-const navPanelOpen = ref(false)
+const sheetState = ref('mini')   // 'mini' | 'full' | 'preview'
+const sheetInputRef = ref(null)
+const navPanelOpen = ref(false)  // legacy compat
 const navInput = ref('')
 const navRecommends = ref([])   // array of 3
 const navSelected = ref(null)   // currently selected recommend item
@@ -240,12 +305,20 @@ const navStepIndex = ref(0)
 const navActive = ref(false)
 const navInstruction = ref('')
 const navDestName = ref('')
-const destLabelRef = ref(null)
-const destTextRef = ref(null)
+
+// 地点预览（AI推荐点击后飞到地图上）
+const previewInfo = ref(null)  // { name, distanceKm, coord: {lng, lat} }
+let previewMarker = null
 
 const navRemainDist = ref(0)
 let navRemainingPath = []   // 导航剩余路径点（实时裁剪用）
 let navPolylineRemain = null // 剩余路径 Polyline 实例
+let navPolylineGlow = null   // 导航路线发光底层
+let navPolylineDirLayer = null // 导航路线方向层
+let navPolylinePassed = null // 已走过路段（灰色）
+let navFullPath = []         // 完整路径（用于已走段计算）
+const navTotalDist = ref(0)  // 导航总距离（米）
+const navCurrentSpeed = ref(0) // 当前速度 km/h
 
 const navDirectionIcon = computed(() => {
   const text = navInstruction.value
@@ -253,6 +326,57 @@ const navDirectionIcon = computed(() => {
   if (text.includes('右转')) return '↱'
   if (text.includes('到达')) return '⚑'
   return '↑'
+})
+
+// 导航摘要 computed
+const navTotalRemainText = computed(() => {
+  // 用剩余路径点估算总剩余距离
+  if (navRemainingPath.length < 2) {
+    return navRemainDist.value > 1000
+      ? (navRemainDist.value / 1000).toFixed(1) + ' km'
+      : Math.round(navRemainDist.value) + ' m'
+  }
+  let total = 0
+  for (let i = 1; i < navRemainingPath.length; i++) {
+    const [lng1, lat1] = navRemainingPath[i - 1]
+    const [lng2, lat2] = navRemainingPath[i]
+    total += calcDistance(lat1, lng1, lat2, lng2)
+  }
+  return total > 1000 ? (total / 1000).toFixed(1) + ' km' : Math.round(total) + ' m'
+})
+
+const navEtaText = computed(() => {
+  const speed = navCurrentSpeed.value || 15 // 默认 15km/h 骑行速度
+  let remainMeters = 0
+  if (navRemainingPath.length >= 2) {
+    for (let i = 1; i < navRemainingPath.length; i++) {
+      const [lng1, lat1] = navRemainingPath[i - 1]
+      const [lng2, lat2] = navRemainingPath[i]
+      remainMeters += calcDistance(lat1, lng1, lat2, lng2)
+    }
+  } else {
+    remainMeters = navRemainDist.value
+  }
+  const minutes = Math.round((remainMeters / 1000) / speed * 60)
+  if (minutes < 1) return '即将到达'
+  if (minutes < 60) return `${minutes} 分钟`
+  const h = Math.floor(minutes / 60)
+  const m = minutes % 60
+  return `${h}h ${m}min`
+})
+
+const currentSpeedText = computed(() => {
+  const s = navCurrentSpeed.value
+  if (s < 1) return '0 km/h'
+  return s.toFixed(1) + ' km/h'
+})
+
+// 整体状态颜色（用于迷你圆球）
+const overallStatusColor = computed(() => {
+  const maxAngle = Math.max(Math.abs(roll.value), Math.abs(pitch.value))
+  if (maxAngle > 20 || gvm.value > 30) return '#FF6B6B'
+  if (maxAngle > 10 || gvm.value > 15) return '#FFD93D'
+  return '#4ade80'
 })
 
 // Sensor values
@@ -484,7 +608,7 @@ function initAMap() {
 // ── 加载数据库最新位置作为地图初始中心 ──────────────────────────────────────
 async function loadInitialPosition() {
   try {
-    const res = await request.get('/api/sensor/latest-gps')
+    const res = await request.get('/sensor/latest-gps')
     const data = res.data
     if (!data || !data.latitude || !data.longitude) {
       console.log('[HelmetTwin] 数据库无 GPS 记录，保持默认中心')
@@ -515,6 +639,7 @@ async function loadInitialPosition() {
 // ── Marker 更新 ───────────────────────────────────────────────────────────────
 function updateHelmetMarker(lngLat, yawDeg) {
   if (!amap) return
+  if (!isFinite(lngLat[0]) || !isFinite(lngLat[1])) return
 
   const html = buildHelmetMarkerHTML(yawDeg)
 
@@ -537,7 +662,11 @@ function updateHelmetMarker(lngLat, yawDeg) {
 function updatePolyline() {
   if (!amap || trackPoints.value.length < 2) return
 
-  const path = trackPoints.value.map(p => [p.lng, p.lat])
+  const path = trackPoints.value
+    .filter(p => isFinite(p.lng) && isFinite(p.lat) && !(p.lat === 0 && p.lng === 0))
+    .map(p => [p.lng, p.lat])
+
+  if (path.length < 2) return
 
   if (!polylineGlow) {
     // 第一层：宽发光底层（青色，模糊感）
@@ -615,13 +744,18 @@ function toggleViewMode() {
   viewMode.value = viewMode.value === 'follow' ? 'global' : 'follow'
 
   if (viewMode.value === 'global') {
-    fitCameraToTrack()
+    if (!amap || trackPoints.value.length < 2 || !polylineMain) return
+    // 先平滑抬高视角再 fitView
+    amap.setPitch(45, true, 600)
+    setTimeout(() => {
+      amap.setFitView([polylineMain], false, [40, 40, 40, 40], 18)
+    }, 300)
   } else {
     if (amap && trackPoints.value.length > 0) {
       const last = trackPoints.value[trackPoints.value.length - 1]
-      amap.setCenter([last.lng, last.lat])
-      amap.setZoom(18)
-      amap.setPitch(62)
+      // 平滑过渡到跟随视角
+      amap.setZoomAndCenter(18, [last.lng, last.lat], true, 800)
+      setTimeout(() => { amap.setPitch(62, true, 600) }, 400)
     }
   }
   console.log('[HelmetTwin] 切换视图模式:', viewMode.value)
@@ -696,6 +830,97 @@ async function fetchRecommend(level) {
   }
 }
 
+// ── 地点预览：点击 AI 推荐卡片后飞到地图 ─────────────────────────────────────
+async function previewLocation(item) {
+  navSelected.value = item
+  try {
+    const coord = await geocodeAddress(item.name)
+    // 计算距离
+    const origin = getCurrentOrigin()
+    let distKm = item.distanceKm
+    if (!distKm && origin) {
+      distKm = (calcDistance(origin.lat, origin.lng, coord.lat, coord.lng) / 1000).toFixed(1)
+    }
+
+    // 清除旧预览
+    clearPreviewMarker()
+
+    // 放置目的地 Marker（带弹跳动画）
+    const markerHtml = `<div class="preview-dest-marker"><div class="preview-dest-marker__pin"></div><div class="preview-dest-marker__pulse"></div></div>`
+    previewMarker = new AMap.Marker({
+      position: [coord.lng, coord.lat],
+      content: markerHtml,
+      offset: new AMap.Pixel(-16, -40),
+      zIndex: 300
+    })
+    amap.add(previewMarker)
+
+    // 地图平滑飞过去
+    amap.setZoomAndCenter(16, [coord.lng, coord.lat], true, 1000)
+    setTimeout(() => { amap.setPitch(50, true, 500) }, 500)
+
+    // 显示信息卡 + 切到 preview 态
+    previewInfo.value = { name: item.name, distanceKm: distKm, coord }
+    sheetState.value = 'preview'
+  } catch (e) {
+    console.error('[Preview] 地址解析失败:', e.message)
+  }
+}
+
+function clearPreviewMarker() {
+  if (previewMarker && amap) {
+    amap.remove(previewMarker)
+    previewMarker = null
+  }
+}
+
+function clearPreview() {
+  clearPreviewMarker()
+  previewInfo.value = null
+}
+
+function startNavFromPreview() {
+  const name = previewInfo.value?.name
+  clearPreview()
+  sheetState.value = 'mini'
+  if (name) startNavigation(name)
+}
+
+// ── Sheet 控制 ───────────────────────────────────────────────────────────────
+function openFullSheet() {
+  sheetState.value = 'full'
+  nextTick(() => { sheetInputRef.value?.focus() })
+}
+
+function handleSheetSearch() {
+  if (!navInput.value.trim()) return
+  startNavigation(navInput.value)
+  sheetState.value = 'mini'
+}
+
+// 拖拽手势
+let sheetTouchStartY = 0
+let sheetTouchDelta = 0
+
+function onSheetTouchStart(e) {
+  sheetTouchStartY = e.touches[0].clientY
+  sheetTouchDelta = 0
+}
+function onSheetTouchMove(e) {
+  sheetTouchDelta = e.touches[0].clientY - sheetTouchStartY
+}
+function onSheetTouchEnd() {
+  if (sheetTouchDelta > 80) {
+    // 下拉：收起
+    if (sheetState.value === 'full') sheetState.value = 'mini'
+    else if (sheetState.value === 'preview') sheetState.value = 'mini'
+  } else if (sheetTouchDelta < -80) {
+    // 上拉：展开
+    if (sheetState.value === 'mini') openFullSheet()
+  }
+  sheetTouchDelta = 0
+}
+
 // 用高德 REST API 地理编码（Web服务 key，走 /gaodemap 代理）
 async function geocodeAddress(address) {
   const key = 'f693a401338ee91c2f19ee1dc4b10a0f'
@@ -737,6 +962,7 @@ function planRidingRoute(originLng, originLat, destLng, destLat) {
 async function startNavigation(destination) {
   if (!destination || !destination.trim() || !amap) return
 
+  clearPreview()
   navDestName.value = destination.trim()
   navInstruction.value = '路线规划中...'
   navActive.value = true
@@ -763,25 +989,73 @@ async function startNavigation(destination) {
     navSteps.value = steps
     navStepIndex.value = 0
 
-    // 5. 绘制橙色路线（存入 navRemainingPath 供实时裁剪）
+    // 5. 绘制导航路线（三层叠加 + 已走段灰化）
     clearNavPolylines()
     if (fullPath.length > 1) {
       navRemainingPath = [...fullPath]
+      navFullPath = [...fullPath]
+
+      // 底层：宽发光
+      navPolylineGlow = new AMap.Polyline({
+        path: navRemainingPath,
+        strokeColor: '#f97316',
+        strokeWeight: 12,
+        strokeOpacity: 0.12,
+        lineJoin: 'round',
+        lineCap: 'round',
+        zIndex: 18
+      })
+      // 主线
       navPolylineRemain = new AMap.Polyline({
         path: navRemainingPath,
         strokeColor: '#f97316',
-        strokeWeight: 5,
+        strokeWeight: 4,
         strokeOpacity: 0.9,
         lineJoin: 'round',
         lineCap: 'round',
         zIndex: 20
       })
-      amap.add(navPolylineRemain)
-      navPolylines.value = [navPolylineRemain]
+      // 方向箭头层
+      navPolylineDirLayer = new AMap.Polyline({
+        path: navRemainingPath,
+        strokeColor: '#ffffff',
+        strokeWeight: 2,
+        strokeOpacity: 0.5,
+        strokeDasharray: [6, 14],
+        showDir: true,
+        lineJoin: 'round',
+        zIndex: 21
+      })
+      // 已走过段（初始为空）
+      navPolylinePassed = new AMap.Polyline({
+        path: [],
+        strokeColor: '#6b7280',
+        strokeWeight: 4,
+        strokeOpacity: 0.4,
+        lineJoin: 'round',
+        lineCap: 'round',
+        zIndex: 19
+      })
+      amap.add([navPolylineGlow, navPolylineRemain, navPolylineDirLayer, navPolylinePassed])
+      navPolylines.value = [navPolylineGlow, navPolylineRemain, navPolylineDirLayer, navPolylinePassed]
       try { amap.setFitView([navPolylineRemain], false, [60, 60, 60, 60]) } catch (_) {}
     }
 
     navInstruction.value = steps.length > 0 ? (steps[0].action || '沿路线骑行') : '沿路线骑行'
+    // 导航开始后平滑过渡到跟随视角
+    setTimeout(() => {
+      if (navActive.value && amap) {
+        const target = trackPoints.value.length > 0
+          ? [trackPoints.value[trackPoints.value.length - 1].lng, trackPoints.value[trackPoints.value.length - 1].lat]
+          : [origin.lng, origin.lat]
+        amap.setZoomAndCenter(18, target, true, 1200)
+        setTimeout(() => {
+          amap.setPitch(62, true, 600)
+          amap.setRotation(-(trackPoints.value.length > 0 ? trackPoints.value[trackPoints.value.length - 1].yaw : 0), true, 600)
+          viewMode.value = 'follow'
+        }, 800)
+      }
+    }, 1500)
 
   } catch (e) {
     console.error('[Nav] 导航失败:', e.message)
@@ -858,21 +1132,29 @@ function clearNavigation() {
   navInstruction.value = ''
   navDestName.value = ''
   navRemainDist.value = 0
+  navTotalDist.value = 0
+  navCurrentSpeed.value = 0
   navRecommends.value = []
   navSelected.value = null
   navInput.value = ''
   navSelectedLevel.value = ''
   navRemainingPath = []
-  // 导航结束后恢复显示蓝色轨迹
+  navFullPath = []
+  sidePanelExpanded.value = false
+  // 导航结束后恢复显示蓝色轨迹 + 恢复 zoom
+  if (amap) {
+    amap.setZoom(18)
+    amap.setPitch(62)
+  }
   if (trackPoints.value.length >= 2) updatePolyline()
 }
 
 function clearNavPolylines() {
   if (amap) {
-    // 直接移除 navPolylineRemain（主要路线对象）
-    if (navPolylineRemain) {
-      try { amap.remove(navPolylineRemain) } catch (_) {}
-      navPolylineRemain = null
+    // 移除所有导航路线图层
+    const layers = [navPolylineRemain, navPolylineGlow, navPolylineDirLayer, navPolylinePassed].filter(Boolean)
+    if (layers.length) {
+      try { amap.remove(layers) } catch (_) {}
     }
     // 兜底：移除 navPolylines 数组里的所有对象
     if (navPolylines.value.length) {
@@ -881,6 +1163,10 @@ function clearNavPolylines() {
   }
   navPolylines.value = []
   navPolylineRemain = null
+  navPolylineGlow = null
+  navPolylineDirLayer = null
+  navPolylinePassed = null
+  navFullPath = []
 }
 
 // ── 回放 ──────────────────────────────────────────────────────────────────────
@@ -942,12 +1228,12 @@ watch(() => props.sensorData, (data) => {
     setTimeout(() => { fallAlert.value = false }, 3000)
   }
 
-  if (data.latitude && data.longitude) {
+  if (data.latitude != null && data.longitude != null) {
     const lat = Number(data.latitude)
     const lng = Number(data.longitude)
     const yaw = Number(data.yaw) || 0
 
-    if (lat && lng) {
+    if (isFinite(lat) && isFinite(lng) && !(lat === 0 && lng === 0)) {
       trackPoints.value.push({ lat, lng, yaw })
 
       const lngLat = [lng, lat]
@@ -979,7 +1265,7 @@ watch(() => props.sensorData, (data) => {
           return
         }
 
-        // 裁剪橙色路线：找到剩余路径中距当前位置最近的点，截掉之前的部分
+        // 裁剪导航路线：找最近点，已走段灰化，剩余段更新
         if (navRemainingPath.length > 2) {
           let closestIdx = 0
           let minDist = Infinity
@@ -991,8 +1277,42 @@ watch(() => props.sensorData, (data) => {
           if (closestIdx > 0) {
             navRemainingPath = navRemainingPath.slice(closestIdx)
           }
-          if (navPolylineRemain && navRemainingPath.length > 2) {
-            navPolylineRemain.setPath(navRemainingPath)
+          // 更新三层剩余路线
+          if (navRemainingPath.length > 2) {
+            if (navPolylineRemain) navPolylineRemain.setPath(navRemainingPath)
+            if (navPolylineGlow) navPolylineGlow.setPath(navRemainingPath)
+            if (navPolylineDirLayer) navPolylineDirLayer.setPath(navRemainingPath)
+          }
+          // 已走段 = 全路径 - 剩余路径
+          if (navPolylinePassed && navFullPath.length > 0) {
+            const passedCount = navFullPath.length - navRemainingPath.length
+            if (passedCount > 1) {
+              navPolylinePassed.setPath(navFullPath.slice(0, passedCount + 1))
+            }
+          }
+        }
+
+        // 计算实时速度（从最近两个轨迹点）
+        if (trackPoints.value.length >= 2) {
+          const pts = trackPoints.value
+          const p1 = pts[pts.length - 2]
+          const p2 = pts[pts.length - 1]
+          const d = calcDistance(p1.lat, p1.lng, p2.lat, p2.lng)
+          // 假设数据间隔约 1-2 秒
+          const timeDiff = 1.5 // 近似
+          navCurrentSpeed.value = Math.round((d / 1000) / (timeDiff / 3600) * 10) / 10
+        }
+
+        // P3: 接近转弯自动 Zoom
+        if (navRemainDist.value < 100 && navRemainDist.value > 5) {
+          if (amap.getZoom() < 19.5) {
+            amap.setZoom(20)
+            amap.setPitch(70)
+          }
+        } else if (navRemainDist.value > 200) {
+          if (amap.getZoom() > 18.5) {
+            amap.setZoom(18)
+            amap.setPitch(62)
           }
         }
       }
@@ -1026,6 +1346,11 @@ onUnmounted(() => {
   arrivalDot = null
   helmetMarker = null
   navPolylines.value = []
+  navPolylineRemain = null
+  navPolylineGlow = null
+  navPolylineDirLayer = null
+  navPolylinePassed = null
+  navFullPath = []
 })
 
 defineExpose({
@@ -1098,6 +1423,8 @@ defineExpose({
   width: 100%;
   height: 100%;
 }
+.map-fullscreen :deep(.amap-logo),
+.map-fullscreen :deep(.amap-copyright) { display: none !important; }
 
 /* 跌倒警告 */
 .twin-alert {
@@ -1121,6 +1448,7 @@ defineExpose({
   gap: 8px;
   pointer-events: none;
 }
+.side-panel > * { pointer-events: auto; }
 
 /* 3D 头盔姿态面板 */
 .helmet3d-panel {
@@ -1331,327 +1659,400 @@ defineExpose({
   margin-top: 2px;
 }
 
-/* 导航抽屉 */
-.nav-drawer {
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 280px;
-  z-index: 150;
-  background: rgba(10,22,40,0.97);
-  border-right: 1px solid rgba(249,115,22,0.3);
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 14px 12px;
-  overflow-y: auto;
-  backdrop-filter: blur(8px);
+/* ═══ iOS 风格三态 Sheet ═══ */
+.sheet-backdrop {
+  position: absolute; inset: 0; z-index: 140;
+  background: rgba(0,0,0,0); pointer-events: none;
+  transition: background 0.4s;
 }
-.nav-drawer__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 13px;
-  font-weight: 600;
-  color: #f97316;
-  margin-bottom: 2px;
-}
-.nav-drawer__header span {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.nav-close-btn {
-  background: none;
-  border: none;
-  color: rgba(255,255,255,0.4);
-  cursor: pointer;
-  font-size: 13px;
-  padding: 2px 6px;
-  border-radius: 4px;
-  transition: color 0.2s;
-}
-.nav-close-btn:hover { color: #fff; }
+.sheet-backdrop--visible { background: rgba(0,0,0,0.3); pointer-events: auto; }
 
-.nav-section { display: flex; flex-direction: column; gap: 6px; }
-.nav-input-row { display: flex; gap: 6px; }
-.nav-input {
-  flex: 1;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(249,115,22,0.25);
-  border-radius: 5px;
-  color: #e2e8f0;
-  font-size: 12px;
-  padding: 6px 8px;
-  outline: none;
+.nav-sheet-v2 {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  z-index: 150;
+  background: rgba(15, 23, 42, 0.78);
+  backdrop-filter: blur(20px) saturate(1.4);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  border-top: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px 16px 0 0;
+  padding: 0 16px;
+  transition: max-height 0.4s cubic-bezier(0.32, 0.72, 0, 1), padding 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+  overflow: hidden;
+}
+.nav-sheet-v2--mini { max-height: 64px; padding: 8px 16px; }
+.nav-sheet-v2--full { max-height: 82vh; padding: 8px 16px 20px; overflow-y: auto; }
+.nav-sheet-v2--preview { max-height: 200px; padding: 8px 16px 16px; }
+
+.sheet-handle { display: flex; justify-content: center; padding: 6px 0 4px; }
+.sheet-handle__bar { width: 36px; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.2); }
+
+/* Mini 态 */
+.sheet-mini {
+  display: flex; align-items: center; gap: 10px;
+  padding: 4px 0; cursor: pointer;
+}
+.sheet-mini__text { flex: 1; font-size: 13px; color: rgba(255,255,255,0.45); }
+
+/* Full 态 */
+.sheet-full { display: flex; flex-direction: column; gap: 14px; padding-top: 4px; }
+.sheet-full__input-row { display: flex; align-items: center; gap: 8px; }
+.sheet-full__input {
+  flex: 1; background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12); border-radius: 10px;
+  color: #f1f5f9; font-size: 14px; padding: 10px 12px; outline: none;
   transition: border-color 0.2s;
 }
-.nav-input:focus { border-color: rgba(249,115,22,0.6); }
-.nav-input::placeholder { color: rgba(255,255,255,0.25); }
-.nav-search-btn {
-  background: rgba(249,115,22,0.2);
-  border: 1px solid rgba(249,115,22,0.4);
-  color: #f97316;
-  border-radius: 5px;
-  font-size: 11px;
-  padding: 6px 10px;
-  cursor: pointer;
-  transition: background 0.2s;
-  white-space: nowrap;
+.sheet-full__input:focus { border-color: rgba(249,115,22,0.5); }
+.sheet-full__input::placeholder { color: rgba(255,255,255,0.3); }
+.sheet-full__search-btn {
+  background: #f97316; border: none; border-radius: 8px;
+  color: #fff; font-size: 12px; font-weight: 600; padding: 8px 14px; cursor: pointer;
 }
-.nav-search-btn:hover:not(:disabled) { background: rgba(249,115,22,0.4); }
-.nav-search-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.sheet-full__cancel {
+  background: none; border: none; color: rgba(255,255,255,0.5); font-size: 13px; cursor: pointer;
+}
+.sheet-full__cancel:hover { color: #fff; }
 
-.nav-divider {
-  text-align: center;
-  font-size: 11px;
-  color: rgba(255,255,255,0.3);
-  position: relative;
-  margin: 2px 0;
+.sheet-full__divider {
+  font-size: 11px; color: rgba(255,255,255,0.35); font-weight: 600;
+  letter-spacing: 0.05em; text-transform: uppercase;
 }
-.nav-divider::before, .nav-divider::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  width: 30%;
-  height: 1px;
-  background: rgba(255,255,255,0.1);
-}
-.nav-divider::before { left: 0; }
-.nav-divider::after { right: 0; }
-
-.nav-level-row { display: flex; gap: 6px; }
-.nav-level-btn {
-  flex: 1;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.1);
-  color: rgba(255,255,255,0.6);
-  border-radius: 6px;
-  font-size: 11px;
-  padding: 8px 4px;
-  cursor: pointer;
-  text-align: center;
-  line-height: 1.4;
+.sheet-full__levels { display: flex; gap: 8px; }
+.sheet-level-btn {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px; padding: 12px 6px; cursor: pointer;
+  color: rgba(255,255,255,0.6); font-size: 12px; font-weight: 500;
   transition: all 0.2s;
 }
-.nav-level-btn small { font-size: 10px; color: rgba(255,255,255,0.35); }
-.nav-level-btn:hover:not(:disabled) { border-color: rgba(249,115,22,0.4); color: #f97316; }
-.nav-level-btn.active { background: rgba(249,115,22,0.15); border-color: rgba(249,115,22,0.5); color: #f97316; }
-.nav-level-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.sheet-level-btn small { font-size: 10px; color: rgba(255,255,255,0.3); }
+.sheet-level-btn .sheet-level-icon { font-size: 20px; }
+.sheet-level-btn:hover:not(:disabled) { border-color: rgba(249,115,22,0.3); color: #f97316; }
+.sheet-level-btn.active { background: rgba(249,115,22,0.12); border-color: rgba(249,115,22,0.5); color: #f97316; }
+.sheet-level-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-.nav-loading {
-  text-align: center;
-  font-size: 11px;
-  color: rgba(249,115,22,0.7);
-  padding: 6px 0;
-  animation: pulse 1.2s infinite;
+.sheet-loading {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  font-size: 12px; color: rgba(249,115,22,0.8); padding: 10px 0;
 }
+.sheet-loading__spinner {
+  width: 14px; height: 14px; border: 2px solid rgba(249,115,22,0.2);
+  border-top-color: #f97316; border-radius: 50%; animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
 
-.nav-recommend-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+.sheet-recommend-list { display: flex; flex-direction: column; gap: 6px; }
+.sheet-recommend-card {
+  display: flex; align-items: center; gap: 10px;
+  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px; padding: 12px; cursor: pointer;
+  transition: all 0.2s;
 }
-.nav-recommend-card {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  background: rgba(249,115,22,0.06);
-  border: 1px solid rgba(249,115,22,0.18);
-  border-radius: 7px;
-  padding: 9px 10px;
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
-}
-.nav-recommend-card:hover {
-  background: rgba(249,115,22,0.12);
-  border-color: rgba(249,115,22,0.35);
-}
-.nav-recommend-card--selected {
-  background: rgba(249,115,22,0.18);
-  border-color: #f97316;
-  box-shadow: 0 0 8px rgba(249,115,22,0.25);
-}
-.nav-recommend-card--error {
-  cursor: default;
-  background: rgba(255,71,87,0.08);
-  border-color: rgba(255,71,87,0.2);
-}
-.nav-recommend-card__index {
-  flex-shrink: 0;
-  width: 18px; height: 18px;
-  border-radius: 50%;
-  background: rgba(249,115,22,0.2);
-  border: 1px solid rgba(249,115,22,0.4);
-  color: #f97316;
-  font-size: 10px;
-  font-weight: 700;
+.sheet-recommend-card:hover { background: rgba(249,115,22,0.08); border-color: rgba(249,115,22,0.2); }
+.sheet-recommend-card--selected { background: rgba(249,115,22,0.12); border-color: rgba(249,115,22,0.4); }
+.sheet-recommend-card__idx {
+  flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%;
+  background: rgba(249,115,22,0.15); color: #f97316;
+  font-size: 11px; font-weight: 700;
   display: flex; align-items: center; justify-content: center;
-  margin-top: 1px;
 }
-.nav-recommend-card__body { flex: 1; min-width: 0; }
-.nav-recommend-name {
-  font-size: 12px;
-  font-weight: 600;
-  color: #f97316;
-  margin-bottom: 3px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.nav-recommend-reason {
-  font-size: 10px;
-  color: rgba(255,255,255,0.5);
-  line-height: 1.4;
-}
-.nav-recommend-meta {
-  display: flex;
-  gap: 10px;
-  margin-top: 5px;
-  font-size: 10px;
-  color: rgba(249,115,22,0.75);
-  font-weight: 500;
-}
+.sheet-recommend-card__body { flex: 1; min-width: 0; }
+.sheet-recommend-card__name { font-size: 13px; font-weight: 600; color: #f1f5f9; margin-bottom: 2px; }
+.sheet-recommend-card__reason { font-size: 11px; color: rgba(255,255,255,0.45); line-height: 1.4; }
+.sheet-recommend-card__meta { display: flex; gap: 10px; margin-top: 4px; font-size: 10px; color: rgba(249,115,22,0.7); }
 
-.nav-confirm-btn {
+/* Preview 态 */
+.sheet-preview { display: flex; flex-direction: column; gap: 12px; padding-top: 4px; }
+.sheet-preview__header { display: flex; align-items: center; gap: 12px; }
+.sheet-preview__icon {
+  width: 44px; height: 44px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(249,115,22,0.1); border-radius: 12px;
+}
+.sheet-preview__info { flex: 1; }
+.sheet-preview__name { font-size: 15px; font-weight: 600; color: #f1f5f9; }
+.sheet-preview__dist { font-size: 12px; color: rgba(255,255,255,0.45); margin-top: 2px; }
+.sheet-preview__nav-btn {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  background: #f97316; border: none; border-radius: 12px;
+  color: #fff; font-size: 15px; font-weight: 600; padding: 14px;
+  cursor: pointer; transition: background 0.2s;
+}
+.sheet-preview__nav-btn:hover { background: #ea580c; }
+.sheet-preview__back {
+  background: none; border: none; color: rgba(255,255,255,0.4);
+  font-size: 12px; cursor: pointer; text-align: center;
+}
+.sheet-preview__back:hover { color: #fff; }
+
+/* ═══ 导航 HUD 卡片 ═══ */
+.nav-hud {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 200;
+  max-width: 420px;
+  min-width: 300px;
+  background: rgba(10,22,40,0.92);
+  border: 1px solid rgba(249,115,22,0.4);
+  border-radius: 12px;
+  padding: 10px 14px;
+  backdrop-filter: blur(10px);
+  pointer-events: auto;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+}
+.nav-hud__main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.nav-hud__direction {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  background: rgba(249,115,22,0.2);
-  border: 1px solid rgba(249,115,22,0.5);
-  color: #f97316;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  padding: 9px;
-  cursor: pointer;
-  transition: background 0.2s;
-  margin-top: 2px;
+  background: rgba(249,115,22,0.1);
+  border: 1px solid rgba(249,115,22,0.3);
+  border-radius: 10px;
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
-.nav-confirm-btn:hover:not(:disabled) { background: rgba(249,115,22,0.35); }
-.nav-confirm-btn:disabled { opacity: 0.35; cursor: not-allowed; }
-
-.nav-stop-btn {
-  background: rgba(255,71,87,0.1);
-  border: 1px solid rgba(255,71,87,0.3);
-  color: #FF4757;
-  border-radius: 6px;
-  font-size: 11px;
-  padding: 7px;
-  cursor: pointer;
-  transition: background 0.2s;
+.nav-hud__direction svg {
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
-.nav-stop-btn:hover { background: rgba(255,71,87,0.25); }
-
-/* 导航指引条 */
-.nav-instruction-bar {
-  position: absolute;
-  top: 10px;
-  left: calc(50% + 80px);
-  transform: translateX(-50%);
-  z-index: 200;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: rgba(10,22,40,0.88);
-  border: 1px solid rgba(249,115,22,0.4);
-  border-radius: 8px;
-  padding: 8px 12px;
-  backdrop-filter: blur(8px);
-  pointer-events: auto;
-  white-space: nowrap;
-}
-.nav-inst-dest {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 11px;
-  font-weight: 700;
-  color: #f97316;
-  letter-spacing: 0.04em;
-  width: 90px;
-  flex-shrink: 0;
-  overflow: hidden;
-}
-.nav-inst-dest svg {
-  flex-shrink: 0;
-}
-.nav-inst-dest__ticker {
-  overflow: hidden;
+.nav-hud__info {
   flex: 1;
   min-width: 0;
 }
-.nav-inst-dest__text {
-  display: inline-block;
+.nav-hud__dist {
+  font-size: 18px;
+  font-weight: 700;
+  color: #f97316;
+  line-height: 1.2;
+}
+.nav-hud__action {
+  font-size: 12px;
+  color: #e2e8f0;
+  margin-top: 2px;
   white-space: nowrap;
-  padding-right: 32px; /* gap between repeat */
-  animation: ticker-scroll 6s linear infinite;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: opacity 0.3s, transform 0.3s;
+  animation: action-slide-in 0.35s ease-out;
 }
-@keyframes ticker-scroll {
-  0%   { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
+@keyframes action-slide-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
 }
-.nav-inst-divider {
-  width: 1px;
-  height: 18px;
-  background: rgba(255,255,255,0.12);
+.nav-hud__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   flex-shrink: 0;
 }
-.nav-inst-actions {
+.nav-hud-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-left: 6px;
-  padding-left: 10px;
-  border-left: 1px solid rgba(255,255,255,0.1);
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s;
+  border: 1px solid;
 }
-.nav-inst-btn {
+.nav-hud-btn--change {
+  background: rgba(56,189,248,0.1);
+  border-color: rgba(56,189,248,0.3);
+  color: #38bdf8;
+}
+.nav-hud-btn--change:hover { background: rgba(56,189,248,0.25); }
+.nav-hud-btn--stop {
+  background: rgba(255,71,87,0.1);
+  border-color: rgba(255,71,87,0.3);
+  color: #FF4757;
+}
+.nav-hud-btn--stop:hover { background: rgba(255,71,87,0.25); }
+
+.nav-hud__meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  font-size: 11px;
+  color: rgba(255,255,255,0.5);
+}
+.nav-hud__dest {
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 4px 10px;
-  border-radius: 5px;
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.15s;
-  white-space: nowrap;
-}
-.nav-inst-btn--change {
-  background: rgba(56,189,248,0.1);
-  border: 1px solid rgba(56,189,248,0.3);
-  color: #38bdf8;
-}
-.nav-inst-btn--change:hover { background: rgba(56,189,248,0.2); }
-.nav-inst-btn--stop {
-  background: rgba(255,71,87,0.1);
-  border: 1px solid rgba(255,71,87,0.3);
-  color: #FF4757;
-}
-.nav-inst-btn--stop:hover { background: rgba(255,71,87,0.22); }
-.nav-inst-icon {
-  font-size: 18px;
   color: #f97316;
-  line-height: 1;
-}
-.nav-inst-text {
-  font-size: 13px;
   font-weight: 600;
-  color: #e2e8f0;
-  max-width: 260px;
+  max-width: 120px;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.nav-inst-dist {
-  font-size: 12px;
-  color: rgba(249,115,22,0.8);
-  font-weight: 600;
-  margin-left: 4px;
+.nav-hud__sep { color: rgba(255,255,255,0.15); }
+.nav-hud__total-dist { color: rgba(255,255,255,0.7); font-weight: 500; }
+.nav-hud__eta { color: rgba(56,189,248,0.8); font-weight: 500; }
+
+/* ═══ 底部导航摘要栏 ═══ */
+.nav-bottom-bar {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 180;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: rgba(10,22,40,0.92);
+  border: 1px solid rgba(249,115,22,0.3);
+  border-radius: 12px;
+  padding: 10px 20px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.35);
+}
+.nav-bottom-item {
+  text-align: center;
+  padding: 0 16px;
+}
+.nav-bottom-val {
+  font-size: 15px;
+  font-weight: 700;
+  color: #f97316;
+  line-height: 1.3;
+}
+.nav-bottom-label {
+  font-size: 10px;
+  color: rgba(255,255,255,0.4);
+  margin-top: 2px;
+}
+.nav-bottom-divider {
+  width: 1px;
+  height: 28px;
+  background: rgba(255,255,255,0.1);
+  flex-shrink: 0;
 }
 
-/* 抽屉滑入动画 */
-.nav-slide-enter-active, .nav-slide-leave-active { transition: transform 0.25s ease, opacity 0.25s; }
-.nav-slide-enter-from, .nav-slide-leave-to { transform: translateX(-100%); opacity: 0; }
+/* ═══ 迷你状态圆球 ═══ */
+.nav-mini-orb {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 100;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: rgba(15,23,42,0.85);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  pointer-events: auto;
+}
+.nav-mini-orb:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 12px rgba(0,217,255,0.3);
+}
+.nav-mini-orb__ring {
+  position: absolute;
+  inset: 2px;
+  border-radius: 50%;
+  border: 2px solid #4ade80;
+  transition: border-color 0.3s;
+}
+.nav-mini-orb__icon {
+  font-size: 16px;
+  color: rgba(255,255,255,0.7);
+}
+
+/* ═══ 侧面板折叠相关 ═══ */
+.side-panel--nav {
+  transform: scale(0.92);
+  transform-origin: top left;
+}
+.side-panel__collapse-btn {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.5);
+  font-size: 10px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  text-align: center;
+  margin-top: 4px;
+  transition: background 0.2s;
+}
+.side-panel__collapse-btn:hover { background: rgba(255,255,255,0.12); color: #fff; }
+
+/* ═══ 动画 ═══ */
+/* HUD 卡片从上滑入 */
+.hud-drop-enter-active { transition: opacity 0.4s ease, transform 0.4s ease; }
+.hud-drop-leave-active { transition: opacity 0.25s ease, transform 0.25s ease; }
+.hud-drop-enter-from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+.hud-drop-leave-to { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+
+/* 底部栏从下滑入 */
+.bar-slide-up-enter-active { transition: opacity 0.4s ease, transform 0.4s ease; }
+.bar-slide-up-leave-active { transition: opacity 0.25s ease, transform 0.25s ease; }
+.bar-slide-up-enter-from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+.bar-slide-up-leave-to { opacity: 0; transform: translateX(-50%) translateY(10px); }
+
+/* 底部 Sheet 面板从下滑入 (legacy - kept for other transitions) */
+
+/* 侧面板折叠/展开 */
+.panel-collapse-enter-active { transition: opacity 0.35s ease, transform 0.35s ease; }
+.panel-collapse-leave-active { transition: opacity 0.25s ease, transform 0.25s ease; }
+.panel-collapse-enter-from { opacity: 0; transform: translateX(-20px) scale(0.9); }
+.panel-collapse-leave-to { opacity: 0; transform: translateX(-20px) scale(0.9); }
+
+/* 迷你圆球弹出 */
+.orb-pop-enter-active { transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.orb-pop-leave-active { transition: opacity 0.2s ease, transform 0.2s ease; }
+.orb-pop-enter-from { opacity: 0; transform: scale(0.5); }
+.orb-pop-leave-to { opacity: 0; transform: scale(0.5); }
+
+/* 目的地预览 Marker 样式（全局，非 scoped） */
+</style>
+
+<style>
+.preview-dest-marker {
+  position: relative;
+  width: 32px; height: 40px;
+}
+.preview-dest-marker__pin {
+  width: 32px; height: 32px;
+  background: #f97316;
+  border: 3px solid #fff;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.5);
+  animation: marker-bounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.preview-dest-marker__pulse {
+  position: absolute;
+  bottom: -4px; left: 50%;
+  transform: translateX(-50%);
+  width: 12px; height: 12px;
+  background: rgba(249, 115, 22, 0.3);
+  border-radius: 50%;
+  animation: marker-pulse 1.5s infinite;
+}
+@keyframes marker-bounce {
+  0% { transform: rotate(-45deg) translateY(-20px); opacity: 0; }
+  60% { transform: rotate(-45deg) translateY(4px); }
+  100% { transform: rotate(-45deg) translateY(0); opacity: 1; }
+}
+@keyframes marker-pulse {
+  0% { transform: translateX(-50%) scale(1); opacity: 0.6; }
+  100% { transform: translateX(-50%) scale(3); opacity: 0; }
+}
 </style>

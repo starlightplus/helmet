@@ -18,6 +18,11 @@ export default defineConfig({
       overlay: false
     },
     proxy: {
+      '/ws': {
+        target: 'http://localhost:8082',
+        changeOrigin: true,
+        ws: true
+      },
       '/qweather': {
         target: 'https://mf2vhfh2af.re.qweatherapi.com',
         changeOrigin: true,

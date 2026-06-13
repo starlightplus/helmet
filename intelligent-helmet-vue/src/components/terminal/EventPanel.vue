@@ -174,7 +174,7 @@ function addEvent(ev) {
   eventHistory.value.unshift(ev)
   if (eventHistory.value.length > 200) eventHistory.value.length = 200
   // persist to server (best-effort, no await to avoid blocking UI)
-  request.post('/api/user/events', {
+  request.post('/user/events', {
     eventType: ev.type,
     eventName: ev.name,
     deviceId:  ev.deviceId || '',

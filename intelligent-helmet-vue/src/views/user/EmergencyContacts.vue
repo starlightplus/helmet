@@ -119,7 +119,7 @@ async function fetchContacts() {
   loading.value = true
   try {
     const token = sessionStorage.getItem('token')
-    const res = await request.get('/api/user/contacts', { headers: { Authorization: `Bearer ${token}` } })
+    const res = await request.get('/user/contacts', { headers: { Authorization: `Bearer ${token}` } })
     contacts.value = res.data
   } catch (e) {
     console.error('加载联系人失败', e)
@@ -133,7 +133,7 @@ async function addContact() {
   submitting.value = true
   try {
     const token = sessionStorage.getItem('token')
-    const res = await request.post('/api/user/contacts', form.value, {
+    const res = await request.post('/user/contacts', form.value, {
       headers: { Authorization: `Bearer ${token}` }
     })
     contacts.value.push(res.data)
@@ -148,7 +148,7 @@ async function addContact() {
 async function removeContact(contact) {
   try {
     const token = sessionStorage.getItem('token')
-    await request.delete(`/api/user/contacts/${contact.id}`, {
+    await request.delete(`/user/contacts/${contact.id}`, {
       headers: { Authorization: `Bearer ${token}` }
     })
     contacts.value = contacts.value.filter(c => c.id !== contact.id)
@@ -161,7 +161,7 @@ async function togglePriority(contact) {
   const newVal = !contact.priority
   try {
     const token = sessionStorage.getItem('token')
-    await request.put(`/api/user/contacts/${contact.id}`, { priority: newVal }, {
+    await request.put(`/user/contacts/${contact.id}`, { priority: newVal }, {
       headers: { Authorization: `Bearer ${token}` }
     })
     contact.priority = newVal

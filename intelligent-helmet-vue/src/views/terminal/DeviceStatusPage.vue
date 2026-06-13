@@ -581,11 +581,11 @@ onMounted(async () => {
 
   // 初始拉取
   try {
-    const res = await request.get('/api/device/status')
+    const res = await request.get('/device/status')
     if (res.data && res.data.deviceId) { markStatusUpdate(res.data); spawnParticles() }
   } catch {}
   try {
-    const res = await request.get('/api/sensor/latest-db')
+    const res = await request.get('/sensor/latest-db')
     if (res.data && res.data.battery != null) battery.value = Number(res.data.battery)
   } catch {}
 

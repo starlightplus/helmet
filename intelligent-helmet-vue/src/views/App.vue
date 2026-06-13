@@ -294,7 +294,7 @@ async function loadContacts() {
   try {
     const token = sessionStorage.getItem('token')
     if (!token) return
-    const res = await request.get('/api/user/contacts', { headers: { Authorization: `Bearer ${token}` } })
+    const res = await request.get('/user/contacts', { headers: { Authorization: `Bearer ${token}` } })
     contacts.value = res.data
   } catch { contacts.value = [] }
 }
@@ -389,7 +389,7 @@ onMounted(async () => {
   const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
   connect(`${wsProtocol}//${window.location.host}/ws/sensor-data`)
   try {
-    const res = await request.get('/api/sensor/latest-db')
+    const res = await request.get('/sensor/latest-db')
     const d = res.data
     if (d && d.deviceId) {
       if (d.temperature != null) latestTemp.value = Number(d.temperature)
@@ -399,7 +399,7 @@ onMounted(async () => {
   } catch {}
   // 初始化设备状态（WebSocket 推送前先拿一份）
   try {
-    const res = await request.get('/api/device/status')
+    const res = await request.get('/device/status')
     if (res.data && res.data.deviceId) deviceStatus.value = res.data
   } catch {}
 })

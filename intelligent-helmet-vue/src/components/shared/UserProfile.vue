@@ -167,7 +167,7 @@ function getToken() {
 async function fetchContacts() {
   contactsLoading.value = true
   try {
-    const res = await request.get('/api/user/contacts', { headers: { Authorization: `Bearer ${getToken()}` } })
+    const res = await request.get('/user/contacts', { headers: { Authorization: `Bearer ${getToken()}` } })
     contacts.value = res.data
   } catch (e) {
     console.error('加载联系人失败', e)
@@ -181,7 +181,7 @@ async function addContact() {
   if (!name.trim() || !phone.trim() || !relation) return
   contactSubmitting.value = true
   try {
-    const res = await request.post('/api/user/contacts', contactForm.value, {
+    const res = await request.post('/user/contacts', contactForm.value, {
       headers: { Authorization: `Bearer ${getToken()}` }
     })
     contacts.value.push(res.data)
@@ -195,7 +195,7 @@ async function addContact() {
 
 async function removeContact(c) {
   try {
-    await request.delete(`/api/user/contacts/${c.id}`, { headers: { Authorization: `Bearer ${getToken()}` } })
+    await request.delete(`/user/contacts/${c.id}`, { headers: { Authorization: `Bearer ${getToken()}` } })
     contacts.value = contacts.value.filter(x => x.id !== c.id)
   } catch (e) {
     console.error('删除联系人失败', e)

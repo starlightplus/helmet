@@ -655,7 +655,7 @@ function saveProfile() {
   contacts.value.forEach(c => {
     const shouldBePriority = c.id === priorityContactId.value
     if (c.priority !== shouldBePriority) {
-      request.put(`/api/user/contacts/${c.id}`, { priority: shouldBePriority }).catch(() => {})
+      request.put(`/user/contacts/${c.id}`, { priority: shouldBePriority }).catch(() => {})
       c.priority = shouldBePriority
     }
   })
@@ -674,7 +674,7 @@ const CONTACTS_KEY = 'emergency_contacts'
 
 async function loadContacts() {
   try {
-    const res = await request.get('/api/user/contacts')
+    const res = await request.get('/user/contacts')
     contacts.value = res.data
     localStorage.setItem(CONTACTS_KEY, JSON.stringify(res.data))
   } catch {
@@ -690,7 +690,7 @@ async function addContact() {
   if (!phone.trim() || phone.trim().length < 5) { errors.emergencyPhone = '请输入有效的联系电话'; return }
   errors.emergencyName = ''; errors.emergencyPhone = ''
   try {
-    const res = await request.post('/api/user/contacts', { name: name.trim(), phone: phone.trim(), relation, email: contactForm.value.email || '', notes: '' })
+    const res = await request.post('/user/contacts', { name: name.trim(), phone: phone.trim(), relation, email: contactForm.value.email || '', notes: '' })
     contacts.value.push(res.data)
     localStorage.setItem(CONTACTS_KEY, JSON.stringify(contacts.value))
     contactForm.value = { name: '', phone: '', email: '', relation: '' }
@@ -705,7 +705,7 @@ async function addContact() {
 
 async function removeContact(i) {
   const c = contacts.value[i]
-  try { await request.delete(`/api/user/contacts/${c.id}`) } catch { /* best-effort */ }
+  try { await request.delete(`/user/contacts/${c.id}`) } catch { /* best-effort */ }
   contacts.value.splice(i, 1)
   localStorage.setItem(CONTACTS_KEY, JSON.stringify(contacts.value))
   triggerToast('联系人已删除', 'info')
@@ -715,7 +715,7 @@ async function updateContact(i) {
   const c = contacts.value[i]
   if (!c.id || String(c.id).length > 10) return // local-only entry, skip server sync
   try {
-    await request.put(`/api/user/contacts/${c.id}`, {
+    await request.put(`/user/contacts/${c.id}`, {
       name: c.name, phone: c.phone, relation: c.relation, email: c.email || '', notes: c.notes || ''
     })
     localStorage.setItem(CONTACTS_KEY, JSON.stringify(contacts.value))
@@ -740,7 +740,7 @@ const githubLoading = ref(false)
 
 async function loadGithubStatus() {
   try {
-    const res = await request.get('/api/auth/oauth/github/bind-status')
+    const res = await request.get('/auth/oauth/github/bind-status')
     githubBound.value = res.data.bound
     githubId.value = res.data.githubLogin || ''
   } catch {
@@ -760,7 +760,7 @@ async function unbindGithub() {
   if (!confirm('确认解绑 GitHub？解绑后需使用密码登录。')) return
   githubLoading.value = true
   try {
-    await request.post('/api/auth/oauth/github/unbind')
+    await request.post('/auth/oauth/github/unbind')
     githubBound.value = false
     githubId.value = ''
     triggerToast('GitHub 解绑成功')

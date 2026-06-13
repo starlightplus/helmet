@@ -37,7 +37,7 @@ export const useUserProfileStore = defineStore('userProfile', () => {
   // ── 从后端加载 ──────────────────────────────────────────────────
   async function loadFromServer() {
     try {
-      const res = await request.get('/api/user/profile')
+      const res = await request.get('/user/profile')
       const d = res.data
       if (d.nickname   != null) nickname.value   = d.nickname
       if (d.age        != null) age.value        = d.age
@@ -58,7 +58,7 @@ export const useUserProfileStore = defineStore('userProfile', () => {
 
   // ── 保存到后端 ──────────────────────────────────────────────────
   async function saveToServer() {
-    await request.put('/api/user/profile', {
+    await request.put('/user/profile', {
       nickname:   nickname.value,
       age:        age.value,
       height:     height.value,
