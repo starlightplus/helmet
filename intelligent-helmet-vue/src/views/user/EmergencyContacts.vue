@@ -104,7 +104,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import SportBackground from '@/components/SportBackground.vue'
+import SportBackground from '@/components/shared/SportBackground.vue'
 import request from '@/utils/request'
 
 const router = useRouter()

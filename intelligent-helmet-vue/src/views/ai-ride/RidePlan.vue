@@ -404,10 +404,10 @@
 <script setup>
 import { ref, computed, reactive, onMounted } from 'vue'
 import { useUserProfileStore } from '@/stores/userProfile.js'
-import { useRideHistoryStore } from '@/stores/rideHistory.js'
-import { useRidePlanStore } from '@/stores/rideplan.js'
-import { usePlanHistoryStore } from '@/stores/planHistory.js'
-import SportBackground from '@/components/SportBackground.vue'
+import { useRideHistoryStore } from '@/stores/ai-ride/rideHistory.js'
+import { useRidePlanStore } from '@/stores/ai-ride/rideplan.js'
+import { usePlanHistoryStore } from '@/stores/ai-ride/planHistory.js'
+import SportBackground from '@/components/shared/SportBackground.vue'
 
 const emit = defineEmits(['back'])
 const profileStore = useUserProfileStore()

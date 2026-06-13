@@ -377,8 +377,8 @@ import {
   TitleComponent, DataZoomComponent, MarkLineComponent
 } from 'echarts/components'
 import VChart from 'vue-echarts'
-import AtmosphericTrendChart from '@/components/AtmosphericTrendChart.vue'
-import { useRideHistoryStore } from '@/stores/rideHistory'
+import AtmosphericTrendChart from '@/components/data-viz/AtmosphericTrendChart.vue'
+import { useRideHistoryStore } from '@/stores/ai-ride/rideHistory'
 import { useUserStore } from '@/stores/user'
 
 use([CanvasRenderer, LineChart, BarChart, PieChart,

@@ -316,9 +316,9 @@
 <script setup>
 import { ref, computed, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
-import SportBackground from '@/components/SportBackground.vue'
-import { useRideHistoryStore } from '@/stores/rideHistory.js'
-import { formatDuration } from '@/composables/useRideTracking.js'
+import SportBackground from '@/components/shared/SportBackground.vue'
+import { useRideHistoryStore } from '@/stores/ai-ride/rideHistory.js'
+import { formatDuration } from '@/composables/digital-twin/useRideTracking.js'
 
 const router = useRouter()
 const rideHistoryStore = useRideHistoryStore()

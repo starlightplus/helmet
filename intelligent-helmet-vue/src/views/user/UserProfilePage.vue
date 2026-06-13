@@ -523,7 +523,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import SportBackground from '@/components/SportBackground.vue'
+import SportBackground from '@/components/shared/SportBackground.vue'
 import { useUserProfileStore } from '@/stores/userProfile'
 import { useUserStore } from '@/stores/user'
 import request from '@/utils/request'

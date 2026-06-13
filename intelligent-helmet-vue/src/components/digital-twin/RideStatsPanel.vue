@@ -71,7 +71,7 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { formatDuration } from '@/composables/useRideTracking.js'
+import { formatDuration } from '@/composables/digital-twin/useRideTracking.js'
 import { DotLottie } from '@lottiefiles/dotlottie-web'
 
 const props = defineProps({

@@ -535,8 +535,8 @@
 
 <script setup>
 import { ref, reactive, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
-import { useRidePlanStore } from '@/stores/rideplan.js'
-import { useRideHistoryStore } from '@/stores/rideHistory.js'
+import { useRidePlanStore } from '@/stores/ai-ride/rideplan.js'
+import { useRideHistoryStore } from '@/stores/ai-ride/rideHistory.js'
 
 // ── Emits ──────────────────────────────────────────────────────────────────
 const emit = defineEmits(['go-plan'])

@@ -290,10 +290,10 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
-import LoadingScreen from '@/components/LoadingScreen.vue';
-import ModelShowcase from '@/components/ModelShowcase.vue';
+import LoadingScreen from '@/components/shared/LoadingScreen.vue';
+import ModelShowcase from '@/components/digital-twin/ModelShowcase.vue';
 // 导入开发板展示组件
-import BoardShowcase from '@/components/BoardShowcase.vue';
+import BoardShowcase from '@/components/digital-twin/BoardShowcase.vue';
 
 const isLoading = ref(true);
 const isScrolled = ref(false);
