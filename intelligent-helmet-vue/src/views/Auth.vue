@@ -407,7 +407,7 @@ watch(() => form.username, (val) => {
   checkingUsername.value = true
   usernameCheckTimer = setTimeout(async () => {
     try {
-      const res = await fetch(`http://localhost:8082/api/auth/check-username/${val}`)
+      const res = await fetch(`/api/auth/check-username/${val}`)
       const data = await res.json()
       if (data.exists) usernameError.value = 'Username already taken'
     } catch {
@@ -459,7 +459,7 @@ async function handleSubmit() {
     }
     loading.value = true
     try {
-      const res = await fetch('http://localhost:8082/api/auth/login', {
+      const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: form.username, password: form.password })
@@ -488,7 +488,7 @@ async function handleSubmit() {
     if (usernameError.value) { errorMessage.value = usernameError.value; return }
     loading.value = true
     try {
-      const res = await fetch('http://localhost:8082/api/auth/register', {
+      const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: form.username, password: form.password })
@@ -521,7 +521,7 @@ function handleDemoLogin() {
 
 function handleSocialClick(provider) {
   if (provider === 'GitHub') {
-    window.location.href = 'http://localhost:8082/api/auth/oauth/github/authorize'
+    window.location.href = '/api/auth/oauth/github/authorize'
     return
   }
   errorMessage.value = `${provider} 登录暂未开放`

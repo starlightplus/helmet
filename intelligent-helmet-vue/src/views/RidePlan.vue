@@ -589,7 +589,7 @@ function estimateDailyBurn() {
   })
   return Math.round(total * (w / 70))
 }
-
+// 本地计算每日运动消耗
 function calcPlan() {
   const w      = Number(profile.value.weight)
   const h      = Number(profile.value.height) || 170
@@ -636,6 +636,7 @@ function buildSportDesc() {
   }).join('、')
 }
 
+// AI生成运动规划和饮食规划
 async function generatePlan() {
   if (!canGenerate.value || generating.value) return
   generating.value = true

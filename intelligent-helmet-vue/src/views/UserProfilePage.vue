@@ -753,7 +753,7 @@ function bindGithub() {
   // 跳转 GitHub OAuth 授权，回调后会自动绑定到当前账号（因为已登录）
   // 实际上回调是登录流程，当账号已登录时绑定需要单独的 bind 接口
   // 这里走重定向授权，回调页判断已登录则绑定
-  window.location.href = 'http://localhost:8082/api/auth/oauth/github/authorize?action=bind&token=' + sessionStorage.getItem('token')
+  window.location.href = '/api/auth/oauth/github/authorize?action=bind&token=' + sessionStorage.getItem('token')
 }
 
 async function unbindGithub() {

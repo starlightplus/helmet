@@ -386,7 +386,8 @@ onMounted(async () => {
   loadContacts()
   rideHistoryStore.loadFromStorage()
   rideHistoryStore.syncFromBackend()
-  connect('ws://localhost:8082/ws/sensor-data')
+  const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+  connect(`${wsProtocol}//${window.location.host}/ws/sensor-data`)
   try {
     const res = await request.get('/api/sensor/latest-db')
     const d = res.data

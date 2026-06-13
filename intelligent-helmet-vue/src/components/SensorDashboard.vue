@@ -23,7 +23,7 @@ const emit = defineEmits(['update-map-location', 'process-device-events'])
 
 async function fetchLatestSensorData() {
   try {
-    const res = await fetch('http://localhost:8082/api/sensor/latest')
+    const res = await fetch('/api/sensor/latest')
     if (res.ok) {
       const data = await res.json()
       // 假设 data 是数组
