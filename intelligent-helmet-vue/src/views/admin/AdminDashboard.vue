@@ -27,6 +27,7 @@
         <div class="sidebar-header">
           <span class="sidebar-title">用户列表</span>
           <span class="sidebar-count">{{ users.length }} 人</span>
+          <button class="action-btn action-btn--primary sidebar-add-btn" @click="showCreateUser = true">+ 添加</button>
         </div>
         <div class="sidebar-search">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -145,32 +146,72 @@
                 </div>
                 <div class="info-item">
                   <label>年龄</label>
-                  <input v-if="editing" v-model.number="form.age" type="number" class="info-input" placeholder="—" />
+                  <input v-if="editing" v-model.number="form.age" type="number" min="1" max="150" class="info-input" placeholder="—" />
                   <span v-else>{{ detail.age != null ? detail.age + ' 岁' : '—' }}</span>
                 </div>
                 <div class="info-item">
                   <label>身高</label>
-                  <input v-if="editing" v-model.number="form.height" type="number" class="info-input" placeholder="—" />
+                  <input v-if="editing" v-model.number="form.height" type="number" min="30" max="300" class="info-input" placeholder="—" />
                   <span v-else>{{ detail.height != null ? detail.height + ' cm' : '—' }}</span>
                 </div>
                 <div class="info-item">
                   <label>体重</label>
-                  <input v-if="editing" v-model.number="form.weight" type="number" step="0.1" class="info-input" placeholder="—" />
+                  <input v-if="editing" v-model.number="form.weight" type="number" step="0.1" min="1" max="500" class="info-input" placeholder="—" />
                   <span v-else>{{ detail.weight != null ? detail.weight + ' ' + (detail.weightUnit || 'kg') : '—' }}</span>
-                </div>
-                <div class="info-item">
-                  <label>血型</label>
-                  <select v-if="editing" v-model="form.bloodType" class="info-input info-input--select">
-                    <option value="">未设置</option>
-                    <option v-for="bt in bloodTypes" :key="bt" :value="bt">{{ bt }}</option>
-                  </select>
-                  <span v-else>{{ detail.bloodType || '—' }}</span>
                 </div>
                 <div class="info-item info-item--full">
                   <label>个人简介</label>
                   <textarea v-if="editing" v-model="form.bio" class="info-input info-input--textarea" placeholder="—" rows="2"></textarea>
                   <span v-else>{{ detail.bio || '—' }}</span>
                 </div>
+              </div>
+            </section>
+
+            <!-- 传感器数据 -->
+            <section v-if="detail.deviceId" class="info-section">
+              <div class="info-section__title sensor-section-header">
+                <span>传感器数据（{{ detail.deviceId }}）</span>
+                <span class="sensor-total">共 {{ sensorTotal }} 条</span>
+                <button class="action-btn action-btn--primary" style="font-size:0.6rem;padding:2px 8px;" @click="showAddSensor = true">+ 添加</button>
+              </div>
+              <div class="sensor-table-wrap">
+                <table class="sensor-table">
+                  <thead>
+                    <tr>
+                      <th>时间</th>
+                      <th>温度</th>
+                      <th>湿度</th>
+                      <th>心率</th>
+                      <th>血氧</th>
+                      <th>电量</th>
+                      <th>GPS</th>
+                      <th>跌倒</th>
+                      <th>操作</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="row in sensorRecords" :key="row.id">
+                      <td>{{ formatTime(row.receiveTime) }}</td>
+                      <td>{{ row.temperature != null ? row.temperature + '°C' : '—' }}</td>
+                      <td>{{ row.humidity != null ? row.humidity + '%' : '—' }}</td>
+                      <td>{{ row.heartRate ?? '—' }}</td>
+                      <td>{{ row.spo2 != null ? row.spo2 + '%' : '—' }}</td>
+                      <td>{{ row.battery != null ? row.battery + '%' : '—' }}</td>
+                      <td>{{ row.latitude != null ? row.latitude + ',' + row.longitude : '—' }}</td>
+                      <td>{{ row.fallFlag ? '⚠️' : '—' }}</td>
+                      <td class="sensor-actions">
+                        <button class="sensor-btn sensor-btn--edit" @click="startEditSensor(row)">编辑</button>
+                        <button class="sensor-btn sensor-btn--del" @click="deleteSensor(row.id)">删除</button>
+                      </td>
+                    </tr>
+                    <tr v-if="sensorRecords.length === 0"><td colspan="9" class="sensor-empty">暂无数据</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="sensor-pager">
+                <button :disabled="sensorPage <= 0" @click="sensorPage--; loadSensorData()">上一页</button>
+                <span>第 {{ sensorPage + 1 }} / {{ Math.max(1, Math.ceil(sensorTotal / sensorSize)) }} 页</span>
+                <button :disabled="(sensorPage + 1) * sensorSize >= sensorTotal" @click="sensorPage++; loadSensorData()">下一页</button>
               </div>
             </section>
 
@@ -209,6 +250,53 @@
       </div>
     </div>
 
+    <!-- ── 添加用户弹窗 ── -->
+    <div v-if="showCreateUser" class="modal-overlay" @click.self="showCreateUser = false">
+      <div class="modal">
+        <div class="modal__title">添加用户</div>
+        <div class="modal__form">
+          <input v-model="createForm.username" class="modal__input" placeholder="用户名" />
+          <input v-model="createForm.password" type="password" class="modal__input" placeholder="密码（至少6位）" />
+          <select v-model="createForm.role" class="modal__input">
+            <option value="user">普通用户</option>
+            <option value="admin">管理员</option>
+          </select>
+        </div>
+        <div class="modal__actions">
+          <button class="action-btn action-btn--success" :disabled="saving" @click="doCreateUser">
+            {{ saving ? '创建中...' : '确认创建' }}
+          </button>
+          <button class="action-btn action-btn--ghost" @click="showCreateUser = false">取消</button>
+        </div>
+        <p v-if="createError" class="modal__error">{{ createError }}</p>
+      </div>
+    </div>
+
+    <!-- ── 编辑/添加传感器弹窗 ── -->
+    <div v-if="showAddSensor || editingSensor" class="modal-overlay" @click.self="closeEditSensor">
+      <div class="modal">
+        <div class="modal__title">{{ editingSensor ? '编辑传感器记录' : '添加传感器记录' }}</div>
+        <div class="modal__form">
+          <div class="sensor-form-grid">
+            <div><label>温度(°C)</label><input v-model.number="sensorForm.temperature" type="number" step="0.1" min="-40" max="80" class="modal__input" /></div>
+            <div><label>湿度(%)</label><input v-model.number="sensorForm.humidity" type="number" step="0.1" min="0" max="100" class="modal__input" /></div>
+            <div><label>心率</label><input v-model.number="sensorForm.heartRate" type="number" min="20" max="250" class="modal__input" /></div>
+            <div><label>血氧(%)</label><input v-model.number="sensorForm.spo2" type="number" min="50" max="100" class="modal__input" /></div>
+            <div><label>电量(%)</label><input v-model.number="sensorForm.battery" type="number" min="0" max="100" class="modal__input" /></div>
+            <div><label>纬度</label><input v-model.number="sensorForm.latitude" type="number" step="0.0001" min="-90" max="90" class="modal__input" /></div>
+            <div><label>经度</label><input v-model.number="sensorForm.longitude" type="number" step="0.0001" min="-180" max="180" class="modal__input" /></div>
+            <div><label>跌倒</label><select v-model="sensorForm.fallFlag" class="modal__input"><option :value="false">否</option><option :value="true">是</option></select></div>
+          </div>
+        </div>
+        <div class="modal__actions">
+          <button class="action-btn action-btn--success" :disabled="saving" @click="doSaveSensor">
+            {{ saving ? '保存中...' : '确认保存' }}
+          </button>
+          <button class="action-btn action-btn--ghost" @click="closeEditSensor">取消</button>
+        </div>
+      </div>
+    </div>
+
     <!-- ── Toast ── -->
     <div v-if="toast" class="toast" :class="'toast--' + toast.type">{{ toast.msg }}</div>
   </div>
@@ -233,16 +321,29 @@ const saving       = ref(false)
 const form         = ref({})
 const showResetPwd      = ref(false)
 const showDeleteConfirm = ref(false)
+const showCreateUser    = ref(false)
 const newPassword  = ref('')
 const pwdError     = ref('')
+const createForm   = ref({ username: '', password: '', role: 'user' })
+const createError  = ref('')
 const toast        = ref(null)
+
+// 传感器数据相关
+const sensorRecords = ref([])
+const sensorTotal   = ref(0)
+const sensorPage    = ref(0)
+const sensorSize    = 20
+const showAddSensor = ref(false)
+const editingSensor = ref(null)
+const sensorForm    = ref({ temperature: null, humidity: null, heartRate: null, spo2: null, battery: null, latitude: null, longitude: null, fallFlag: false })
 
 const bloodTypes = ['A', 'B', 'AB', 'O', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
 
 const filteredUsers = computed(() => {
   const q = searchQuery.value.trim().toLowerCase()
-  if (!q) return users.value
-  return users.value.filter(u => u.username.toLowerCase().includes(q))
+  const nonAdmins = users.value.filter(u => u.role !== 'admin')
+  if (!q) return nonAdmins
+  return nonAdmins.filter(u => u.username.toLowerCase().includes(q))
 })
 
 onMounted(() => loadUsers())
@@ -250,7 +351,7 @@ onMounted(() => loadUsers())
 async function loadUsers() {
   loading.value = true
   try {
-    const res = await request.get('/api/auth/admin/users')
+    const res = await request.get('/auth/admin/users')
     users.value = res.data
   } catch {
     showToast('加载用户列表失败', 'error')
@@ -262,12 +363,28 @@ async function loadUsers() {
 async function selectUser(u) {
   selectedUser.value = u
   editing.value = false
+  sensorPage.value = 0
   try {
-    const res = await request.get(`/api/auth/admin/users/${u.id}/profile`)
+    const res = await request.get(`/auth/admin/users/${u.id}/profile`)
     detail.value = res.data
+    if (res.data.deviceId) loadSensorData()
   } catch {
     detail.value = { ...u }
     showToast('加载用户详情失败', 'error')
+  }
+}
+
+async function loadSensorData() {
+  if (!selectedUser.value) return
+  try {
+    const res = await request.get(`/auth/admin/users/${selectedUser.value.id}/sensor-data`, {
+      params: { page: sensorPage.value, size: sensorSize }
+    })
+    sensorRecords.value = res.data.records
+    sensorTotal.value = res.data.total
+  } catch {
+    sensorRecords.value = []
+    sensorTotal.value = 0
   }
 }
 
@@ -290,10 +407,14 @@ function startEdit() {
 function cancelEdit() { editing.value = false }
 
 async function saveEdit() {
+  const f = form.value
+  if (f.age != null && (f.age < 1 || f.age > 150)) { showToast('年龄范围 1-150', 'error'); return }
+  if (f.height != null && (f.height < 30 || f.height > 300)) { showToast('身高范围 30-300 cm', 'error'); return }
+  if (f.weight != null && (f.weight < 1 || f.weight > 500)) { showToast('体重范围 1-500', 'error'); return }
   saving.value = true
   try {
-    await request.put(`/api/auth/admin/users/${selectedUser.value.id}/profile`, form.value)
-    const res = await request.get(`/api/auth/admin/users/${selectedUser.value.id}/profile`)
+    await request.put(`/auth/admin/users/${selectedUser.value.id}/profile`, form.value)
+    const res = await request.get(`/auth/admin/users/${selectedUser.value.id}/profile`)
     detail.value = res.data
     const idx = users.value.findIndex(u => u.id === selectedUser.value.id)
     if (idx !== -1) {
@@ -314,7 +435,7 @@ async function doResetPassword() {
   if (!newPassword.value || newPassword.value.length < 6) { pwdError.value = '密码至少6位'; return }
   saving.value = true
   try {
-    await request.put(`/api/auth/admin/users/${selectedUser.value.id}/password`, { password: newPassword.value })
+    await request.put(`/auth/admin/users/${selectedUser.value.id}/password`, { password: newPassword.value })
     showResetPwd.value = false
     newPassword.value  = ''
     showToast('密码重置成功', 'success')
@@ -327,10 +448,28 @@ async function doResetPassword() {
 
 function confirmDelete() { showDeleteConfirm.value = true }
 
+async function doCreateUser() {
+  createError.value = ''
+  if (!createForm.value.username.trim()) { createError.value = '用户名不能为空'; return }
+  if (!createForm.value.password || createForm.value.password.length < 6) { createError.value = '密码至少6位'; return }
+  saving.value = true
+  try {
+    const res = await request.post('/auth/admin/users', createForm.value)
+    users.value.push({ id: res.data.id, username: res.data.username, role: res.data.role, deviceId: null })
+    showCreateUser.value = false
+    createForm.value = { username: '', password: '', role: 'user' }
+    showToast('用户创建成功', 'success')
+  } catch (e) {
+    createError.value = e?.response?.data || '创建失败'
+  } finally {
+    saving.value = false
+  }
+}
+
 async function doDelete() {
   saving.value = true
   try {
-    await request.delete(`/api/auth/admin/users/${selectedUser.value.id}`)
+    await request.delete(`/auth/admin/users/${selectedUser.value.id}`)
     users.value = users.value.filter(u => u.id !== selectedUser.value.id)
     selectedUser.value = null
     detail.value = {}
@@ -349,6 +488,71 @@ function formatDate(dt) { return dt ? String(dt).slice(0, 10) : '—' }
 function showToast(msg, type = 'success') {
   toast.value = { msg, type }
   setTimeout(() => { toast.value = null }, 2500)
+}
+
+// ── 传感器数据操作 ───────────────────────────────────────────
+
+function startEditSensor(row) {
+  editingSensor.value = row.id
+  sensorForm.value = {
+    temperature: row.temperature,
+    humidity: row.humidity,
+    heartRate: row.heartRate,
+    spo2: row.spo2,
+    battery: row.battery,
+    latitude: row.latitude,
+    longitude: row.longitude,
+    fallFlag: row.fallFlag || false
+  }
+}
+
+function closeEditSensor() {
+  showAddSensor.value = false
+  editingSensor.value = null
+  sensorForm.value = { temperature: null, humidity: null, heartRate: null, spo2: null, battery: null, latitude: null, longitude: null, fallFlag: false }
+}
+
+async function doSaveSensor() {
+  const s = sensorForm.value
+  if (s.temperature != null && (s.temperature < -40 || s.temperature > 80)) { showToast('温度范围 -40~80°C', 'error'); return }
+  if (s.humidity != null && (s.humidity < 0 || s.humidity > 100)) { showToast('湿度范围 0~100%', 'error'); return }
+  if (s.heartRate != null && (s.heartRate < 20 || s.heartRate > 250)) { showToast('心率范围 20~250', 'error'); return }
+  if (s.spo2 != null && (s.spo2 < 50 || s.spo2 > 100)) { showToast('血氧范围 50~100%', 'error'); return }
+  if (s.battery != null && (s.battery < 0 || s.battery > 100)) { showToast('电量范围 0~100%', 'error'); return }
+  if (s.latitude != null && (s.latitude < -90 || s.latitude > 90)) { showToast('纬度范围 -90~90', 'error'); return }
+  if (s.longitude != null && (s.longitude < -180 || s.longitude > 180)) { showToast('经度范围 -180~180', 'error'); return }
+  saving.value = true
+  try {
+    if (editingSensor.value) {
+      await request.put(`/auth/admin/sensor-data/${editingSensor.value}`, sensorForm.value)
+      showToast('修改成功', 'success')
+    } else {
+      await request.post('/auth/admin/sensor-data', { ...sensorForm.value, deviceId: detail.value.deviceId })
+      showToast('添加成功', 'success')
+    }
+    closeEditSensor()
+    loadSensorData()
+  } catch {
+    showToast('操作失败', 'error')
+  } finally {
+    saving.value = false
+  }
+}
+
+async function deleteSensor(dataId) {
+  if (!confirm('确认删除这条传感器记录？')) return
+  try {
+    await request.delete(`/auth/admin/sensor-data/${dataId}`)
+    showToast('已删除', 'success')
+    loadSensorData()
+  } catch {
+    showToast('删除失败', 'error')
+  }
+}
+
+function formatTime(t) {
+  if (!t) return '—'
+  return String(t).replace('T', ' ').slice(0, 19)
 }
 
 function onLogout() {
@@ -441,12 +645,13 @@ function onLogout() {
   background: rgba(2,8,23,0.6);
 }
 .sidebar-header {
-  display: flex; align-items: center; justify-content: space-between;
+  display: flex; align-items: center; gap: 8px;
   padding: 14px 16px 10px;
   border-bottom: 1px solid rgba(56,189,248,0.08);
 }
 .sidebar-title { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; color: rgba(56,189,248,0.8); text-transform: uppercase; }
-.sidebar-count { font-size: 0.65rem; color: rgba(255,255,255,0.3); font-family: monospace; }
+.sidebar-count { font-size: 0.65rem; color: rgba(56,189,248,0.5); font-family: monospace; margin-right: auto; }
+.sidebar-add-btn { font-size: 0.65rem; padding: 3px 10px; flex-shrink: 0; }
 .sidebar-search {
   display: flex; align-items: center; gap: 8px;
   margin: 8px 12px;
@@ -498,7 +703,7 @@ function onLogout() {
 .role-badge--user  { background: rgba(56,189,248,0.12); color: #38bdf8; border: 1px solid rgba(56,189,248,0.25); }
 .role-badge--admin { background: rgba(239,68,68,0.12);  color: #ef4444; border: 1px solid rgba(239,68,68,0.3); }
 .device-tag {
-  font-size: 0.58rem; color: rgba(255,255,255,0.3);
+  font-size: 0.58rem; color: rgba(74,222,128,0.7);
   font-family: monospace;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 80px;
 }
@@ -517,7 +722,7 @@ function onLogout() {
   gap: 16px; opacity: 0.3;
 }
 .main-empty__icon { color: rgba(56,189,248,0.5); }
-.main-empty__text { font-size: 0.85rem; color: rgba(255,255,255,0.4); }
+.main-empty__text { font-size: 0.85rem; color: rgba(56,189,248,0.5); }
 
 /* ── 用户详情面板 ──────────────────────────────────────────────── */
 .user-panel { display: flex; flex-direction: column; gap: 20px; max-width: 860px; }
@@ -537,7 +742,7 @@ function onLogout() {
 .user-panel__title { flex: 1; min-width: 0; }
 .user-panel__name { margin: 0 0 4px; font-size: 1rem; font-weight: 700; color: #fff; }
 .user-panel__sub { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.user-panel__id, .user-panel__since { font-size: 0.65rem; color: rgba(255,255,255,0.3); font-family: monospace; }
+.user-panel__id, .user-panel__since { font-size: 0.65rem; color: rgba(56,189,248,0.6); font-family: monospace; }
 .user-panel__actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 
 /* ── 操作按钮 ──────────────────────────────────────────────────── */
@@ -585,10 +790,10 @@ function onLogout() {
   display: flex; flex-direction: column; gap: 4px;
 }
 .info-item--full { grid-column: 1 / -1; }
-.info-item label { font-size: 0.6rem; color: rgba(255,255,255,0.3); letter-spacing: 0.06em; text-transform: uppercase; }
-.info-item span  { font-size: 0.8rem; color: #e2e8f0; }
+.info-item label { font-size: 0.6rem; color: rgba(56,189,248,0.7); letter-spacing: 0.06em; text-transform: uppercase; }
+.info-item span  { font-size: 0.8rem; color: #f1f5f9; }
 .info-input {
-  background: rgba(56,189,248,0.04);
+  background: #0f172a;
   border: 1px solid rgba(56,189,248,0.2);
   color: #e2e8f0;
   font-size: 0.78rem;
@@ -597,7 +802,8 @@ function onLogout() {
   width: 100%; box-sizing: border-box;
 }
 .info-input:focus { border-color: rgba(56,189,248,0.5); }
-.info-input--select { cursor: pointer; }
+.info-input--select { cursor: pointer; appearance: auto; }
+.info-input--select option { background: #0f172a; color: #e2e8f0; }
 .info-input--textarea { resize: vertical; min-height: 52px; font-family: inherit; }
 
 /* ── 弹窗 ──────────────────────────────────────────────────────── */
@@ -622,12 +828,14 @@ function onLogout() {
 .modal__desc strong { color: #38bdf8; }
 .modal--danger .modal__desc strong { color: #ef4444; }
 .modal__input {
-  background: rgba(56,189,248,0.04);
+  background: #0f172a;
   border: 1px solid rgba(56,189,248,0.2);
   color: #e2e8f0; font-size: 0.82rem;
   padding: 8px 12px; outline: none;
 }
 .modal__input:focus { border-color: rgba(56,189,248,0.5); }
+.modal__input option { background: #0f172a; color: #e2e8f0; }
+.modal__form { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
 .modal__actions { display: flex; gap: 10px; }
 .modal__error   { font-size: 0.72rem; color: #ef4444; margin: 0; }
 
@@ -651,4 +859,48 @@ function onLogout() {
 .admin-main::-webkit-scrollbar-track { background: transparent; }
 .sidebar-list::-webkit-scrollbar-thumb,
 .admin-main::-webkit-scrollbar-thumb { background: rgba(56,189,248,0.15); border-radius: 2px; }
+
+/* ── 传感器数据表格 ───────────────────────────────────────────── */
+.sensor-section-header { display: flex; align-items: center; gap: 10px; }
+.sensor-section-header span:first-child { flex: 1; }
+.sensor-total { font-size: 0.6rem; color: rgba(56,189,248,0.6); font-family: monospace; }
+.sensor-table-wrap { overflow-x: auto; }
+.sensor-table { width: 100%; border-collapse: collapse; font-size: 0.72rem; }
+.sensor-table th {
+  padding: 8px 10px; text-align: left;
+  color: rgba(56,189,248,0.8); font-weight: 700; font-size: 0.62rem;
+  letter-spacing: 0.05em; text-transform: uppercase;
+  border-bottom: 1px solid rgba(56,189,248,0.15);
+  background: rgba(56,189,248,0.03);
+  white-space: nowrap;
+}
+.sensor-table td {
+  padding: 6px 10px;
+  color: #e2e8f0;
+  border-bottom: 1px solid rgba(56,189,248,0.06);
+  white-space: nowrap;
+}
+.sensor-table tr:hover td { background: rgba(56,189,248,0.04); }
+.sensor-empty { text-align: center; color: rgba(56,189,248,0.4); padding: 20px; }
+.sensor-actions { display: flex; gap: 6px; }
+.sensor-btn {
+  padding: 2px 8px; font-size: 0.62rem; border: 1px solid; cursor: pointer; background: transparent;
+}
+.sensor-btn--edit { color: #38bdf8; border-color: rgba(56,189,248,0.3); }
+.sensor-btn--edit:hover { background: rgba(56,189,248,0.1); }
+.sensor-btn--del  { color: #ef4444; border-color: rgba(239,68,68,0.3); }
+.sensor-btn--del:hover { background: rgba(239,68,68,0.1); }
+.sensor-pager {
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+  padding: 10px; font-size: 0.7rem; color: rgba(56,189,248,0.7);
+}
+.sensor-pager button {
+  padding: 4px 12px; font-size: 0.65rem; cursor: pointer;
+  background: rgba(56,189,248,0.06); border: 1px solid rgba(56,189,248,0.2); color: #38bdf8;
+}
+.sensor-pager button:disabled { opacity: 0.3; cursor: not-allowed; }
+.sensor-form-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+}
+.sensor-form-grid label { display: block; font-size: 0.6rem; color: rgba(56,189,248,0.7); margin-bottom: 3px; }
 </style>

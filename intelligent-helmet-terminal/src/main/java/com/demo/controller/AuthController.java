@@ -3,14 +3,18 @@ package com.demo.controller;
 import com.demo.config.JwtUtil;
 import com.demo.model.User;
 import com.demo.model.UserProfile;
+import com.demo.model.SensorData;
 import com.demo.repository.UserProfileRepository;
+import com.demo.repository.SensorDataRepository;
 import com.demo.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +33,9 @@ public class AuthController {
 
     @Autowired
     private UserProfileRepository profileRepository;
+
+    @Autowired
+    private SensorDataRepository sensorDataRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -79,6 +86,31 @@ public class AuthController {
     }
 
     // ── 管理员接口 ──────────────────────────────────────────────────
+
+    @PostMapping("/admin/users")
+    public ResponseEntity<?> createUser(@RequestBody Map<String, String> body, Authentication auth) {
+        if (!isAdmin(auth)) return ResponseEntity.status(403).body("Forbidden");
+        String username = body.get("username");
+        String password = body.get("password");
+        String role = body.getOrDefault("role", "user");
+        if (username == null || username.trim().isEmpty())
+            return ResponseEntity.badRequest().body("用户名不能为空");
+        if (password == null || password.length() < 6)
+            return ResponseEntity.badRequest().body("密码至少6位");
+        if (userService.existsByUsername(username))
+            return ResponseEntity.badRequest().body("用户名已存在");
+        User user = new User();
+        user.setUsername(username.trim());
+        user.setPassword(passwordEncoder.encode(password));
+        user.setRole(role);
+        userService.save(user);
+        Map<String, Object> res = new HashMap<>();
+        res.put("success", true);
+        res.put("id", user.getId());
+        res.put("username", user.getUsername());
+        res.put("role", user.getRole());
+        return ResponseEntity.ok(res);
+    }
 
     @GetMapping("/admin/users")
     public ResponseEntity<?> listUsers(Authentication auth) {
@@ -204,6 +236,113 @@ public class AuthController {
         response.put("username", user.getUsername());
         response.put("role", user.getRole());
         return ResponseEntity.ok(response);
+    }
+
+    // ── 管理员：传感器数据 CRUD ──────────────────────────────────────
+
+    /** 查询用户设备的传感器历史数据（分页） */
+    @GetMapping("/admin/users/{id}/sensor-data")
+    public ResponseEntity<?> getUserSensorData(@PathVariable Long id,
+                                               @RequestParam(defaultValue = "0") int page,
+                                               @RequestParam(defaultValue = "20") int size,
+                                               Authentication auth) {
+        if (!isAdmin(auth)) return ResponseEntity.status(403).body("Forbidden");
+        User user = userService.findById(id);
+        if (user == null) return ResponseEntity.status(404).body("用户不存在");
+        if (user.getDeviceId() == null || user.getDeviceId().isEmpty())
+            return ResponseEntity.ok(Map.of("records", List.of(), "total", 0));
+
+        List<SensorData> records = sensorDataRepository.findByDeviceIdOrderByReceiveTimeDesc(
+                user.getDeviceId(), PageRequest.of(page, size));
+        long total = sensorDataRepository.countByDeviceId(user.getDeviceId());
+
+        List<Map<String, Object>> list = records.stream().map(s -> {
+            Map<String, Object> m = new HashMap<>();
+            m.put("id", s.getId());
+            m.put("deviceId", s.getDeviceId());
+            m.put("temperature", s.getTemperature());
+            m.put("humidity", s.getHumidity());
+            m.put("longitude", s.getLongitude());
+            m.put("latitude", s.getLatitude());
+            m.put("roll", s.getRoll());
+            m.put("pitch", s.getPitch());
+            m.put("avm", s.getAvm());
+            m.put("gvm", s.getGvm());
+            m.put("heartRate", s.getHeartRate());
+            m.put("spo2", s.getSpo2());
+            m.put("battery", s.getBattery());
+            m.put("voltage", s.getVoltage());
+            m.put("fallFlag", s.getFallFlag());
+            m.put("slowFlag", s.getSlowFlag());
+            m.put("receiveTime", s.getReceiveTime());
+            return m;
+        }).collect(Collectors.toList());
+
+        return ResponseEntity.ok(Map.of("records", list, "total", total));
+    }
+
+    /** 删除单条传感器记录 */
+    @DeleteMapping("/admin/sensor-data/{dataId}")
+    public ResponseEntity<?> deleteSensorData(@PathVariable Long dataId, Authentication auth) {
+        if (!isAdmin(auth)) return ResponseEntity.status(403).body("Forbidden");
+        if (!sensorDataRepository.existsById(dataId))
+            return ResponseEntity.status(404).body("记录不存在");
+        sensorDataRepository.deleteById(dataId);
+        return ResponseEntity.ok(Map.of("success", true));
+    }
+
+    /** 修改单条传感器记录 */
+    @PutMapping("/admin/sensor-data/{dataId}")
+    public ResponseEntity<?> updateSensorData(@PathVariable Long dataId,
+                                              @RequestBody Map<String, Object> body,
+                                              Authentication auth) {
+        if (!isAdmin(auth)) return ResponseEntity.status(403).body("Forbidden");
+        SensorData s = sensorDataRepository.findById(dataId).orElse(null);
+        if (s == null) return ResponseEntity.status(404).body("记录不存在");
+
+        if (body.containsKey("temperature") && body.get("temperature") != null)
+            s.setTemperature(((Number) body.get("temperature")).doubleValue());
+        if (body.containsKey("humidity") && body.get("humidity") != null)
+            s.setHumidity(((Number) body.get("humidity")).doubleValue());
+        if (body.containsKey("longitude") && body.get("longitude") != null)
+            s.setLongitude(((Number) body.get("longitude")).doubleValue());
+        if (body.containsKey("latitude") && body.get("latitude") != null)
+            s.setLatitude(((Number) body.get("latitude")).doubleValue());
+        if (body.containsKey("heartRate") && body.get("heartRate") != null)
+            s.setHeartRate(((Number) body.get("heartRate")).intValue());
+        if (body.containsKey("spo2") && body.get("spo2") != null)
+            s.setSpo2(((Number) body.get("spo2")).intValue());
+        if (body.containsKey("battery") && body.get("battery") != null)
+            s.setBattery(((Number) body.get("battery")).intValue());
+        if (body.containsKey("fallFlag"))
+            s.setFallFlag((Boolean) body.get("fallFlag"));
+
+        sensorDataRepository.save(s);
+        return ResponseEntity.ok(Map.of("success", true));
+    }
+
+    /** 手动添加一条传感器记录 */
+    @PostMapping("/admin/sensor-data")
+    public ResponseEntity<?> addSensorData(@RequestBody Map<String, Object> body, Authentication auth) {
+        if (!isAdmin(auth)) return ResponseEntity.status(403).body("Forbidden");
+        String deviceId = (String) body.get("deviceId");
+        if (deviceId == null || deviceId.isEmpty())
+            return ResponseEntity.badRequest().body("deviceId不能为空");
+
+        SensorData s = new SensorData();
+        s.setDeviceId(deviceId);
+        if (body.get("temperature") != null) s.setTemperature(((Number) body.get("temperature")).doubleValue());
+        if (body.get("humidity") != null) s.setHumidity(((Number) body.get("humidity")).doubleValue());
+        if (body.get("longitude") != null) s.setLongitude(((Number) body.get("longitude")).doubleValue());
+        if (body.get("latitude") != null) s.setLatitude(((Number) body.get("latitude")).doubleValue());
+        if (body.get("heartRate") != null) s.setHeartRate(((Number) body.get("heartRate")).intValue());
+        if (body.get("spo2") != null) s.setSpo2(((Number) body.get("spo2")).intValue());
+        if (body.get("battery") != null) s.setBattery(((Number) body.get("battery")).intValue());
+        if (body.get("fallFlag") != null) s.setFallFlag((Boolean) body.get("fallFlag"));
+        s.setReceiveTime(LocalDateTime.now());
+
+        sensorDataRepository.save(s);
+        return ResponseEntity.ok(Map.of("success", true, "id", s.getId()));
     }
 
     private boolean isAdmin(Authentication auth) {

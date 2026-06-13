@@ -1,0 +1,30 @@
+重新打包部署步骤
+
+1. 打包后端
+cd d:\嵌入式\1\amqp-demo\intelligent-helmet-terminal
+mvn clean package -DskipTests
+
+2. 打包前端
+cd d:\嵌入式\1\amqp-demo\intelligent-helmet-vue
+npm run build
+
+3. 上传到服务器
+# 上传后端 jar
+scp -P 2222 d:\嵌入式\1\amqp-demo\intelligent-helmet-terminal\target\ApplicationAMQPJavaDemo-1.0-SNAPSHOT.jar deploy@47.101.174.71:/home/deploy/
+
+# 上传前端 dist
+scp -P 2222 -r d:\嵌入式\1\amqp-demo\intelligent-helmet-vue\dist/* deploy@47.101.174.71:/home/deploy/helmet-vue/
+4. 服务器上替换并重启
+
+# 替换后端
+sudo systemctl stop helmet
+sudo cp /home/deploy/ApplicationAMQPJavaDemo-1.0-SNAPSHOT.jar /opt/helmet/app.jar
+sudo systemctl start helmet
+
+# 替换前端
+sudo rm -rf /var/www/helmet/*
+sudo cp -r /home/deploy/helmet-vue/* /var/www/helmet/
+
+# 确认后端正常
+sleep 5
+curl http://localhost:8082/api/sensor/latest

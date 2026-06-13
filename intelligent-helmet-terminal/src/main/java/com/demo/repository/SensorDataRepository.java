@@ -16,6 +16,8 @@ public interface SensorDataRepository extends JpaRepository<SensorData, Long> {
 
     Optional<SensorData> findTopByDeviceIdOrderByReceiveTimeDesc(String deviceId);
 
+    long countByDeviceId(String deviceId);
+
     List<SensorData> findByDeviceIdOrderByReceiveTimeDesc(String deviceId);
 
     // 分页查最近N条
