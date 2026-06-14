@@ -438,36 +438,46 @@ function renderTrackMap(rideId) {
   if (!container) return
 
   if (mapInstances[rideId]) {
-    mapInstances[rideId].destroy()
+    mapInstances[rideId].destroy && mapInstances[rideId].destroy()
     delete mapInstances[rideId]
   }
 
-  if (typeof BMapGL === 'undefined') return
+  if (typeof AMap === 'undefined') return
 
-  const map = new BMapGL.Map(containerId)
+  const map = new AMap.Map(containerId, {
+    zoom: 14,
+    viewMode: '2D',
+    mapStyle: 'amap://styles/dark'
+  })
   mapInstances[rideId] = map
 
-  const points = ride.trackPoints.map(p => new BMapGL.Point(p.lng, p.lat))
-  if (points.length === 0) return
+  const path = ride.trackPoints.map(p => [p.lng, p.lat])
+  if (path.length === 0) return
 
-  const viewport = map.getViewport(points)
-  map.centerAndZoom(viewport.center, viewport.zoom)
-  map.enableScrollWheelZoom()
-
-  const polyline = new BMapGL.Polyline(points, {
+  const polyline = new AMap.Polyline({
+    path,
     strokeColor: '#00C49A',
     strokeWeight: 4,
-    strokeOpacity: 0.85
+    strokeOpacity: 0.85,
+    lineJoin: 'round'
   })
-  map.addOverlay(polyline)
+  map.add(polyline)
 
-  const startLabel = new BMapGL.Label('起点', { position: points[0], offset: new BMapGL.Size(-16, -40) })
-  startLabel.setStyle({ background: '#00C49A', color: '#fff', border: 'none', borderRadius: '4px', padding: '2px 8px', fontSize: '11px', fontWeight: '600' })
-  map.addOverlay(startLabel)
+  const startMarker = new AMap.Marker({
+    position: path[0],
+    content: '<div style="background:#00C49A;color:#fff;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:600;white-space:nowrap;">起点</div>',
+    offset: new AMap.Pixel(-16, -30)
+  })
+  map.add(startMarker)
 
-  const endLabel = new BMapGL.Label('终点', { position: points[points.length - 1], offset: new BMapGL.Size(-16, -40) })
-  endLabel.setStyle({ background: '#FF6B35', color: '#fff', border: 'none', borderRadius: '4px', padding: '2px 8px', fontSize: '11px', fontWeight: '600' })
-  map.addOverlay(endLabel)
+  const endMarker = new AMap.Marker({
+    position: path[path.length - 1],
+    content: '<div style="background:#FF6B35;color:#fff;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:600;white-space:nowrap;">终点</div>',
+    offset: new AMap.Pixel(-16, -30)
+  })
+  map.add(endMarker)
+
+  map.setFitView([polyline], false, [20, 20, 20, 20])
 }
 
 // ── Confirm ──────────────────────────────────────────────────────

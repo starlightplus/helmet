@@ -29,12 +29,6 @@ export default defineConfig({
         rewrite: path => path.replace(/^\/qweather/, ''),
         secure: true
       },
-      '/baidumap': {
-        target: 'https://api.map.baidu.com',
-        changeOrigin: true,
-        rewrite: path => path.replace(/^\/baidumap/, ''),
-        secure: true
-      },
       '/gaodemap': {
         target: 'https://restapi.amap.com',
         changeOrigin: true,
