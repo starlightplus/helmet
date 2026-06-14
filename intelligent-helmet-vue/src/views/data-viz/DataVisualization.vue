@@ -1,0 +1,1187 @@
+<template>
+<div class="dv-root">
+    <!-- ── Tab Bar ───────────────────────────────────────────── -->
+    <nav class="dv-tabs">
+      <button v-for="tab in tabs" :key="tab.id"
+        class="dv-tab" :class="{ 'dv-tab--active': activeTab === tab.id }"
+        @click="activeTab = tab.id">
+        <span class="dv-tab__icon" v-html="tab.icon"></span>
+        {{ tab.label }}
+      </button>
+    </nav>
+
+    <!-- ── Content ───────────────────────────────────────────── -->
+    <main class="dv-content">
+
+      <!-- ══ 总览 ══════════════════════════════════════════════ -->
+      <div v-if="activeTab === 'overview'" class="dv-overview">
+
+        <!-- Hero -->
+        <div class="dv-hero">
+          <div class="dv-hero__bg-text">HELMET</div> 
+          <div class="dv-hero__left">
+            <div class="dv-hero__tag">
+              <span class="dv-hero__tag-dot"></span>传感器数据实时同步中
+            </div>
+            <h1 class="dv-hero__title">
+              累计骑行 <span class="dv-hero__title-num">{{ totalDistance.toFixed(1) }}</span> 公里
+            </h1>
+            <p class="dv-hero__desc">智能头盔多维传感器数据可视化分析中心，集成温湿度监测、骑行能耗统计、安全事件追踪、电量监控与心率数据分析。</p>
+          </div>
+          <button class="dv-hero__back-btn" @click="goBack">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+            返回终端
+          </button>
+        </div>
+
+        <!-- 5 入口卡片 -->
+        <div class="dv-cards-grid">
+
+          <div class="dv-entry-card dv-entry-card--cyan" @click="activeTab = 'temp'">
+            <div class="dv-entry-card__top">
+              <div class="dv-entry-card__icon dv-entry-card__icon--cyan">
+                <img src="/icon/temp.svg" width="18" height="18" />
+              </div>
+            </div>
+            <div class="dv-entry-card__body">
+              <div class="dv-entry-card__val">温湿度趋势</div>
+              <div class="dv-entry-card__meta">
+              <span>{{ tempChartData.length }} 条采样</span>
+              </div>
+            </div>
+            <div class="dv-entry-card__footer">
+              <span class="dv-entry-card__link">进入温湿度分析</span>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7"/><path d="M7 7h10v10"/></svg>
+            </div>
+          </div>
+
+          <div class="dv-entry-card dv-entry-card--emerald" @click="activeTab = 'ride'">
+            <div class="dv-entry-card__top">
+              <div class="dv-entry-card__icon dv-entry-card__icon--emerald">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="5.5" cy="17.5" r="3.5"/><path d="M15 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2z" fill="currentColor"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></svg>
+              </div>
+            </div>
+            <div class="dv-entry-card__body">
+              <div class="dv-entry-card__val">骑行记录分析</div>
+              <div class="dv-entry-card__meta">
+                <span>{{ rideCount }} 次骑行记录</span>
+              </div>
+            </div>
+            <div class="dv-entry-card__footer">
+              <span class="dv-entry-card__link">进入骑行分析</span>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7"/><path d="M7 7h10v10"/></svg>
+            </div>
+          </div>
+
+          <div class="dv-entry-card dv-entry-card--green" @click="activeTab = 'battery'">
+            <div class="dv-entry-card__top">
+              <div class="dv-entry-card__icon dv-entry-card__icon--green">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="16" height="10" rx="2"/><path d="M22 11v2"/></svg>
+              </div>
+            </div>
+            <div class="dv-entry-card__body">
+              <div class="dv-entry-card__val">电量监控</div>
+              <div class="dv-entry-card__meta">
+                <span>{{ batteryRecords.length }} 条记录</span>
+              </div>
+            </div>
+            <div class="dv-entry-card__footer">
+              <span class="dv-entry-card__link">进入电量分析</span>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7"/><path d="M7 7h10v10"/></svg>
+            </div>
+          </div>
+
+          <div class="dv-entry-card dv-entry-card--rose" @click="activeTab = 'heartrate'">
+            <div class="dv-entry-card__top">
+              <div class="dv-entry-card__icon dv-entry-card__icon--rose">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+              </div>
+            </div>
+            <div class="dv-entry-card__body">
+              <div class="dv-entry-card__val">心率监测</div>
+              <div class="dv-entry-card__meta">
+                <span>峰值 {{ hrMax }} BPM</span>
+              </div>
+            </div>
+            <div class="dv-entry-card__footer">
+              <span class="dv-entry-card__link">进入心率分析</span>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7"/><path d="M7 7h10v10"/></svg>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- 说明区 -->
+        <div class="dv-guide">
+          <div class="dv-guide__title">
+            <span class="dv-guide__dot-wrap"><span class="dv-guide__dot-ping"></span><span class="dv-guide__dot"></span></span>
+            数据分析模块说明
+          </div>
+          <div class="dv-guide__grid">
+            <div class="dv-guide__item">
+              <div class="dv-guide__item-title">
+                <img src="/icon/temp.svg" width="12" height="12" />
+                温湿度趋势分析
+              </div>
+              <p>支持分钟级实时推送、小时级均值、天级别历史三种粒度切换。双折线图展示温度与湿度协同变化，支持 CSV 导出。</p>
+            </div>
+            <div class="dv-guide__item">
+              <div class="dv-guide__item-title">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2"><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="5.5" cy="17.5" r="3.5"/><path d="M15 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2z" fill="currentColor"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></svg>
+                骑行里程与能耗
+              </div>
+              <p>基于本地骑行记录，可视化每次骑行的距离与卡路里消耗趋势，辅助制定骑行规划目标。</p>
+            </div>
+            <div class="dv-guide__item">
+              <div class="dv-guide__item-title">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2"><rect x="2" y="7" width="16" height="10" rx="2"/><path d="M22 11v2"/></svg>
+                电量时序监控
+              </div>
+              <p>手动记录设备电量、温度、电压，折线图追踪电量曲线变化，支持快速充放电模拟与历史清除。</p>
+            </div>
+            <div class="dv-guide__item">
+              <div class="dv-guide__item-title">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fb7185" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                整点心率监测
+              </div>
+              <p>按24小时整点记录心率与骑行速度，自动划分 ACSM 五区间（静息/热身/燃脂/有氧/峰值），支持多日对比。</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ══ 温湿度 ════════════════════════════════════════════ -->
+      <div v-else-if="activeTab === 'temp'" class="dv-tab-panel">
+        <div class="dv-panel-header">
+          <div class="dv-panel-title">
+            <img src="/icon/temp.svg" width="16" height="16" />
+            温湿度趋势分析
+          </div>
+          <div class="dv-range-switch">
+            <button :class="['dv-range-btn', timeRange === 'minute' && 'active']" @click="switchRange('minute')">分钟级</button>
+            <button :class="['dv-range-btn', timeRange === 'hour'   && 'active']" @click="switchRange('hour')">小时级</button>
+            <button :class="['dv-range-btn', timeRange === 'day'    && 'active']" @click="switchRange('day')">天级别</button>
+          </div>
+        </div>
+        <AtmosphericTrendChart :chart-data="tempChartData" :time-range="timeRange" />
+      </div>
+
+      <!-- ══ 骑行能耗 ══════════════════════════════════════════ -->
+      <div v-else-if="activeTab === 'ride'" class="dv-tab-panel">
+        <div class="dv-panel-header">
+          <div class="dv-panel-header__left">
+            <div class="dv-panel-title">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2"><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="5.5" cy="17.5" r="3.5"/><path d="M15 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2z" fill="currentColor"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></svg>
+              骑行里程与能耗
+            </div>
+            <button class="dv-ride-history-btn" @click="goToRideHistory">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="5.5" cy="17.5" r="3.5"/><path d="M15 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2z" fill="currentColor"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></svg>
+              详细骑行记录
+            </button>
+          </div>
+          <div class="dv-stat-pills">
+            <span class="dv-stat-pill dv-stat-pill--emerald">累计 {{ totalDistance.toFixed(1) }} km</span>
+            <span class="dv-stat-pill dv-stat-pill--amber">{{ totalCalories }} kcal</span>
+            <span class="dv-stat-pill dv-stat-pill--blue">{{ rideCount }} 次</span>
+          </div>
+        </div>
+        <div v-if="rideCount === 0" class="dv-empty">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="rgba(52,211,153,0.2)" stroke-width="1.2"><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="5.5" cy="17.5" r="3.5"/><path d="M15 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2z" fill="currentColor"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></svg>
+          <p>暂无骑行记录</p>
+        </div>
+        <div v-else class="dv-ride-layout">
+          <div class="dv-chart-wrap dv-chart-wrap--ride">
+            <v-chart class="dv-echart" :option="rideChartOption" autoresize />
+          </div>
+          <div class="dv-ride-list">
+            <div class="dv-ride-list__title">最近骑行记录</div>
+            <div v-for="ride in recentRides" :key="ride.id" class="dv-ride-row">
+              <div class="dv-ride-row__left">
+                <div class="dv-ride-row__date">{{ formatRideDate(ride.startTime) }}</div>
+                <div class="dv-ride-row__dist">{{ ride.distance.toFixed(1) }} km</div>
+              </div>
+              <div class="dv-ride-row__right">
+                <span class="dv-ride-row__cal">{{ ride.calories || 0 }} kcal</span>
+                <span class="dv-ride-row__speed">{{ ride.avgSpeed.toFixed(1) }} km/h</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ 电量监控 ══════════════════════════════════════════ -->
+      <div v-else-if="activeTab === 'battery'" class="dv-tab-panel">
+        <div class="dv-panel-header">
+          <div class="dv-panel-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2"><rect x="2" y="7" width="16" height="10" rx="2"/><path d="M22 11v2"/></svg>
+            电量时序监控
+          </div>
+          <div class="dv-stat-pills">
+            <span class="dv-stat-pill" :class="latestBattery.percentage > 50 ? 'dv-stat-pill--emerald' : latestBattery.percentage > 20 ? 'dv-stat-pill--amber' : 'dv-stat-pill--red'">
+              {{ latestBattery.percentage }}%
+            </span>
+            <span class="dv-stat-pill dv-stat-pill--blue">{{ batteryRecords.length }} 条采样</span>
+          </div>
+        </div>
+
+        <div class="dv-battery-layout">
+          <!-- 左：图表 + 状态卡 -->
+          <div class="dv-battery-left">
+            <!-- 当前状态卡 -->
+            <div class="dv-bat-status">
+              <div class="dv-bat-status__pct" :class="batPctClass">{{ latestBattery.percentage }}%</div>
+              <div class="dv-bat-bar-wrap">
+                <div class="dv-bat-bar" :class="batBarClass" :style="{ width: latestBattery.percentage + '%' }"></div>
+              </div>
+              <div class="dv-bat-status__meta">
+                <span>{{ latestBattery.status === 'charging' ? '⚡ 充电中' : '🔋 放电' }}</span>
+                <span>{{ latestBattery.voltage?.toFixed(2) ?? '--' }} V</span>
+                <span>{{ latestBattery.temperature ?? '--' }} °C</span>
+              </div>
+            </div>
+            <!-- 折线图 -->
+            <div class="dv-chart-wrap dv-chart-wrap--battery">
+              <v-chart class="dv-echart" :option="batteryChartOption" autoresize />
+            </div>
+          </div>
+          <!-- 右：历史记录 + 注意事项 -->
+          <div class="dv-battery-right">
+            <div class="dv-form-title">历史记录
+              <span class="dv-hr-record-count">共 {{ batteryRecords.length }} 条</span>
+            </div>
+            <div class="dv-hr-table-wrap">
+              <table class="dv-hr-table">
+                <thead>
+                  <tr>
+                    <th>时间</th>
+                    <th>电量</th>
+                    <th>电压</th>
+                    <th>温度</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="r in batteryRecords.slice().reverse()" :key="r.id">
+                    <td class="dv-hr-table__time">{{ r.timestamp?.slice(11,16) }}</td>
+                    <td :style="{ color: r.percentage > 50 ? '#4ade80' : r.percentage > 20 ? '#f59e0b' : '#ef4444' }">
+                      {{ r.percentage }}<span class="dv-hr-table__unit">%</span>
+                    </td>
+                    <td style="color:#60a5fa">{{ r.voltage?.toFixed(2) ?? '--' }}<span class="dv-hr-table__unit">V</span></td>
+                    <td style="color:#94a3b8">{{ r.temperature ?? '--' }}<span class="dv-hr-table__unit">°C</span></td>
+                  </tr>
+                  <tr v-if="batteryRecords.length === 0">
+                    <td colspan="4" class="dv-hr-table__empty">暂无数据</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <!-- 注意事项 -->
+            <div class="dv-bat-notice">
+              <div class="dv-form-title" style="margin-top:12px">注意事项</div>
+              <div class="dv-bat-notice__body">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" style="flex-shrink:0;margin-top:2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                <span>电池电压低于 <b>4.8V</b>（电量约 <b>79%</b>）后，电压将加速下降，头盔可能随时因电压不足而无法使用。请及时充电，避免影响使用。</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ 心率监测 ══════════════════════════════════════════ -->
+      <div v-else-if="activeTab === 'heartrate'" class="dv-tab-panel">
+        <div class="dv-panel-header">
+          <div class="dv-panel-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fb7185" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            整点心率监测
+          </div>
+          <div class="dv-stat-pills">
+            <span class="dv-stat-pill dv-stat-pill--rose">均值 {{ hrAvg }} BPM</span>
+            <span class="dv-stat-pill dv-stat-pill--red">峰值 {{ hrMax }} BPM</span>
+            <span v-if="latestSpo2 != null" class="dv-stat-pill dv-stat-pill--violet">血氧 {{ latestSpo2 }}%</span>
+            <div class="dv-hr-day-switch">
+              <button v-for="d in hrDays" :key="d.date"
+                :class="['dv-range-btn', hrSelectedDate === d.date && 'active']"
+                @click="hrSelectedDate = d.date">{{ d.label }}</button>
+            </div>
+          </div>
+        </div>
+        <div class="dv-hr-layout">
+          <!-- 左：面积图 + 区间柱 -->
+          <div class="dv-hr-charts">
+            <div class="dv-chart-wrap dv-chart-wrap--hr">
+              <v-chart class="dv-echart" :option="hrAreaOption" autoresize />
+            </div>
+            <div class="dv-hr-zones">
+              <div v-for="z in hrZoneSummary" :key="z.name" class="dv-zone-row">
+                <span class="dv-zone-dot" :style="{ background: z.color }"></span>
+                <span class="dv-zone-name">{{ z.name }}</span>
+                <div class="dv-zone-bar-wrap">
+                  <div class="dv-zone-bar" :style="{ width: z.pct + '%', background: z.color }"></div>
+                </div>
+                <span class="dv-zone-pct">{{ z.count }}h · {{ z.pct }}%</span>
+              </div>
+            </div>
+          </div>
+          <!-- 右：历史记录表格 -->
+          <div class="dv-hr-form">
+            <div class="dv-form-title">历史记录
+              <span class="dv-hr-record-count">共 {{ hrRawHistory.length }} 条</span>
+            </div>
+            <div class="dv-hr-table-wrap">
+              <table class="dv-hr-table">
+                <thead>
+                  <tr>
+                    <th>时间</th>
+                    <th>心率</th>
+                    <th>血氧</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="r in hrRawHistory" :key="r.id">
+                    <td class="dv-hr-table__time">{{ r.time }}</td>
+                    <td :style="{ color: hrZoneColor(r.bpm) }">{{ r.bpm }} <span class="dv-hr-table__unit">BPM</span></td>
+                    <td :style="{ color: r.spo2 != null ? '#a78bfa' : 'rgba(255,255,255,0.3)' }">
+                      {{ r.spo2 != null ? r.spo2 + '%' : '--' }}
+                    </td>
+                  </tr>
+                  <tr v-if="hrRawHistory.length === 0">
+                    <td colspan="3" class="dv-hr-table__empty">暂无数据</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <!-- 区间说明 -->
+            <div class="dv-zone-legend">
+              <div class="dv-form-title" style="margin-top:12px">ACSM 心率区间</div>
+              <div v-for="z in HR_ZONES" :key="z.name" class="dv-zone-legend-row">
+                <span class="dv-zone-dot" :style="{ background: z.color }"></span>
+                <span>{{ z.name }}：{{ z.range }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+</div>
+</template>
+
+<script setup>
+import { ref, computed, watch, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { use } from 'echarts/core'
+import { CanvasRenderer } from 'echarts/renderers'
+import { LineChart, BarChart, PieChart } from 'echarts/charts'
+import {
+  GridComponent, TooltipComponent, LegendComponent,
+  TitleComponent, DataZoomComponent, MarkLineComponent
+} from 'echarts/components'
+import VChart from 'vue-echarts'
+import AtmosphericTrendChart from '@/components/data-viz/AtmosphericTrendChart.vue'
+import { useRideHistoryStore } from '@/stores/ai-ride/rideHistory'
+import { useUserStore } from '@/stores/user'
+
+use([CanvasRenderer, LineChart, BarChart, PieChart,
+  GridComponent, TooltipComponent, LegendComponent,
+  TitleComponent, DataZoomComponent, MarkLineComponent])
+
+const props = defineProps({
+  sensorData: { type: Object, default: () => ({}) },
+})
+const emit = defineEmits(['back'])
+const goBack = () => emit('back')
+const router = useRouter()
+const goToRideHistory = () => router.push('/ride-history')
+
+const userStore = useUserStore()
+
+// 带用户名的 localStorage key，不同用户互不干扰
+function userKey(base) {
+  return `${base}_${sessionStorage.getItem('username') || 'anonymous'}`
+}
+
+// ── Tabs ──────────────────────────────────────────────────────────
+const tabs = [
+  { id: 'overview',   label: '总览',   icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>' },
+  { id: 'temp',       label: '温湿度', icon: '<img src="/icon/temp.svg" width="14" height="14" />' },
+  { id: 'ride',       label: '骑行能耗', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="5.5" cy="17.5" r="3.5"/><path d="M15 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2z" fill="currentColor"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></svg>' },
+  { id: 'battery',    label: '电量监控', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="16" height="10" rx="2"/><path d="M22 11v2"/></svg>' },
+  { id: 'heartrate',  label: '心率监测', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>' },
+]
+const activeTab = ref('overview')
+
+// ── Sensor data from prop ──────────────────────────────────────────
+const latestTemp = computed(() => props.sensorData?.temperature ?? null)
+const latestHum  = computed(() => props.sensorData?.humidity  ?? null)
+
+// ── Temp chart data (from WebSocket history) ───────────────────────
+const tempHistory = ref([])
+const timeRange   = ref('minute')
+
+function switchRange(r) { timeRange.value = r }
+
+const tempChartData = computed(() => {
+  if (timeRange.value === 'minute') return tempHistory.value.slice(-60)
+  if (timeRange.value === 'hour') {
+    const buckets = {}
+    tempHistory.value.forEach(d => {
+      const key = d.time?.slice(0, 13) || ''
+      if (!buckets[key]) buckets[key] = { temps: [], hums: [], time: key + ':00' }
+      buckets[key].temps.push(d.temp)
+      buckets[key].hums.push(d.hum)
+    })
+    return Object.values(buckets).map(b => ({
+      time: b.time,
+      temp: +(b.temps.reduce((a, v) => a + v, 0) / b.temps.length).toFixed(1),
+      hum:  +(b.hums.reduce((a, v) => a + v, 0) / b.hums.length).toFixed(1),
+    }))
+  }
+  const buckets = {}
+  tempHistory.value.forEach(d => {
+    const key = d.time?.slice(0, 10) || ''
+    if (!buckets[key]) buckets[key] = { temps: [], hums: [], time: key }
+    buckets[key].temps.push(d.temp)
+    buckets[key].hums.push(d.hum)
+  })
+  return Object.values(buckets).map(b => ({
+    time: b.time,
+    temp: +(b.temps.reduce((a, v) => a + v, 0) / b.temps.length).toFixed(1),
+    hum:  +(b.hums.reduce((a, v) => a + v, 0) / b.hums.length).toFixed(1),
+  }))
+})
+
+watch(() => props.sensorData, (v) => {
+  if (!v) return
+  // Temperature/humidity
+  if (v.temperature != null && v.humidity != null) {
+    tempHistory.value.push({
+      time: new Date().toISOString().replace('T', ' ').slice(0, 19),
+      temp: v.temperature,
+      hum:  v.humidity,
+    })
+    if (tempHistory.value.length > 1440) tempHistory.value.shift()
+  }
+  // Real-time battery
+  if (v.battery != null) {
+    batteryRecords.value.push({
+      id: Date.now(),
+      timestamp: new Date().toISOString().replace('T', ' ').slice(0, 19),
+      percentage: Number(v.battery),
+      temperature: v.temperature ?? 0,
+      voltage: v.voltage ?? null,
+      status: 'discharging',
+      source: 'device',
+    })
+    if (batteryRecords.value.length > 500) batteryRecords.value.shift()
+  }
+  // Real-time heart rate
+  if (v.heartRate != null) {
+    const now = new Date()
+    const dateStr = now.toISOString().slice(0, 10)
+    const hour = now.getHours()
+    const timeStr = now.toISOString().replace('T', ' ').slice(0, 16)
+
+    // 追加到原始表格（最新在前）
+    hrRawHistory.value.unshift({
+      id: Date.now(),
+      time: timeStr,
+      bpm: v.heartRate,
+      spo2: v.spo2 ?? null,
+    })
+    if (hrRawHistory.value.length > 200) hrRawHistory.value.pop()
+
+    // 更新图表数据
+    let day = hrDays.value.find(d => d.date === dateStr)
+    if (!day) {
+      day = { date: dateStr, label: '今天', points: [] }
+      hrDays.value.push(day)
+      hrSelectedDate.value = dateStr
+    }
+    const existing = day.points.find(p => p.hour === hour)
+    if (existing) {
+      existing.bpm = v.heartRate
+      existing.spo2 = v.spo2 ?? existing.spo2
+    } else {
+      day.points.push({ hour, bpm: v.heartRate, spo2: v.spo2 ?? null })
+      day.points.sort((a, b) => a.hour - b.hour)
+    }
+  }
+})
+
+async function loadTempHistory() {
+  try {
+    const token = sessionStorage.getItem('token')
+    const headers = token ? { Authorization: 'Bearer ' + token } : {}
+    const res = await fetch('/api/sensor/history?limit=200', { headers })
+    if (!res.ok) return
+    const list = await res.json()
+    // list is array of SensorData, newest first — reverse to chronological
+    const points = [...list].reverse()
+      .filter(d => d.temperature != null && d.humidity != null)
+      .map(d => ({
+        time: (d.receiveTime || '').replace('T', ' ').slice(0, 19),
+        temp: d.temperature,
+        hum:  d.humidity,
+      }))
+    if (points.length) tempHistory.value = points
+  } catch {}
+}
+
+// ── Ride history ───────────────────────────────────────────────────
+const rideStore = useRideHistoryStore()
+const rides = computed(() => rideStore.rides || [])
+const totalDistance = computed(() => rides.value.reduce((s, r) => s + (r.distance || 0), 0))
+const totalCalories = computed(() => rides.value.reduce((s, r) => s + (r.calories || 0), 0))
+const rideCount     = computed(() => rides.value.length)
+const recentRides   = computed(() => [...rides.value].sort((a, b) => b.startTime - a.startTime).slice(0, 10))
+
+function formatRideDate(ts) {
+  if (!ts) return '--'
+  const d = new Date(ts)
+  return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`
+}
+
+const rideChartOption = computed(() => {
+  const data = [...rides.value].sort((a, b) => a.startTime - b.startTime).slice(-20)
+  return {
+    backgroundColor: 'transparent',
+    tooltip: { trigger: 'axis', backgroundColor: '#0f172a', borderColor: '#334155', textStyle: { color: '#e2e8f0' } },
+    legend: { data: ['距离(km)', '卡路里(kcal)'], textStyle: { color: '#94a3b8' }, top: 4 },
+    grid: { left: 48, right: 48, top: 36, bottom: 40 },
+    xAxis: { type: 'category', data: data.map(r => formatRideDate(r.startTime)), axisLabel: { color: 'white', fontSize: 10 }, axisLine: { lineStyle: { color: '#1e293b' } } },
+    yAxis: [
+      { type: 'value', name: 'km',   nameTextStyle: { color: 'white' }, axisLabel: { color: 'white' }, splitLine: { lineStyle: { color: '#1e293b' } } },
+      { type: 'value', name: 'kcal', nameTextStyle: { color: 'white' }, axisLabel: { color: 'white' }, splitLine: { show: false } },
+    ],
+    series: [
+      { name: '距离(km)',   type: 'bar', data: data.map(r => r.distance?.toFixed(1)), itemStyle: { color: '#34d399' }, barMaxWidth: 24 },
+      { name: '卡路里(kcal)', type: 'line', yAxisIndex: 1, data: data.map(r => r.calories || 0), lineStyle: { color: '#f59e0b' }, itemStyle: { color: '#f59e0b' }, smooth: true },
+    ],
+  }
+})
+
+// ── Battery ────────────────────────────────────────────────────────
+const batteryRecords = ref([])
+
+function loadBattery() {
+  try { batteryRecords.value = JSON.parse(localStorage.getItem(userKey('helmet_battery_records')) || '[]') } catch { batteryRecords.value = [] }
+}
+function saveBattery() {
+  localStorage.setItem(userKey('helmet_battery_records'), JSON.stringify(batteryRecords.value))
+}
+
+async function loadBatteryFromBackend() {
+  try {
+    const token = sessionStorage.getItem('token')
+    const headers = token ? { Authorization: 'Bearer ' + token } : {}
+    const res = await fetch('/api/sensor/history/battery?limit=200', { headers })
+    if (!res.ok) return
+    const list = await res.json()
+    const points = [...list].reverse()
+      .filter(d => d.battery != null)
+      .map(d => ({
+        id: d.id,
+        timestamp: (d.receiveTime || '').replace('T', ' ').slice(0, 19),
+        percentage: d.battery,
+        temperature: d.temperature ?? 0,
+        voltage: d.voltage ?? null,
+        status: 'discharging',
+        source: 'device',
+      }))
+    if (points.length) batteryRecords.value = points
+  } catch {}
+}
+
+async function loadHeartRateFromBackend() {
+  try {
+    const token = sessionStorage.getItem('token')
+    const headers = token ? { Authorization: 'Bearer ' + token } : {}
+    const res = await fetch('/api/sensor/history/heartrate?limit=200', { headers })
+    if (!res.ok) return
+    const list = await res.json()
+
+    // 原始表格数据（按时间正序，最新在上）
+    hrRawHistory.value = list
+      .filter(d => d.heartRate != null)
+      .map(d => ({
+        id: d.id,
+        time: (d.receiveTime || '').replace('T', ' ').slice(0, 16),
+        bpm: d.heartRate,
+        spo2: d.spo2 ?? null,
+      }))
+
+    // 按日期+小时聚合用于图表
+    list.forEach(d => {
+      if (d.heartRate == null || !d.receiveTime) return
+      const ts = (d.receiveTime || '').replace('T', ' ')
+      const dateStr = ts.slice(0, 10)
+      const hour = parseInt(ts.slice(11, 13), 10)
+      let day = hrDays.value.find(x => x.date === dateStr)
+      if (!day) {
+        const dt = new Date(dateStr)
+        const label = `${dt.getMonth()+1}/${dt.getDate()}`
+        day = { date: dateStr, label, points: [] }
+        hrDays.value.push(day)
+      }
+      if (!day.points.find(p => p.hour === hour)) {
+        day.points.push({ hour, bpm: d.heartRate, spo2: d.spo2 ?? null })
+      }
+    })
+    hrDays.value.sort((a, b) => a.date.localeCompare(b.date))
+    if (hrDays.value.length > 7) hrDays.value = hrDays.value.slice(-7)
+    hrDays.value.forEach(d => d.points.sort((a, b) => a.hour - b.hour))
+    const today = new Date().toISOString().slice(0, 10)
+    if (hrDays.value.find(d => d.date === today)) hrSelectedDate.value = today
+    else if (hrDays.value.length) hrSelectedDate.value = hrDays.value[hrDays.value.length - 1].date
+  } catch {}
+}
+
+const latestBattery = computed(() => {
+  if (!batteryRecords.value.length) return { percentage: 0, status: 'discharging', voltage: 0, temperature: 0 }
+  return batteryRecords.value[batteryRecords.value.length - 1]
+})
+
+const batPctClass = computed(() => {
+  const p = latestBattery.value.percentage
+  return p > 50 ? 'clr-green' : p > 20 ? 'clr-amber' : 'clr-red'
+})
+const batBarClass = computed(() => {
+  const p = latestBattery.value.percentage
+  return p > 50 ? 'dv-bat-bar--green' : p > 20 ? 'dv-bat-bar--amber' : 'dv-bat-bar--red'
+})
+
+const batteryChartOption = computed(() => {
+  const data = batteryRecords.value.slice(-50)
+  return {
+    backgroundColor: 'transparent',
+    tooltip: { trigger: 'axis', backgroundColor: '#0f172a', borderColor: '#334155', textStyle: { color: '#e2e8f0' } },
+    legend: { data: ['电量%'], textStyle: { color: '#94a3b8' }, top: 4 },
+    grid: { left: 44, right: 20, top: 36, bottom: 40 },
+    xAxis: { type: 'category', data: data.map(r => r.timestamp?.slice(11, 16) || ''), axisLabel: { color: 'white', fontSize: 10 }, axisLine: { lineStyle: { color: '#1e293b' } } },
+    yAxis: [
+      { type: 'value', min: 0, max: 100, name: '%', nameTextStyle: { color: 'white' }, axisLabel: { color: 'white' }, splitLine: { lineStyle: { color: '#1e293b' } } },
+    ],
+    series: [
+      { name: '电量%', type: 'line', data: data.map(r => r.percentage), lineStyle: { color: '#4ade80' }, itemStyle: { color: '#4ade80' }, areaStyle: { color: 'rgba(74,222,128,0.08)' }, smooth: true },
+    ],
+  }
+})
+
+// ── Heart Rate ─────────────────────────────────────────────────────
+const HR_ZONES = [
+  { name: '静息',  range: '< 60 BPM',    color: 'white', min: 0,   max: 59  },
+  { name: '热身',  range: '60–99 BPM',   color: '#22d3ee', min: 60,  max: 99  },
+  { name: '燃脂',  range: '100–139 BPM', color: '#4ade80', min: 100, max: 139 },
+  { name: '有氧',  range: '140–169 BPM', color: '#f59e0b', min: 140, max: 169 },
+  { name: '峰值',  range: '≥ 170 BPM',   color: '#ef4444', min: 170, max: 999 },
+]
+
+// HR_KEY is now dynamic — use userKey('helmet_hr_days') at call site
+
+function makeDefaultHrDays() {
+  const days = []
+  for (let i = 2; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i)
+    const dateStr = d.toISOString().slice(0, 10)
+    const label = i === 0 ? '今天' : i === 1 ? '昨天' : `${d.getMonth()+1}/${d.getDate()}`
+    const points = Array.from({ length: 24 }, (_, h) => {
+      const base = h >= 6 && h <= 22 ? 75 : 58
+      return { hour: h, bpm: base + Math.floor(Math.random() * 20), speed: h >= 7 && h <= 9 ? 15 + Math.floor(Math.random() * 10) : 0 }
+    })
+    days.push({ date: dateStr, label, points })
+  }
+  return days
+}
+
+function loadHrDays() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(userKey('helmet_hr_days')) || 'null')
+    if (saved && Array.isArray(saved) && saved.length) return saved
+  } catch {}
+  return makeDefaultHrDays()
+}
+
+const hrDays = ref(loadHrDays())
+const hrSelectedDate = ref(hrDays.value[hrDays.value.length - 1]?.date || '')
+const hrRawHistory = ref([]) // 直接来自数据库的原始记录，用于表格
+
+const selectedDayData = computed(() => hrDays.value.find(d => d.date === hrSelectedDate.value) || hrDays.value[0])
+
+const hrAvg = computed(() => {
+  const pts = selectedDayData.value?.points || []
+  if (!pts.length) return 0
+  return Math.round(pts.reduce((s, p) => s + p.bpm, 0) / pts.length)
+})
+const hrMax = computed(() => {
+  const pts = selectedDayData.value?.points || []
+  return pts.length ? Math.max(...pts.map(p => p.bpm)) : 0
+})
+const latestSpo2 = computed(() => {
+  const pts = selectedDayData.value?.points || []
+  const withSpo2 = pts.filter(p => p.spo2 != null)
+  return withSpo2.length ? withSpo2[withSpo2.length - 1].spo2 : null
+})
+
+function hrZoneColor(bpm) {
+  return (HR_ZONES.find(z => bpm >= z.min && bpm <= z.max) || HR_ZONES[0]).color
+}
+function hrZoneName(bpm) {
+  return (HR_ZONES.find(z => bpm >= z.min && bpm <= z.max) || HR_ZONES[0]).name
+}
+
+const hrZoneSummary = computed(() => {
+  const pts = selectedDayData.value?.points || []
+  return HR_ZONES.map(z => {
+    const count = pts.filter(p => p.bpm >= z.min && p.bpm <= z.max).length
+    return { ...z, count, pct: pts.length ? Math.round(count / pts.length * 100) : 0 }
+  })
+})
+
+const hrInput = ref({ hour: new Date().getHours(), bpm: 75, speed: 0 })
+
+function updateHrPoint() {
+  const day = hrDays.value.find(d => d.date === hrSelectedDate.value)
+  if (!day) return
+  const pt = day.points.find(p => p.hour === hrInput.value.hour)
+  if (pt) { pt.bpm = hrInput.value.bpm; pt.speed = hrInput.value.speed }
+  else day.points.push({ hour: hrInput.value.hour, bpm: hrInput.value.bpm, speed: hrInput.value.speed })
+  day.points.sort((a, b) => a.hour - b.hour)
+  localStorage.setItem(userKey('helmet_hr_days'), JSON.stringify(hrDays.value))
+}
+
+function applyHrPreset(type) {
+  const day = hrDays.value.find(d => d.date === hrSelectedDate.value)
+  if (!day) return
+  const patterns = {
+    hiit:      [58,58,58,58,58,58,62,180,175,170,65,65,65,65,65,65,65,175,180,170,65,65,62,58],
+    endurance: [58,58,58,58,58,58,62,140,145,148,65,65,65,65,65,65,65,142,145,140,65,65,62,58],
+    recovery:  [58,58,58,58,58,58,62,90,95,92,65,65,65,65,65,65,65,88,90,88,65,65,62,58],
+  }
+  const p = patterns[type]
+  if (!p) return
+  day.points = p.map((bpm, h) => ({ hour: h, bpm, speed: bpm > 130 ? 20 : bpm > 100 ? 12 : 0 }))
+  localStorage.setItem(userKey('helmet_hr_days'), JSON.stringify(hrDays.value))
+}
+
+const hrAreaOption = computed(() => {
+  const pts = (selectedDayData.value?.points || []).sort((a, b) => a.hour - b.hour)
+  const hours = pts.map(p => String(p.hour).padStart(2, '0') + ':00')
+  const bpms  = pts.map(p => p.bpm)
+  const spo2s = pts.map(p => p.spo2 ?? null)
+  const hasSpo2 = spo2s.some(v => v != null)
+  return {
+    backgroundColor: 'transparent',
+    tooltip: { trigger: 'axis', backgroundColor: '#0f172a', borderColor: '#334155', textStyle: { color: '#e2e8f0' } },
+    legend: { data: hasSpo2 ? ['心率 BPM', '血氧 SpO2%'] : ['心率 BPM'], textStyle: { color: '#94a3b8' }, top: 4 },
+    grid: { left: 44, right: 44, top: 36, bottom: 40 },
+    xAxis: { type: 'category', data: hours, axisLabel: { color: 'white', fontSize: 10 }, axisLine: { lineStyle: { color: '#1e293b' } } },
+    yAxis: [
+      { type: 'value', name: 'BPM', nameTextStyle: { color: 'white' }, axisLabel: { color: 'white' }, splitLine: { lineStyle: { color: '#1e293b' } } },
+      ...(hasSpo2 ? [{ type: 'value', name: 'SpO2%', min: 90, max: 100, nameTextStyle: { color: 'white' }, axisLabel: { color: 'white' }, splitLine: { show: false } }] : []),
+    ],
+    series: [
+      {
+        name: '心率 BPM', type: 'line', data: bpms,
+        lineStyle: { color: '#fb7185', width: 2 }, itemStyle: { color: '#fb7185' },
+        areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(251,113,133,0.3)' }, { offset: 1, color: 'rgba(251,113,133,0.02)' }] } },
+        smooth: true,
+        markLine: {
+          silent: true, lineStyle: { color: '#f59e0b', type: 'dashed', opacity: 0.5 },
+          data: [{ yAxis: 140, name: '有氧阈值' }],
+          label: { color: '#f59e0b', fontSize: 10 },
+        },
+      },
+      ...(hasSpo2 ? [{
+        name: '血氧 SpO2%', type: 'line', yAxisIndex: 1, data: spo2s,
+        lineStyle: { color: '#a78bfa', width: 1.5, type: 'dashed' }, itemStyle: { color: '#a78bfa' },
+        smooth: true, connectNulls: true,
+      }] : []),
+    ],
+  }
+})
+
+// ── Lifecycle ──────────────────────────────────────────────────────
+onMounted(() => {
+  loadBattery()
+  loadBatteryFromBackend()
+  loadHeartRateFromBackend()
+  loadTempHistory()
+})
+
+// 用户切换时重新加载各用户独立数据（DataVisualization 用 v-show，onMounted 只触发一次）
+watch(() => userStore.username, (newUser, oldUser) => {
+  if (!newUser || newUser === oldUser) return
+  tempHistory.value = []
+  loadTempHistory()
+  loadBattery()
+  loadBatteryFromBackend()
+  hrDays.value = loadHrDays()
+  hrSelectedDate.value = hrDays.value[hrDays.value.length - 1]?.date || ''
+  loadHeartRateFromBackend()
+})
+</script>
+
+<style scoped>
+/* ── Root ─────────────────────────────────────────────────────── */
+.dv-root {
+  height: 100%;
+  background: #020817;
+  color: #e2e8f0;
+  font-family: 'JetBrains Mono', 'Consolas', monospace;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ── Header ───────────────────────────────────────────────────── */
+.dv-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  border-bottom: 1px solid #1e293b;
+  background: rgba(2,8,23,0.95);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.dv-header__brand { display: flex; align-items: center; gap: 12px; }
+.dv-brand-icon {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, #0ea5e9, #6366f1);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  color: white;
+}
+.dv-brand-title { font-size: 14px; font-weight: 700; color: #f1f5f9; display: flex; align-items: center; gap: 8px; }
+.dv-brand-badge { font-size: 9px; background: rgba(14,165,233,0.15); color: #38bdf8; border: 1px solid rgba(14,165,233,0.3); border-radius: 4px; padding: 1px 6px; }
+.dv-brand-desc { font-size: 9px; color: #475569; margin-top: 2px; letter-spacing: 0.05em; }
+
+/* ── Tabs ─────────────────────────────────────────────────────── */
+.dv-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 8px 24px 0;
+  border-bottom: 1px solid #1e293b;
+  background: transparent;
+  flex-shrink: 0;
+}
+.dv-tab {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 16px;
+  font-size: 12px; font-family: inherit;
+  color: white;
+  background: transparent;
+  border: none; border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.dv-tab:hover { color: #94a3b8; }
+.dv-tab--active { color: #38bdf8; border-bottom-color: #38bdf8; }
+.dv-tab__icon { display: flex; align-items: center; }
+
+/* ── Content ──────────────────────────────────────────────────── */
+.dv-content { flex: 1; min-height: 0; padding: 24px; overflow-y: auto; display: flex; flex-direction: column; }
+
+/* ── Hero ─────────────────────────────────────────────────────── */
+.dv-hero {
+  position: relative;
+  background: rgba(10, 15, 26, 1);
+  border: 1px solid rgba(14,165,233,0.15);
+  border-radius: 12px;
+  padding: 28px 32px;
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+.dv-hero__bg-text {
+  position: absolute; right: 24px; top: 50%; transform: translateY(-50%);
+  font-size: 80px; font-weight: 900; color: rgba(14,165,233,0.04);
+  letter-spacing: 0.1em; pointer-events: none; user-select: none;
+}
+.dv-hero__tag { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #38bdf8; margin-bottom: 10px; }
+.dv-hero__tag-dot { width: 6px; height: 6px; border-radius: 50%; background: #38bdf8; animation: pulse 2s infinite; }
+.dv-hero__title { font-size: 26px; font-weight: 800; color: #f1f5f9; margin: 0 0 8px; }
+.dv-hero__title-num { color: #38bdf8; }
+.dv-hero__desc { font-size: 12px; color: white; max-width: 560px; line-height: 1.6; margin: 0; }
+.dv-hero__back-btn {
+  position: absolute; top: 20px; right: 20px;
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 14px; font-size: 12px; font-family: inherit;
+  background: rgba(14,165,233,0.1); color: #38bdf8;
+  border: 1px solid rgba(14,165,233,0.3); border-radius: 6px;
+  cursor: pointer; transition: all 0.2s;
+}
+.dv-hero__back-btn:hover { background: rgba(14,165,233,0.2); }
+
+/* ── Entry cards ──────────────────────────────────────────────── */
+.dv-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 20px;
+}
+.dv-entry-card {
+  background: rgba(15,23,42,0.8);
+  border: 1px solid #1e293b;
+  border-radius: 10px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.dv-entry-card:hover { transform: translateY(-2px); border-color: rgba(56,189,248,0.3); }
+.dv-entry-card--cyan:hover  { border-color: rgba(34,211,238,0.4); }
+.dv-entry-card--emerald:hover { border-color: rgba(52,211,153,0.4); }
+.dv-entry-card--amber:hover { border-color: rgba(245,158,11,0.4); }
+.dv-entry-card--green:hover { border-color: rgba(74,222,128,0.4); }
+.dv-entry-card--rose:hover  { border-color: rgba(251,113,133,0.4); }
+.dv-entry-card__top { display: flex; align-items: center; justify-content: space-between; }
+.dv-entry-card__icon {
+  width: 32px; height: 32px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+}
+.dv-entry-card__icon--cyan    { background: rgba(34,211,238,0.15); color: #22d3ee; }
+.dv-entry-card__icon--emerald { background: rgba(52,211,153,0.15); color: #34d399; }
+.dv-entry-card__icon--amber   { background: rgba(245,158,11,0.15); color: #f59e0b; }
+.dv-entry-card__icon--green   { background: rgba(74,222,128,0.15); color: #4ade80; }
+.dv-entry-card__icon--rose    { background: rgba(251,113,133,0.15); color: #fb7185; }
+.dv-entry-card__sub { font-size: 9px; color: #475569; letter-spacing: 0.05em; }
+.dv-entry-card__label { font-size: 11px; color: #94a3b8; margin-bottom: 4px; }
+.dv-entry-card__val { font-size: 24px; font-weight: 700; color: #f1f5f9; }
+.dv-entry-card__val-unit { font-size: 13px; color: white; }
+.dv-entry-card__meta { display: flex; gap: 6px; font-size: 10px; color: white; }
+.dv-entry-card__footer { display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: #38bdf8; margin-top: auto; }
+.dv-entry-card__link { }
+
+/* ── Guide ────────────────────────────────────────────────────── */
+.dv-guide { background: rgba(15,23,42,0.6); border: 1px solid #1e293b; border-radius: 10px; padding: 20px; }
+.dv-guide__title { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #94a3b8; margin-bottom: 16px; }
+.dv-guide__dot-wrap { position: relative; width: 10px; height: 10px; }
+.dv-guide__dot { position: absolute; inset: 0; width: 8px; height: 8px; border-radius: 50%; background: #38bdf8; margin: auto; }
+.dv-guide__dot-ping { position: absolute; inset: 0; width: 10px; height: 10px; border-radius: 50%; background: rgba(56,189,248,0.4); animation: pulse 2s infinite; }
+.dv-guide__grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.dv-guide__item { }
+.dv-guide__item-title { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: #cbd5e1; margin-bottom: 6px; }
+.dv-guide__item p { font-size: 11px; color: white; line-height: 1.6; margin: 0; }
+
+/* ── Panel ────────────────────────────────────────────────────── */
+.dv-tab-panel { display: flex; flex-direction: column; gap: 16px; flex: 1; min-height: 0; }
+.dv-panel-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; flex-shrink: 0; }
+.dv-panel-header__left { display: flex; align-items: center; gap: 12px; }
+.dv-ride-history-btn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 12px;
+  background: rgba(52,211,153,0.08); color: #34d399;
+  border: 1px solid rgba(52,211,153,0.25); border-radius: 6px;
+  font-size: 11px; font-family: inherit; cursor: pointer;
+  transition: all 0.2s;
+}
+.dv-ride-history-btn:hover { background: rgba(52,211,153,0.18); border-color: rgba(52,211,153,0.5); }
+.dv-panel-title { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: #f1f5f9; }
+.dv-range-switch { display: flex; gap: 4px; }
+.dv-range-btn {
+  padding: 4px 12px; font-size: 11px; font-family: inherit;
+  background: rgba(30,41,59,0.8); color: white;
+  border: 1px solid #1e293b; border-radius: 4px; cursor: pointer; transition: all 0.2s;
+}
+.dv-range-btn.active, .dv-range-btn:hover { background: rgba(14,165,233,0.15); color: #38bdf8; border-color: rgba(14,165,233,0.3); }
+.dv-stat-pills { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.dv-stat-pill {
+  padding: 3px 10px; font-size: 11px; border-radius: 20px;
+  background: rgba(30,41,59,0.8); color: #94a3b8; border: 1px solid #1e293b;
+}
+.dv-stat-pill--emerald { background: rgba(52,211,153,0.1); color: #34d399; border-color: rgba(52,211,153,0.2); }
+.dv-stat-pill--amber   { background: rgba(245,158,11,0.1); color: #f59e0b; border-color: rgba(245,158,11,0.2); }
+.dv-stat-pill--blue    { background: rgba(96,165,250,0.1); color: #60a5fa; border-color: rgba(96,165,250,0.2); }
+.dv-stat-pill--red     { background: rgba(239,68,68,0.1);  color: #ef4444; border-color: rgba(239,68,68,0.2); }
+.dv-stat-pill--orange  { background: rgba(249,115,22,0.1); color: #f97316; border-color: rgba(249,115,22,0.2); }
+.dv-stat-pill--rose    { background: rgba(251,113,133,0.1); color: #fb7185; border-color: rgba(251,113,133,0.2); }
+.dv-stat-pill--violet  { background: rgba(167,139,250,0.1); color: #a78bfa; border-color: rgba(167,139,250,0.2); }
+.dv-pill-btn {
+  padding: 3px 10px; font-size: 11px; font-family: inherit; border-radius: 20px;
+  cursor: pointer; border: 1px solid; transition: all 0.2s;
+}
+.dv-pill-btn--danger { background: rgba(239,68,68,0.1); color: #ef4444; border-color: rgba(239,68,68,0.2); }
+.dv-pill-btn--danger:hover { background: rgba(239,68,68,0.2); }
+
+/* ── Chart wrap ───────────────────────────────────────────────── */
+.dv-chart-wrap {
+  background: rgba(15,23,42,0.6); border: 1px solid #1e293b; border-radius: 10px;
+  padding: 12px; height: 300px;
+}
+.dv-chart-wrap--ride    { flex: 1; min-height: 260px; height: auto; }
+.dv-chart-wrap--battery { flex: 1; min-height: 220px; height: auto; }
+.dv-chart-wrap--hr      { flex: 1; min-height: 240px; height: auto; }
+.dv-echart { width: 100%; height: 100%; }
+
+/* ── Empty ────────────────────────────────────────────────────── */
+.dv-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 60px; color: #475569; font-size: 13px; }
+
+/* ── Ride layout ──────────────────────────────────────────────── */
+.dv-ride-layout { display: grid; grid-template-columns: 1fr 320px; gap: 16px; flex: 1; min-height: 0; }
+.dv-ride-list { background: rgba(15,23,42,0.6); border: 1px solid #1e293b; border-radius: 10px; padding: 16px; overflow-y: auto; }
+.dv-ride-list__title { font-size: 12px; color: white; margin-bottom: 10px; }
+.dv-ride-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #0f172a; }
+.dv-ride-row:last-child { border-bottom: none; }
+.dv-ride-row__date { font-size: 11px; color: white; }
+.dv-ride-row__dist { font-size: 14px; font-weight: 600; color: #34d399; }
+.dv-ride-row__right { display: flex; gap: 8px; }
+.dv-ride-row__cal   { font-size: 11px; color: #f59e0b; }
+.dv-ride-row__speed { font-size: 11px; color: #60a5fa; }
+
+/* ── Battery layout ───────────────────────────────────────────── */
+.dv-battery-layout { display: grid; grid-template-columns: 1fr 300px; gap: 16px; flex: 1; min-height: 0; }
+.dv-battery-left { display: flex; flex-direction: column; gap: 14px; min-height: 0; }
+.dv-battery-right { background: rgba(15,23,42,0.6); border: 1px solid #1e293b; border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; }
+.dv-bat-notice { margin-top: 4px; }
+.dv-bat-notice__body { display: flex; align-items: flex-start; gap: 8px; background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.25); border-radius: 8px; padding: 10px 12px; font-size: 12px; color: #cbd5e1; line-height: 1.6; }
+.dv-bat-notice__body b { color: #f59e0b; }
+.dv-bat-status { background: rgba(15,23,42,0.8); border: 1px solid #1e293b; border-radius: 10px; padding: 16px; }
+.dv-bat-status__pct { font-size: 36px; font-weight: 800; margin-bottom: 8px; }
+.dv-bat-bar-wrap { height: 6px; background: #1e293b; border-radius: 3px; overflow: hidden; margin-bottom: 8px; }
+.dv-bat-bar { height: 100%; border-radius: 3px; transition: width 0.5s; }
+.dv-bat-bar--green { background: linear-gradient(90deg, #22c55e, #4ade80); }
+.dv-bat-bar--amber { background: linear-gradient(90deg, #d97706, #f59e0b); }
+.dv-bat-bar--red   { background: linear-gradient(90deg, #dc2626, #ef4444); }
+.dv-bat-status__meta { display: flex; gap: 12px; font-size: 11px; color: white; }
+
+/* ── HR layout ────────────────────────────────────────────────── */
+.dv-hr-layout { display: grid; grid-template-columns: 1fr 280px; gap: 16px; flex: 1; min-height: 0; }
+.dv-hr-charts { display: flex; flex-direction: column; gap: 14px; min-height: 0; }
+.dv-hr-form { background: rgba(15,23,42,0.6); border: 1px solid #1e293b; border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; }
+.dv-hr-zones { background: rgba(15,23,42,0.6); border: 1px solid #1e293b; border-radius: 10px; padding: 14px; }
+.dv-zone-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.dv-zone-row:last-child { margin-bottom: 0; }
+.dv-zone-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.dv-zone-name { font-size: 11px; color: #94a3b8; width: 36px; flex-shrink: 0; }
+.dv-zone-bar-wrap { flex: 1; height: 6px; background: #1e293b; border-radius: 3px; overflow: hidden; }
+.dv-zone-bar { height: 100%; border-radius: 3px; transition: width 0.4s; }
+.dv-zone-pct { font-size: 10px; color: white; width: 60px; text-align: right; flex-shrink: 0; }
+.dv-hr-day-switch { display: flex; gap: 4px; }
+.dv-zone-tag { display: inline-block; padding: 4px 12px; font-size: 11px; border-radius: 20px; border: 1px solid; font-weight: 600; }
+.dv-zone-legend { }
+.dv-zone-legend-row { display: flex; align-items: center; gap: 8px; font-size: 11px; color: white; margin-bottom: 5px; }
+
+.dv-hr-record-count {
+  margin-left: 8px;
+  font-size: 10px;
+  color: rgba(255,255,255,0.35);
+  font-weight: 400;
+}
+.dv-hr-table-wrap {
+  flex: 1;
+  overflow-y: auto;
+  margin-top: 8px;
+  border: 1px solid rgba(56,189,248,0.1);
+  border-radius: 6px;
+}
+.dv-hr-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+}
+.dv-hr-table thead th {
+  position: sticky;
+  top: 0;
+  background: rgba(5,8,18,0.95);
+  color: rgba(255,255,255,0.45);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  padding: 6px 10px;
+  text-align: left;
+  border-bottom: 1px solid rgba(56,189,248,0.15);
+}
+.dv-hr-table tbody tr {
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  transition: background 0.15s;
+}
+.dv-hr-table tbody tr:hover {
+  background: rgba(56,189,248,0.05);
+}
+.dv-hr-table td {
+  padding: 5px 10px;
+  color: rgba(255,255,255,0.8);
+}
+.dv-hr-table__time {
+  color: rgba(255,255,255,0.4) !important;
+  font-size: 10px;
+}
+.dv-hr-table__unit {
+  font-size: 9px;
+  opacity: 0.5;
+}
+.dv-hr-table__empty {
+  text-align: center;
+  color: rgba(255,255,255,0.25);
+  padding: 20px !important;
+}
+
+/* ── Form ─────────────────────────────────────────────────────── */
+.dv-form-title { font-size: 11px; font-weight: 600; color: white; text-transform: uppercase; letter-spacing: 0.05em; }
+.dv-form-row { display: flex; align-items: center; gap: 8px; }
+.dv-form-label { font-size: 11px; color: white; width: 60px; flex-shrink: 0; }
+.dv-form-num { font-size: 12px; font-weight: 600; color: #f1f5f9; width: 44px; text-align: right; flex-shrink: 0; }
+.dv-slider { flex: 1; accent-color: #38bdf8; cursor: pointer; }
+.dv-select {
+  flex: 1; background: #0f172a; color: #e2e8f0; border: 1px solid #1e293b;
+  border-radius: 6px; padding: 4px 8px; font-size: 11px; font-family: inherit; cursor: pointer;
+}
+.dv-form-toggle { display: flex; gap: 4px; }
+.dv-toggle-btn {
+  padding: 4px 12px; font-size: 11px; font-family: inherit;
+  background: rgba(30,41,59,0.8); color: white;
+  border: 1px solid #1e293b; border-radius: 4px; cursor: pointer; transition: all 0.2s;
+}
+.dv-toggle-btn.active { background: rgba(14,165,233,0.15); color: #38bdf8; border-color: rgba(14,165,233,0.3); }
+.dv-form-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.dv-form-btn {
+  padding: 6px 12px; font-size: 11px; font-family: inherit;
+  border-radius: 6px; border: 1px solid; cursor: pointer; transition: all 0.2s;
+}
+.dv-form-btn--primary { background: rgba(14,165,233,0.15); color: #38bdf8; border-color: rgba(14,165,233,0.3); }
+.dv-form-btn--primary:hover { background: rgba(14,165,233,0.25); }
+.dv-form-btn--green   { background: rgba(74,222,128,0.1);  color: #4ade80; border-color: rgba(74,222,128,0.2); }
+.dv-form-btn--green:hover { background: rgba(74,222,128,0.2); }
+.dv-form-btn--amber   { background: rgba(245,158,11,0.1);  color: #f59e0b; border-color: rgba(245,158,11,0.2); }
+.dv-form-btn--amber:hover { background: rgba(245,158,11,0.2); }
+.dv-form-btn--red     { background: rgba(239,68,68,0.1);   color: #ef4444; border-color: rgba(239,68,68,0.2); }
+.dv-form-btn--red:hover { background: rgba(239,68,68,0.2); }
+.dv-form-btn--blue    { background: rgba(96,165,250,0.1);  color: #60a5fa; border-color: rgba(96,165,250,0.2); }
+.dv-form-btn--blue:hover { background: rgba(96,165,250,0.2); }
+.dv-preset-btns { display: flex; flex-direction: column; gap: 6px; }
+
+/* ── Mini list ────────────────────────────────────────────────── */
+.dv-mini-list { margin-top: 4px; }
+.dv-mini-list__title { font-size: 11px; color: white; margin-bottom: 6px; }
+.dv-mini-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid #0f172a; font-size: 11px; }
+.dv-mini-row:last-child { border-bottom: none; }
+.dv-mini-row__time { color: #475569; width: 36px; flex-shrink: 0; }
+.dv-mini-row__val  { font-weight: 600; width: 36px; flex-shrink: 0; }
+.dv-mini-row__sub  { color: #475569; }
+
+/* ── Colors ───────────────────────────────────────────────────── */
+.clr-green { color: #4ade80; }
+.clr-amber { color: #f59e0b; }
+.clr-red   { color: #ef4444; }
+
+/* ── Animations ───────────────────────────────────────────────── */
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(1.4); }
+}
+
+/* ── Responsive ───────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .dv-ride-layout, .dv-safety-layout, .dv-battery-layout, .dv-hr-layout {
+    grid-template-columns: 1fr;
+  }
+  .dv-cards-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 600px) {
+  .dv-content { padding: 12px; }
+  .dv-cards-grid { grid-template-columns: 1fr; }
+  .dv-hero { padding: 20px; }
+  .dv-hero__title { font-size: 20px; }
+}
+</style>
