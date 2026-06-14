@@ -1,5 +1,6 @@
 package com.demo.service;
 
+import com.demo.config.JwtUtil;
 import com.demo.model.User;
 import com.demo.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +18,28 @@ public class UserService {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private JwtUtil jwtUtil;
+
+    /**
+     * 从 Authorization header 解析当前用户，无效则返回 null
+     */
+    public User resolveUser(String authHeader) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) return null;
+        String token = authHeader.substring(7);
+        if (!jwtUtil.validateToken(token)) return null;
+        String username = jwtUtil.extractUsername(token);
+        return userRepository.findByUsername(username).orElse(null);
+    }
+
+    /**
+     * 从 Authorization header 解析用户绑定的设备 ID
+     */
+    public String resolveDeviceId(String authHeader) {
+        User user = resolveUser(authHeader);
+        return user != null ? user.getDeviceId() : null;
+    }
 
     public Optional<User> findByUsername(String username) {
         return userRepository.findByUsername(username);
@@ -79,25 +102,42 @@ public class UserService {
      * GitHub OAuth 登录：按 githubId 查找用户，不存在则自动注册
      */
     public User findOrCreateByGithub(String githubId, String githubLogin) {
-        // 先按 github_id 查
         Optional<User> existing = userRepository.findByGithubId(githubId);
         if (existing.isPresent()) {
             return existing.get();
         }
-        // 用户名冲突时加后缀
         String username = githubLogin;
         if (userRepository.existsByUsername(username)) {
             username = githubLogin + "_gh";
         }
-        // 仍然冲突则加 githubId 后几位
         if (userRepository.existsByUsername(username)) {
             username = githubLogin + "_" + githubId.substring(Math.max(0, githubId.length() - 4));
         }
         User newUser = new User();
         newUser.setUsername(username);
-        newUser.setPassword(""); // OAuth 用户无密码
+        newUser.setPassword("");
         newUser.setRole("user");
         newUser.setGithubId(githubId);
         return userRepository.save(newUser);
+    }
+
+    /**
+     * GitHub 绑定
+     */
+    public void bindGithub(User user, String githubId) {
+        user.setGithubId(githubId);
+        userRepository.save(user);
+    }
+
+    /**
+     * GitHub 解绑
+     */
+    public void unbindGithub(User user) {
+        user.setGithubId(null);
+        userRepository.save(user);
+    }
+
+    public Optional<User> findByGithubId(String githubId) {
+        return userRepository.findByGithubId(githubId);
     }
 }

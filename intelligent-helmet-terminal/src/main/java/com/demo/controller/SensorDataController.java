@@ -2,7 +2,6 @@ package com.demo.controller;
 
 import com.demo.config.JwtUtil;
 import com.demo.model.SensorData;
-import com.demo.model.User;
 import com.demo.service.SensorDataService;
 import com.demo.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,7 +12,6 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/sensor")
@@ -199,11 +197,6 @@ public class SensorDataController {
     }
 
     private String resolveDeviceId(String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) return null;
-        String token = authHeader.substring(7);
-        if (!jwtUtil.validateToken(token)) return null;
-        String username = jwtUtil.extractUsername(token);
-        Optional<User> userOpt = userService.findByUsername(username);
-        return userOpt.map(User::getDeviceId).orElse(null);
+        return userService.resolveDeviceId(authHeader);
     }
 }
