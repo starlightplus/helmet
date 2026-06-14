@@ -60,3 +60,8 @@ ehthumbs.db
 # ========================
 *.tsbuildinfo
 coverage/
+
+# ========================
+# Large assets (use CDN or local only)
+# ========================
+intelligent-helmet-vue/public
