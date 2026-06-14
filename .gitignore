@@ -16,7 +16,8 @@ hs_err_pid*
 *.iml
 *.iws
 *.ipr
-.vscode/
+.vscode/*
+!.vscode/extensions.json
 *.suo
 *.ntvs*
 *.njsproj
@@ -64,4 +65,5 @@ coverage/
 # ========================
 # Large assets (use CDN or local only)
 # ========================
-intelligent-helmet-vue/public
+intelligent-helmet-vue/public/food/
+intelligent-helmet-vue/public/background.mp4
